@@ -57,6 +57,10 @@ def make_handler(cfg, engine):
             if method == "GET" and not path.startswith("/api/"):
                 return self._static(path)
             if path == "/api/health":
+                if qs.get("deep"):
+                    return self._send(200, {"ok": True, "app": cfg["app"].get("title") or cfg["app"].get("name", ""), "provider": cfg["provider"]["type"],
+                                            "sources": [x.get("id") or x.get("name") or x.get("type") for x in cfg.get("sources", [])],
+                                            "db": store.ping(), "version": "0.1"})
                 return self._send(200, {"ok": True})
             if path == "/api/config":
                 return self._send(200, schema.public_view(cfg))
@@ -71,6 +75,9 @@ def make_handler(cfg, engine):
             if path == "/api/export-all":
                 return self._send(200, json.dumps(store.export_all(o), indent=1).encode(), "application/json",
                                   {"Content-Disposition": 'attachment; filename="customchat-export.json"'})
+            if path == "/api/import" and method == "POST":
+                n = store.import_chats(o, b.get("chats") or [])
+                return self._send(200, {"imported": n})
             if path == "/api/export":
                 ch = store.chat(o, qs.get("chat", ""))
                 return self._send(200, chat_markdown(ch["title"], store.turns(o, ch["id"])).encode(), "text/markdown; charset=utf-8",

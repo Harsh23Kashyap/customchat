@@ -157,6 +157,24 @@ class Store:
     def delete_upload(self, owner, upload):
         self.q("DELETE FROM uploads WHERE id=? AND owner=?", (upload, owner), write=True)
 
+    def ping(self):
+        try:
+            return bool(self.q("SELECT 1 AS x"))
+        except Exception:
+            return False
+
+    def import_chats(self, owner, chats):
+        n = 0
+        for c in chats[:200]:
+            if not isinstance(c, dict):
+                continue
+            cid = self.new_chat(owner, str(c.get("title") or "Imported")[:120])
+            for t in (c.get("turns") or [])[:500]:
+                if isinstance(t, dict) and t.get("question") and t.get("answer"):
+                    self.add_turn(cid, None, str(t["question"])[:2000], str(t["question"])[:2000], str(t["answer"]), t.get("evidence") or [], [], "standard")
+            n += 1
+        return n
+
     def export_all(self, owner):
         out = []
         for c in self.q("SELECT id,title,pinned,created FROM chats WHERE owner=? AND deleted IS NULL ORDER BY created", (owner,)):
