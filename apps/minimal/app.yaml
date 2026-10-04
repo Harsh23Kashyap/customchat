@@ -1,0 +1,16 @@
+# The smallest working app. Run: python -m customchat run apps/minimal/app.yaml
+app:
+  id: minimal
+  title: Docs Chat
+  tagline: Ask questions about the files in ./docs
+  accent: "#0a84ff"
+  examples:
+    - What is CustomChat?
+    - How does conversation memory work?
+provider:
+  type: mock            # change to ollama (model: llama3.2) or openai (model: gpt-4o-mini)
+sources:
+  - id: docs
+    type: local_files
+    label: My documents
+    path: docs
