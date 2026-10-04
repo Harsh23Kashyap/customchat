@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{TITLE}}</title>
+<meta name="theme-color" content="{{ACCENT}}">
+<style>:root{--accent:{{ACCENT}}}</style>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="side" id="side">
+    <div class="side-top">
+      <div class="brand" id="brand"></div>
+      <button class="icon" id="newChat" title="New chat" aria-label="New chat">＋</button>
+    </div>
+    <input class="search" id="search" type="search" placeholder="Search chats" aria-label="Search chats">
+    <div class="tabs" role="tablist"><button class="tab on" data-tab="chats">Chats</button><button class="tab" data-tab="topics">Conversations</button></div>
+    <nav class="list" id="list" aria-label="History"></nav>
+    <div class="foot" id="foot"></div>
+  </aside>
+  <main class="main">
+    <header class="bar">
+      <button class="icon menu" id="menu" aria-label="Menu">☰</button>
+      <div class="title" id="chatTitle">New chat</div>
+      <div class="bar-r"><span class="badge" id="modelBadge"></span></div>
+    </header>
+    <section class="thread" id="thread" aria-live="polite"></section>
+    <footer class="composer">
+      <div class="pills" id="pills"></div>
+      <div class="box">
+        <textarea id="q" rows="1" placeholder="Ask a question" aria-label="Question" maxlength="2000"></textarea>
+        <select id="style" aria-label="Answer depth"></select>
+        <button class="send" id="send" aria-label="Send">↑</button>
+      </div>
+      <div class="hint" id="hint"></div>
+    </footer>
+  </main>
+  <aside class="sources" id="sources" aria-label="Sources"></aside>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>
