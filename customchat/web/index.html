@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="{{THEME}}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+<a class="skip" href="#q">Skip to question</a>
 <div class="app" id="app">
   <aside class="side" id="side">
     <div class="side-top">
@@ -26,7 +27,7 @@
       <div class="title" id="chatTitle">New chat</div>
       <div class="bar-r"><button class="icon" id="exportChat" title="Export chat as Markdown" aria-label="Export chat">⤓</button><span class="badge" id="modelBadge"></span></div>
     </header>
-    <section class="thread" id="thread" aria-live="polite"></section>
+    <section class="thread" id="thread" role="log" aria-live="polite" aria-label="Conversation"></section>
     <footer class="composer">
       <div class="pills" id="pills"></div>
       <div class="box">

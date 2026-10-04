@@ -144,21 +144,40 @@ async function openTopic(id) {
 }
 function newChat() { S.chat = null; S.topic = null; S.newTopic = false; S.turns = []; $("#chatTitle").textContent = "New chat"; $("#app").classList.remove("src"); drawThread(); $("#q").focus(); }
 
+async function stream(body, onEvent) {
+  const h = { "Content-Type": "application/json" };
+  if (S.token) h.Authorization = "Bearer " + S.token;
+  const r = await fetch("/api/ask-stream", { method: "POST", headers: h, body: JSON.stringify(body) });
+  if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.error || "Request failed"); }
+  const reader = r.body.getReader(), dec = new TextDecoder(); let buf = "";
+  for (;;) {
+    const { value, done } = await reader.read(); if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let i; while ((i = buf.indexOf("\n")) >= 0) { const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1); if (line) onEvent(JSON.parse(line)); }
+  }
+}
 async function send() {
   const q = $("#q").value.trim(); if (!q || S.busy) return;
   S.busy = true; $("#send").disabled = true; $("#q").value = ""; autosize();
   const w = $("#thread .wrap") || $("#thread");
   w.querySelector(".hero")?.remove();
-  w.append(el("div", { class: "q", text: q }), el("div", { class: "think", id: "think" }, el("span", { class: "dot" }), el("span", { class: "dot" }), el("span", { class: "dot" })));
-  $("#thread").scrollTop = $("#thread").scrollHeight;
+  const live = el("div", { class: "a", id: "live" });
+  w.append(el("div", { class: "q", text: q }), el("div", { class: "think", id: "think" }, el("span", { class: "dot" }), el("span", { class: "dot" }), el("span", { class: "dot" })), live);
+  const th = $("#thread"); th.scrollTop = th.scrollHeight;
+  let text = "", result = null, err = null;
   try {
-    const r = await api("/api/ask", { chat: S.chat, question: q, style: $("#style").value, topic: S.topic, new_topic: S.newTopic, sources: [...S.sources].length ? [...S.sources] : null });
-    S.chat = r.chat; S.topic = r.topic; S.newTopic = false;
-    S.turns.push({ ...r, id: r.id });
-    if (Object.keys(r.source_errors || {}).length) toast("Some sources were unavailable: " + Object.keys(r.source_errors).join(", "));
-  } catch (e) { toast(e.message); S.turns = S.turns.slice(); }
+    await stream({ chat: S.chat, question: q, style: $("#style").value, topic: S.topic, new_topic: S.newTopic, sources: S.sources.size ? [...S.sources] : null }, (ev) => {
+      if (ev.type === "token") { $("#think")?.remove(); text += ev.data; live.textContent = text; th.scrollTop = th.scrollHeight; }
+      else if (ev.type === "done") result = ev.data;
+      else if (ev.type === "error") err = ev.data;
+    });
+  } catch (e) { err = e.message; }
+  if (result) {
+    S.chat = result.chat; S.topic = result.topic; S.newTopic = false; S.turns.push(result);
+    if (Object.keys(result.source_errors || {}).length) toast("Some sources were unavailable: " + Object.keys(result.source_errors).join(", "));
+    if (S.turns.length === 1) $("#chatTitle").textContent = q.slice(0, 60);
+  } else toast(err || "Something went wrong");
   S.busy = false; $("#send").disabled = false; drawThread(); loadList();
-  if (S.turns.length === 1) $("#chatTitle").textContent = q.slice(0, 60);
 }
 async function regen(turn, style) {
   try { const r = await api("/api/regenerate", { turn, style }); S.turns.push(r); drawThread(); } catch (e) { toast(e.message); }
