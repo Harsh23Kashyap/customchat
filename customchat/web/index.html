@@ -28,9 +28,11 @@
       <div class="bar-r"><button class="icon" id="exportChat" title="Export chat as Markdown" aria-label="Export chat">⤓</button><span class="badge" id="modelBadge"></span></div>
     </header>
     <section class="thread" id="thread" role="log" aria-live="polite" aria-label="Conversation"></section>
+    <button class="jump" id="jump" aria-label="Scroll to latest">↓</button>
     <footer class="composer">
       <div class="pills" id="pills"></div>
       <div class="box">
+        <button class="icon" id="upload" title="Add a text file as a source" aria-label="Add file">📎</button>
         <textarea id="q" rows="1" placeholder="Ask a question" aria-label="Question" maxlength="2000"></textarea>
         <select id="style" aria-label="Answer depth"></select>
         <button class="send" id="send" aria-label="Send">↑</button>
