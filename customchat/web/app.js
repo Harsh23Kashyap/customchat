@@ -25,12 +25,25 @@ async function api(path, body) {
 }
 function toast(msg) { const t = el("div", { class: "toast", text: msg }); document.body.append(t); setTimeout(() => t.remove(), 2200); }
 
+function inline(parent, text, evidence) {
+  // safe inline markdown: **bold**, `code`, and [n] citations. Everything is text nodes.
+  text.split(/(\*\*[^*]+\*\*|`[^`]+`|\[\d+\])/).forEach((p) => {
+    let m;
+    if ((m = p.match(/^\[(\d+)\]$/)) && evidence.some((e) => e.n === +m[1])) parent.append(el("button", { class: "cite", title: "Show source " + m[1], onclick: () => showSources(evidence, +m[1]) }, "[" + m[1] + "]"));
+    else if (/^\*\*[^*]+\*\*$/.test(p)) parent.append(el("strong", { text: p.slice(2, -2) }));
+    else if (/^`[^`]+`$/.test(p)) parent.append(el("code", { text: p.slice(1, -1) }));
+    else if (p) parent.append(document.createTextNode(p));
+  });
+}
 function renderAnswer(text, evidence) {
   const box = el("div", { class: "a" });
-  text.split(/(\[\d+\])/).forEach((p) => {
-    const m = p.match(/^\[(\d+)\]$/);
-    if (m && evidence.some((e) => e.n === +m[1])) box.append(el("button", { class: "cite", title: "Show source", onclick: () => showSources(evidence, +m[1]) }, "[" + m[1] + "]"));
-    else box.append(document.createTextNode(p));
+  let list = null;
+  text.split(/\n/).forEach((line) => {
+    const li = line.match(/^\s*(?:[-*]|\d+[.)])\s+(.*)/), h = line.match(/^#{1,3}\s+(.*)/);
+    if (li) { if (!list) { list = el("ul"); box.append(list); } const x = el("li"); inline(x, li[1], evidence); list.append(x); return; }
+    list = null;
+    if (!line.trim()) return;
+    const p = el(h ? "h4" : "p"); inline(p, h ? h[1] : line, evidence); box.append(p);
   });
   return box;
 }
@@ -68,6 +81,7 @@ function turnView(t, prev) {
   if (t.evidence.length && unsupported) meta.append(el("span", { class: "chip warn", title: "Sentences without a valid citation" }, unsupported + " uncited"));
   if (t.standalone && t.standalone !== t.question) meta.append(el("span", { class: "chip", title: "Understood as" }, "Understood as: " + t.standalone));
   if (t.evidence.length) {
+    meta.append(el("button", { class: "chip", onclick: () => navigator.clipboard.writeText(t.answer).then(() => toast("Copied")) }, "Copy"));
     meta.append(el("button", { class: "chip", onclick: () => download("/api/bibtex?turn=" + t.id, "references.bib") }, "BibTeX"));
     meta.append(el("button", { class: "chip", onclick: () => download("/api/pdf?turn=" + t.id, "answer.pdf") }, "PDF"));
     for (const s of ["quick", "deep"]) if (S.cfg.styles.includes(s)) meta.append(el("button", { class: "chip", onclick: () => regen(t.id, s) }, s === "quick" ? "Shorter" : "Deeper"));
@@ -165,6 +179,7 @@ async function init() {
   $("#hint").textContent = "Answers cite their sources. Check important facts.";
   $("#q").addEventListener("input", autosize);
   $("#q").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
+  $("#exportChat").addEventListener("click", () => S.chat && S.turns.length ? download("/api/export?chat=" + S.chat, "chat.md") : toast("Nothing to export yet"));
   $("#send").addEventListener("click", send); $("#newChat").addEventListener("click", newChat);
   $("#menu").addEventListener("click", () => $("#app").classList.toggle("menu-open"));
   $("#search").addEventListener("input", () => S.tab === "chats" && loadList());
