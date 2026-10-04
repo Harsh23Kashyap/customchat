@@ -340,3 +340,16 @@ class Round16(unittest.TestCase):
         import subprocess, sys
         r = subprocess.run([sys.executable, "-m", "customchat", "ask", APP, "What is CustomChat?", "--json"], cwd=ROOT, capture_output=True, text=True)
         self.assertIn("evidence", json.loads(r.stdout))
+
+
+class Round17(unittest.TestCase):
+    def test_import_roundtrip_and_ping(self):
+        import tempfile, os
+        from customchat.store import Store
+        d = tempfile.mkdtemp()
+        s = Store(os.path.join(d, "t.db"))
+        self.assertTrue(s.ping())
+        n = s.import_chats("o", [{"title": "X", "turns": [{"question": "q", "answer": "a"}]}, "bad"])
+        self.assertEqual(n, 1)
+        out = s.export_all("o")
+        self.assertEqual(out[0]["turns"][0]["answer"], "a")
