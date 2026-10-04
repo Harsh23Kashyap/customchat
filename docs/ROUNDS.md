@@ -17,3 +17,9 @@ Each round is one change plus a check (a test, or a screenshot reviewed).
 | U2 | Copy button on each answer | screenshot |
 | U3 | Export button in the title bar | screenshot |
 | U4 | Mock answers cut at a word, not mid-word | screenshot |
+
+## Batch 2
+| # | Change | Check |
+|---|---|---|
+| F5 | `schema/chat-app.schema.json` for editor autocomplete and validation; a test keeps it in step with the loader | unit test |
+| F6 | Lint pass over Custom-Nerd (`pyflakes`): no functional bugs found statically, only unused imports and variables in main.py and helper_functions.py. Runtime bug hunt needs its dependencies and is still open | static check |
