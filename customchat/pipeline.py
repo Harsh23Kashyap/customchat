@@ -80,6 +80,42 @@ class Engine:
                             "invalid": [c for c in cites if c not in valid], "supported": bool(cites) and all(c in valid for c in cites)})
         return out
 
+    def ask_stream(self, owner, chat, question, sources=None, style="standard", topic=None, new_topic=False, use_cache=True):
+        """Yield ('meta', {...}), ('token', str)..., ('done', result). Same behaviour as ask()."""
+        q = (question or "").strip()
+        if not q or len(q) > 2000:
+            raise ValueError("Question must be 1-2000 characters")
+        self.store.chat(owner, chat)
+        if topic:
+            self.store.topic(owner, topic)
+        elif not new_topic:
+            topic = self.store.last_topic(chat)
+        if not topic:
+            topic = self.store.new_topic(owner, q[:80])
+        mem_on = self.cfg["memory"]["enabled"]
+        history = self.store.topic_turns(owner, topic, 12) if mem_on else []
+        summary = self.store.topic(owner, topic)["summary"] if mem_on else ""
+        standalone = self.standalone(q, history, summary)
+        evidence, errors = self.retrieve(standalone, sources) if use_cache else self._fresh(standalone, sources)
+        yield "meta", {"standalone": standalone, "evidence": evidence, "source_errors": errors}
+        if not evidence:
+            answer = self.cfg["prompt"]["no_evidence"]
+            yield "token", answer
+        else:
+            parts = []
+            for piece in self.provider.stream(self.prompt(standalone, evidence, style, history, summary)):
+                parts.append(piece)
+                yield "token", piece
+            answer = "".join(parts).strip()
+        ledger = self.ledger(answer, evidence) if evidence else []
+        tid = self.store.add_turn(chat, topic, q, standalone, answer, evidence, ledger, style)
+        if mem_on:
+            self._summarize(owner, topic)
+        if self.store.chat(owner, chat)["title"] == "New chat":
+            self.store.rename_chat(owner, chat, q[:60])
+        yield "done", {"id": tid, "chat": chat, "topic": topic, "question": q, "standalone": standalone, "answer": answer,
+                       "evidence": evidence, "ledger": ledger, "style": style, "source_errors": errors}
+
     def ask(self, owner, chat, question, sources=None, style="standard", topic=None, new_topic=False, use_cache=True):
         q = (question or "").strip()
         if not q or len(q) > 2000:

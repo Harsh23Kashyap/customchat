@@ -72,11 +72,32 @@ def make_handler(cfg, engine):
                 ch = store.chat(o, qs.get("chat", ""))
                 return self._send(200, chat_markdown(ch["title"], store.turns(o, ch["id"])).encode(), "text/markdown; charset=utf-8",
                                   {"Content-Disposition": 'attachment; filename="chat.md"'})
-            if path in ("/api/ask", "/api/regenerate"):
+            if path in ("/api/ask", "/api/ask-stream", "/api/regenerate"):
                 now = time.time(); hits[o] = [t for t in hits[o] if now - t < 60]
                 if len(hits[o]) >= 30:
                     return self._send(429, {"error": "Too many questions, wait a moment"})
                 hits[o].append(now)
+            if path == "/api/ask-stream":
+                chat = b.get("chat") or store.new_chat(o)
+                gen = engine.ask_stream(o, chat, b.get("question"), b.get("sources"), b.get("style", "standard"),
+                                        b.get("topic"), bool(b.get("new_topic")), not b.get("fresh"))
+                first = next(gen)  # validation errors surface as a normal 400 before streaming starts
+                self.send_response(200)
+                self.send_header("Content-Type", "application/x-ndjson")
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("X-Content-Type-Options", "nosniff")
+                self.end_headers()
+                def emit(kind, data):
+                    self.wfile.write((json.dumps({"type": kind, "data": data}) + "\n").encode()); self.wfile.flush()
+                emit(*first)
+                try:
+                    for kind, data in gen:
+                        emit(kind, data)
+                except providers.ProviderError as e:
+                    emit("error", str(e))
+                return
+            if path in ("/api/ask",):
+                pass
             if path == "/api/ask":
                 r = engine.ask(o, b.get("chat") or store.new_chat(o), b.get("question"), b.get("sources"),
                                b.get("style", "standard"), b.get("topic"), bool(b.get("new_topic")), not b.get("fresh"))
@@ -118,7 +139,7 @@ def make_handler(cfg, engine):
             data = open(full, "rb").read()
             if name == "index.html":
                 a = cfg["app"]
-                data = data.decode().replace("{{TITLE}}", _esc(a["title"])).replace("{{ACCENT}}", _esc(a["accent"])).encode()
+                data = data.decode().replace("{{TITLE}}", _esc(a["title"])).replace("{{ACCENT}}", _esc(a["accent"])).replace("{{THEME}}", _esc(a["theme"])).encode()
             self._send(200, data, ctype + ("; charset=utf-8" if ctype.startswith("text") or "javascript" in ctype else ""))
 
         def _guard(self, method):

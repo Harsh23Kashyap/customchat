@@ -35,12 +35,33 @@ def _post_once(url, payload, headers, timeout):
         raise ProviderError("Provider unreachable: %s" % getattr(e, "reason", e)) from None
 
 
-class Mock:
+def _stream_lines(url, payload, headers, timeout):
+    req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers={"Content-Type": "application/json", **headers})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            for raw in r:
+                line = raw.decode("utf-8", "replace").strip()
+                if line:
+                    yield line
+    except urllib.error.HTTPError as e:
+        raise ProviderError("Provider returned HTTP %d" % e.code) from None
+    except (urllib.error.URLError, TimeoutError, OSError) as e:
+        raise ProviderError("Provider unreachable: %s" % getattr(e, "reason", e)) from None
+
+
+class Streams:
+    """Default streaming: yield the finished answer word by word."""
+    def stream(self, messages):
+        for w in re.findall(r"\S+\s*", self.complete(messages)):
+            yield w
+
+
+class Mock(Streams):
     """Extractive stand-in. Quotes the first sentence of each evidence block with its citation."""
     def __init__(self, cfg): self.cfg = cfg
 
     def complete(self, messages):
-        user = messages[-1]["content"]
+        user = messages[-1]["content"].split("Evidence:\n", 1)[-1]
         blocks = re.findall(r"\[(\d+)\]\s*(.+?)(?=\n\[\d+\]|\Z)", user, flags=re.S)
         if not blocks:
             return "No evidence was provided."
@@ -52,7 +73,18 @@ class Mock:
         return " ".join(out)
 
 
-class Ollama:
+class Ollama(Streams):
+    def stream(self, messages):
+        base = (self.base)
+        for line in _stream_lines(base + "/api/chat", {"model": self.model, "messages": messages, "stream": True,
+                                  "options": {"temperature": self.temp}}, {}, self.t):
+            try:
+                d = json.loads(line)
+            except ValueError:
+                continue
+            if d.get("message", {}).get("content"):
+                yield d["message"]["content"]
+
     def __init__(self, cfg):
         p = cfg["provider"]
         self.base = (p["base_url"] or os.environ.get("OLLAMA_BASE_URL") or "http://localhost:11434").rstrip("/")
@@ -67,7 +99,25 @@ class Ollama:
             raise ProviderError("Unexpected Ollama response") from None
 
 
-class OpenAICompatible:
+class OpenAICompatible(Streams):
+    def stream(self, messages):
+        headers = {}
+        if self.key_env:
+            key = os.environ.get(self.key_env, "")
+            if not key:
+                raise ProviderError("Set the %s environment variable" % self.key_env)
+            headers["Authorization"] = "Bearer " + key
+        for line in _stream_lines(self.base + "/chat/completions", {"model": self.model, "messages": messages,
+                                  "temperature": self.temp, "stream": True}, headers, self.t):
+            if not line.startswith("data:") or line.endswith("[DONE]"):
+                continue
+            try:
+                piece = json.loads(line[5:])["choices"][0]["delta"].get("content")
+            except (ValueError, KeyError, IndexError):
+                continue
+            if piece:
+                yield piece
+
     def __init__(self, cfg):
         p = cfg["provider"]
         self.base = (p["base_url"] or "https://api.openai.com/v1").rstrip("/")

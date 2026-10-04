@@ -14,6 +14,7 @@ DEFAULTS = {
         "footer": "",
         "examples": [],
         "language": "en",
+        "theme": "auto",           # auto | light | dark
     },
     "provider": {
         "type": "mock",            # mock | ollama | openai | openai_compatible
@@ -113,6 +114,8 @@ def validate(raw):
         if s["id"] in seen:
             raise ConfigError("Duplicate source id " + s["id"])
         seen.add(s["id"])
+    if cfg["app"]["theme"] not in ("auto", "light", "dark"):
+        raise ConfigError("app.theme must be auto, light or dark")
     if cfg["auth"]["mode"] not in AUTH_MODES:
         raise ConfigError("auth.mode must be none or token")
     if cfg["retrieval"]["top_k"] < 1 or cfg["retrieval"]["top_k"] > 50:
