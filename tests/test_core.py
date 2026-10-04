@@ -169,3 +169,35 @@ class Http(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Extras(unittest.TestCase):
+    def test_env_file_loaded_and_existing_wins(self):
+        d = tempfile.mkdtemp()
+        open(os.path.join(d, ".env"), "w").write("CC_A=1\nCC_B='two'\n# c\n")
+        open(os.path.join(d, "app.yaml"), "w").write("app: {title: T}\n")
+        os.environ["CC_A"] = "keep"
+        schema.load(os.path.join(d, "app.yaml"))
+        self.assertEqual(os.environ["CC_A"], "keep"); self.assertEqual(os.environ["CC_B"], "two")
+
+    def test_chat_markdown(self):
+        from customchat.exports import chat_markdown
+        md = chat_markdown("T", [{"question": "q", "answer": "a [1]", "evidence": [{"title": "X", "url": "u"}]}])
+        self.assertIn("**Q:** q", md); self.assertIn("1. X <u>", md)
+
+    def test_provider_retry_on_transient(self):
+        from customchat import providers
+        calls = []
+        def fake(url, payload, headers, timeout):
+            calls.append(1)
+            if len(calls) < 3: raise providers.ProviderError("Provider returned HTTP 503")
+            return {"ok": 1}
+        orig = providers._post_once; providers._post_once = fake
+        try:
+            self.assertEqual(providers._post("u", {}, {}, 1), {"ok": 1}); self.assertEqual(len(calls), 3)
+            calls.clear()
+            def bad(*a): calls.append(1); raise providers.ProviderError("Provider returned HTTP 401")
+            providers._post_once = bad
+            with self.assertRaises(providers.ProviderError): providers._post("u", {}, {}, 1)
+            self.assertEqual(len(calls), 1)
+        finally: providers._post_once = orig
