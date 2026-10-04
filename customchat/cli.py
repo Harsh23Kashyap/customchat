@@ -1,0 +1,71 @@
+"""customchat init | validate | run | doctor | ask"""
+import argparse, json, os, shutil, sys, urllib.request
+from . import schema, __version__
+
+TEMPLATE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "apps", "minimal")
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(prog="customchat", description="Build a chat app over any evidence source.")
+    ap.add_argument("--version", action="version", version=__version__)
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    i = sub.add_parser("init", help="scaffold a new app folder"); i.add_argument("name")
+    v = sub.add_parser("validate", help="check an app file"); v.add_argument("app")
+    r = sub.add_parser("run", help="serve an app"); r.add_argument("app"); r.add_argument("--host"); r.add_argument("--port", type=int)
+    d = sub.add_parser("doctor", help="check provider and sources"); d.add_argument("app")
+    a = sub.add_parser("ask", help="ask one question from the terminal"); a.add_argument("app"); a.add_argument("question")
+    args = ap.parse_args(argv)
+    if args.cmd == "init":
+        if os.path.exists(args.name):
+            sys.exit("%s already exists" % args.name)
+        shutil.copytree(TEMPLATE, args.name, ignore=shutil.ignore_patterns("__pycache__", "*.db"))
+        print("Created %s/. Next: customchat run %s/app.yaml" % (args.name, args.name))
+    elif args.cmd == "validate":
+        try:
+            c = schema.load(args.app)
+        except (schema.ConfigError, OSError) as e:
+            sys.exit("Invalid: %s" % e)
+        print("OK: %s, %d source(s), provider %s" % (c["app"]["title"], len(c["sources"]), c["provider"]["type"]))
+    elif args.cmd == "run":
+        from .server import serve
+        serve(args.app, args.host, args.port)
+    elif args.cmd == "doctor":
+        doctor(args.app)
+    elif args.cmd == "ask":
+        from .pipeline import Engine
+        from .store import Store
+        c = schema.load(args.app)
+        e = Engine(c, Store(":memory:"))
+        res = e.ask("local", e.store.new_chat("local"), args.question)
+        print(res["answer"])
+        for ev in res["evidence"]:
+            print("  [%d] %s %s" % (ev["n"], ev["title"], ev["url"]))
+
+
+def doctor(path):
+    c = schema.load(path)
+    p = c["provider"]
+    print("provider:", p["type"], p["model"])
+    if p["type"] == "ollama":
+        base = (p["base_url"] or os.environ.get("OLLAMA_BASE_URL") or "http://localhost:11434").rstrip("/")
+        try:
+            tags = json.loads(urllib.request.urlopen(base + "/api/tags", timeout=5).read())
+            names = [m["name"] for m in tags.get("models", [])]
+            ok = any(n == p["model"] or n.startswith(p["model"] + ":") for n in names)
+            print("  ollama reachable; model %s %s" % (p["model"], "installed" if ok else "NOT installed, run: ollama pull " + p["model"]))
+        except Exception as e:
+            print("  ollama NOT reachable at %s (%s). Install from https://ollama.com and run `ollama serve`." % (base, type(e).__name__))
+    elif p["api_key_env"]:
+        print("  key env %s: %s" % (p["api_key_env"], "set" if os.environ.get(p["api_key_env"]) else "NOT set"))
+    from .connectors import make_connector
+    for s in c["sources"]:
+        try:
+            conn = make_connector(s, c["_dir"])
+            n = len(getattr(conn, "docs", [])) if s["type"] == "local_files" else None
+            print("  source %s (%s): ready%s" % (s["id"], s["type"], "" if n is None else ", %d chunks" % n))
+        except Exception as e:
+            print("  source %s: FAILED %s" % (s["id"], e))
+
+
+if __name__ == "__main__":
+    main()
