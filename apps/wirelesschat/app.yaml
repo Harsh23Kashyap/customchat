@@ -1,0 +1,28 @@
+# WirelessChat as a CustomChat app: wireless and signal-processing literature from arXiv
+# plus an optional local folder of your own papers.
+app:
+  id: wirelesschat
+  title: WirelessChat
+  tagline: Ask about wireless communications research, with cited papers.
+  accent: "#0a84ff"
+  examples:
+    - What is the benefit of massive MIMO?
+    - How does OFDM handle multipath fading?
+provider:
+  type: ollama
+  model: llama3.2
+sources:
+  - id: arxiv
+    type: arxiv
+    label: arXiv
+    category: eess.SP
+  - id: papers
+    type: local_files
+    label: My papers
+    path: papers
+prompt:
+  style:
+    quick: Answer in 2 to 3 sentences.
+    standard: Answer clearly and name the technique and the paper it comes from.
+    deep: Give a structured answer with background, method, trade-offs and open problems.
+retrieval: {top_k: 8}
