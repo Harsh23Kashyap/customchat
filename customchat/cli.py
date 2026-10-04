@@ -13,7 +13,7 @@ def main(argv=None):
     v = sub.add_parser("validate", help="check an app file"); v.add_argument("app")
     r = sub.add_parser("run", help="serve an app"); r.add_argument("app"); r.add_argument("--host"); r.add_argument("--port", type=int)
     d = sub.add_parser("doctor", help="check provider and sources"); d.add_argument("app")
-    a = sub.add_parser("ask", help="ask one question from the terminal"); a.add_argument("app"); a.add_argument("question")
+    a = sub.add_parser("ask", help="ask one question from the terminal"); a.add_argument("app"); a.add_argument("question"); a.add_argument("--json", action="store_true")
     args = ap.parse_args(argv)
     if args.cmd == "init":
         if os.path.exists(args.name):
@@ -37,6 +37,8 @@ def main(argv=None):
         c = schema.load(args.app)
         e = Engine(c, Store(":memory:"))
         res = e.ask("local", e.store.new_chat("local"), args.question)
+        if args.json:
+            print(json.dumps({k: res[k] for k in ("question", "standalone", "answer", "evidence", "ledger")}, indent=2)); return
         print(res["answer"])
         for ev in res["evidence"]:
             print("  [%d] %s %s" % (ev["n"], ev["title"], ev["url"]))

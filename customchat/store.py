@@ -5,6 +5,8 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS chats(id TEXT PRIMARY KEY, owner TEXT, title TEXT, pinned INTEGER DEFAULT 0, deleted REAL, created REAL);
 CREATE TABLE IF NOT EXISTS topics(id TEXT PRIMARY KEY, owner TEXT, title TEXT, summary TEXT DEFAULT '', created REAL);
 CREATE TABLE IF NOT EXISTS turns(id TEXT PRIMARY KEY, chat TEXT, topic TEXT, question TEXT, standalone TEXT, answer TEXT, evidence TEXT, ledger TEXT, style TEXT, created REAL);
+CREATE TABLE IF NOT EXISTS evidence_cache(key TEXT PRIMARY KEY, payload TEXT, created REAL);
+CREATE TABLE IF NOT EXISTS uploads(id TEXT PRIMARY KEY, owner TEXT, name TEXT, text TEXT, created REAL);
 CREATE INDEX IF NOT EXISTS turns_chat ON turns(chat, created);
 CREATE INDEX IF NOT EXISTS turns_topic ON turns(topic, created);
 """
@@ -113,11 +115,11 @@ class Store:
 
     def turns(self, owner, chat):
         self.chat(owner, chat)
-        return [self._turn(r) for r in self.q("SELECT * FROM turns WHERE chat=? ORDER BY created", (chat,))]
+        return [self._turn(r) for r in self.q("SELECT * FROM turns WHERE chat=? AND style NOT LIKE 'deleted:%' ORDER BY created", (chat,))]
 
     def topic_turns(self, owner, topic, limit=200):
         self.topic(owner, topic)
-        return [self._turn(r) for r in self.q("SELECT * FROM turns WHERE topic=? ORDER BY created DESC LIMIT ?", (topic, limit))][::-1]
+        return [self._turn(r) for r in self.q("SELECT * FROM turns WHERE topic=? AND style NOT LIKE 'deleted:%' ORDER BY created DESC LIMIT ?", (topic, limit))][::-1]
 
     def turn(self, owner, turn):
         r = self.q("SELECT t.* FROM turns t JOIN chats c ON c.id=t.chat WHERE t.id=? AND c.owner=?", (turn, owner), one=True)
@@ -131,3 +133,33 @@ class Store:
         r["evidence"] = json.loads(r["evidence"] or "[]")
         r["ledger"] = json.loads(r["ledger"] or "[]")
         return r
+
+    # turns: delete / restore
+    def delete_turn(self, owner, turn):
+        t = self.turn(owner, turn)
+        self.q("UPDATE turns SET style=? WHERE id=?", ("deleted:" + t["style"], turn), write=True)
+
+    def restore_turn(self, owner, turn):
+        r = self.q("SELECT t.style FROM turns t JOIN chats c ON c.id=t.chat WHERE t.id=? AND c.owner=?", (turn, owner), one=True)
+        if not r or not str(r["style"]).startswith("deleted:"):
+            raise PermissionError("Turn not found")
+        self.q("UPDATE turns SET style=? WHERE id=?", (r["style"][8:], turn), write=True)
+
+    # uploads (private text the owner adds in the UI)
+    def add_upload(self, owner, name, text):
+        i = str(uuid.uuid4())
+        self.q("INSERT INTO uploads VALUES(?,?,?,?,?)", (i, owner, name[:120], text, time.time()), write=True)
+        return i
+
+    def uploads(self, owner):
+        return self.q("SELECT id,name,text FROM uploads WHERE owner=? ORDER BY created", (owner,))
+
+    def delete_upload(self, owner, upload):
+        self.q("DELETE FROM uploads WHERE id=? AND owner=?", (upload, owner), write=True)
+
+    def export_all(self, owner):
+        out = []
+        for c in self.q("SELECT id,title,pinned,created FROM chats WHERE owner=? AND deleted IS NULL ORDER BY created", (owner,)):
+            c["turns"] = [{k: t[k] for k in ("question", "answer", "evidence", "created")} for t in self.turns(owner, c["id"])]
+            out.append(c)
+        return out
