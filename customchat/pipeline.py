@@ -7,7 +7,8 @@ question -> (1) resolve follow-up into a standalone question using memory
          -> (5) check citations, build a claim-to-evidence ledger
          -> (6) store the turn under a conversation and refresh its summary
 """
-import re, time
+import re, time, json, hashlib
+from concurrent.futures import ThreadPoolExecutor
 from . import providers
 from .connectors import make_connector
 
@@ -36,18 +37,69 @@ class Engine:
         except providers.ProviderError:
             return question
 
+    def queries(self, question):
+        """Search queries for the question. With a real model and retrieval.query_rewrite, the model writes up to 3
+        keyword queries (the CustomNerd idea). Otherwise the question itself is used."""
+        if self.cfg["retrieval"].get("query_rewrite") and self.cfg["provider"]["type"] != "mock":
+            try:
+                out = self.provider.complete([{"role": "system", "content": "Write up to 3 short keyword search queries for the question. One per line, no numbering."},
+                                              {"role": "user", "content": question}])
+                qs = [re.sub(r"^[-*\d.)\s]+", "", l).strip() for l in out.splitlines() if l.strip()][:3]
+                if qs:
+                    return [question] + [x for x in qs if x.lower() != question.lower()]
+            except providers.ProviderError:
+                pass
+        return [question]
+
     # (2)+(3) retrieval
-    def retrieve(self, question, source_ids=None):
+    def _uploads_evidence(self, owner, question):
+        """Search the owner's uploaded text with the same BM25 used for local files."""
+        rows = self.store.uploads(owner) if owner else []
+        if not rows:
+            return []
+        from .connectors.local_files import LocalFiles, tokens, chunks
+        lf = LocalFiles.__new__(LocalFiles)
+        lf.id, lf.label, lf.docs = "uploads", "My uploads", []
+        for r in rows:
+            for i, c in enumerate(chunks(r["text"])):
+                lf.docs.append({"title": r["name"], "text": c, "tok": tokens(r["name"] + " " + c), "id": "%s#%d" % (r["id"], i)})
+        import math
+        n = len(lf.docs) or 1; df = {}
+        for d in lf.docs:
+            for t in set(d["tok"]): df[t] = df.get(t, 0) + 1
+        lf.idf = {t: math.log(1 + (n - c + 0.5) / (c + 0.5)) for t, c in df.items()}
+        lf.avg = sum(len(d["tok"]) for d in lf.docs) / n
+        return lf.search(question, self.cfg["retrieval"]["top_k"])
+
+    def retrieve(self, question, source_ids=None, owner=None):
         ids = [s for s in (source_ids or list(self.connectors)) if s in self.connectors]
-        key = (question.lower().strip(), tuple(sorted(ids)))
+        extra = self._uploads_evidence(owner, question)
+        key = (question.lower().strip(), tuple(sorted(ids)), owner if extra else None, len(extra))
         if key in self._cache:
             return self._cache[key]
         k = self.cfg["retrieval"]["top_k"]
-        found, errors, seen = [], {}, set()
-        for sid in ids:
+        found, errors, seen = list(extra), {}, set()
+        weights = {s["id"]: float(s.get("weight", 1.0)) for s in self.cfg["sources"]}
+        qs = self.queries(question)
+
+        def run(sid):
+            out = []
+            for qq in qs:
+                ck = hashlib.sha1(("%s|%s|%d" % (sid, qq.lower(), k)).encode()).hexdigest()
+                hit = self._disk_get(ck, sid)
+                if hit is None:
+                    hit = self.connectors[sid].search(qq, k)
+                    self._disk_put(ck, hit, sid)
+                out += hit
+            return sid, out
+
+        with ThreadPoolExecutor(max_workers=max(1, min(8, len(ids)))) as ex:
+            futures = [(sid, ex.submit(run, sid)) for sid in ids]
+        for sid, f in futures:
             try:
-                for e in self.connectors[sid].search(question, k):
-                    sig = re.sub(r"\W+", "", e["title"].lower())[:80] or e["id"]
+                for e in f.result(timeout=60)[1]:
+                    e["score"] *= weights.get(sid, 1.0)
+                    sig = e["url"] or re.sub(r"\W+", "", e["title"].lower())[:80] or e["id"]
                     if sig not in seen and e["score"] >= self.cfg["retrieval"]["min_score"]:
                         seen.add(sig); found.append(e)
             except Exception as ex:  # one failing source must not sink the answer
@@ -58,6 +110,19 @@ class Engine:
             e["n"] = n
         self._cache[key] = (found, errors)
         return found, errors
+
+    # persistent evidence cache (remote sources only; local files are already fast)
+    def _disk_get(self, key, sid):
+        ttl = self.cfg["retrieval"].get("cache_ttl", 0)
+        if not ttl or self.cfg["sources"] and next((x["type"] for x in self.cfg["sources"] if x["id"] == sid), "") == "local_files":
+            return None
+        r = self.store.q("SELECT payload,created FROM evidence_cache WHERE key=?", (key,), one=True)
+        return json.loads(r["payload"]) if r and time.time() - r["created"] < ttl else None
+
+    def _disk_put(self, key, hit, sid):
+        ttl = self.cfg["retrieval"].get("cache_ttl", 0)
+        if ttl and next((x["type"] for x in self.cfg["sources"] if x["id"] == sid), "") != "local_files":
+            self.store.q("INSERT OR REPLACE INTO evidence_cache VALUES(?,?,?)", (key, json.dumps(hit), time.time()), write=True)
 
     # (4) generation
     def prompt(self, question, evidence, style, history, summary):
@@ -70,18 +135,29 @@ class Engine:
 
     # (5) citations
     @staticmethod
+    def support(claim, cites, evidence):
+        """Share of the claim's content words found in the cited evidence (0 to 1). A lexical check, not a proof."""
+        words = {w for w in re.findall(r"[a-z0-9]{4,}", claim.lower())}
+        if not words or not cites:
+            return 0.0
+        text = " ".join((e.get("title", "") + " " + e.get("text", "")).lower() for e in evidence if e.get("n") in cites)
+        return round(sum(1 for w in words if w in text) / len(words), 2)
+
+    @staticmethod
     def ledger(answer, evidence):
         valid = {e["n"] for e in evidence}
         out = []
         for sent in re.split(r"(?<=[.!?])\s+(?!\[\d+\])", answer):
             cites = [int(n) for n in re.findall(r"\[(\d+)\]", sent)]
             if sent.strip():
-                out.append({"claim": re.sub(r"\s*\[\d+\]", "", sent).strip(), "cites": [c for c in cites if c in valid],
+                claim = re.sub(r"\s*\[\d+\]", "", sent).strip()
+                out.append({"claim": claim, "overlap": Engine.support(claim, [c for c in cites if c in valid], evidence), "cites": [c for c in cites if c in valid],
                             "invalid": [c for c in cites if c not in valid], "supported": bool(cites) and all(c in valid for c in cites)})
         return out
 
     def ask_stream(self, owner, chat, question, sources=None, style="standard", topic=None, new_topic=False, use_cache=True):
         """Yield ('meta', {...}), ('token', str)..., ('done', result). Same behaviour as ask()."""
+        t0 = time.time()
         q = (question or "").strip()
         if not q or len(q) > 2000:
             raise ValueError("Question must be 1-2000 characters")
@@ -96,7 +172,7 @@ class Engine:
         history = self.store.topic_turns(owner, topic, 12) if mem_on else []
         summary = self.store.topic(owner, topic)["summary"] if mem_on else ""
         standalone = self.standalone(q, history, summary)
-        evidence, errors = self.retrieve(standalone, sources) if use_cache else self._fresh(standalone, sources)
+        evidence, errors = self.retrieve(standalone, sources, owner) if use_cache else self._fresh(standalone, sources, owner)
         yield "meta", {"standalone": standalone, "evidence": evidence, "source_errors": errors}
         if not evidence:
             answer = self.cfg["prompt"]["no_evidence"]
@@ -113,7 +189,8 @@ class Engine:
             self._summarize(owner, topic)
         if self.store.chat(owner, chat)["title"] == "New chat":
             self.store.rename_chat(owner, chat, q[:60])
-        yield "done", {"id": tid, "chat": chat, "topic": topic, "question": q, "standalone": standalone, "answer": answer,
+        fu = self.followups(q, answer, evidence)
+        yield "done", {"seconds": round(time.time() - t0, 1), "followups": fu, "id": tid, "chat": chat, "topic": topic, "question": q, "standalone": standalone, "answer": answer,
                        "evidence": evidence, "ledger": ledger, "style": style, "source_errors": errors}
 
     def ask(self, owner, chat, question, sources=None, style="standard", topic=None, new_topic=False, use_cache=True):
@@ -131,7 +208,7 @@ class Engine:
         history = self.store.topic_turns(owner, topic, 12) if mem_on else []
         summary = self.store.topic(owner, topic)["summary"] if mem_on else ""
         standalone = self.standalone(q, history, summary)
-        evidence, errors = self.retrieve(standalone, sources) if use_cache else self._fresh(standalone, sources)
+        evidence, errors = self.retrieve(standalone, sources, owner) if use_cache else self._fresh(standalone, sources, owner)
         if not evidence:
             answer, ledger = self.cfg["prompt"]["no_evidence"], []
         else:
@@ -145,9 +222,22 @@ class Engine:
         return {"id": tid, "chat": chat, "topic": topic, "question": q, "standalone": standalone, "answer": answer,
                 "evidence": evidence, "ledger": ledger, "style": style, "source_errors": errors}
 
-    def _fresh(self, q, sources):
+    def _fresh(self, q, sources, owner=None):
         self._cache.clear()
-        return self.retrieve(q, sources)
+        return self.retrieve(q, sources, owner)
+
+    def followups(self, question, answer, evidence):
+        """Up to three short follow-up questions. Model-written when a model is configured, else from evidence titles."""
+        if self.cfg["provider"]["type"] != "mock" and evidence:
+            try:
+                out = self.provider.complete([{"role": "system", "content": "Suggest 3 short follow-up questions a curious reader might ask next. One per line, no numbering."},
+                                              {"role": "user", "content": "Question: %s\nAnswer: %s" % (question, answer[:800])}])
+                qs = [re.sub(r"^[-*\d.)\s]+", "", l).strip() for l in out.splitlines() if "?" in l]
+                if qs:
+                    return qs[:3]
+            except providers.ProviderError:
+                pass
+        return ["Tell me more about %s" % e["title"].rstrip(".")[:70] for e in evidence[1:4]]
 
     # (6) rolling summary
     def _summarize(self, owner, topic):

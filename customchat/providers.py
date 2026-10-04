@@ -139,7 +139,35 @@ class OpenAICompatible(Streams):
             raise ProviderError("Unexpected provider response") from None
 
 
+class WithFallback:
+    """Try the primary provider; on ProviderError use the fallback (before any text was produced)."""
+    def __init__(self, primary, secondary):
+        self.primary, self.secondary = primary, secondary
+
+    def complete(self, messages):
+        try:
+            return self.primary.complete(messages)
+        except ProviderError:
+            return self.secondary.complete(messages)
+
+    def stream(self, messages):
+        started = False
+        try:
+            for piece in self.primary.stream(messages):
+                started = True
+                yield piece
+        except ProviderError:
+            if started:
+                raise
+            yield from self.secondary.stream(messages)
+
+
+def _one(cfg, block):
+    c = {**cfg, "provider": {**cfg["provider"], **block, "fallback": None}}
+    return {"mock": Mock, "ollama": Ollama, "openai": OpenAICompatible, "openai_compatible": OpenAICompatible}[c["provider"]["type"]](c)
+
+
 def make(cfg):
-    t = cfg["provider"]["type"]
-    return {"mock": Mock, "ollama": Ollama, "openai": OpenAICompatible,
-            "openai_compatible": OpenAICompatible}[t](cfg)
+    primary = _one(cfg, {})
+    fb = cfg["provider"].get("fallback")
+    return WithFallback(primary, _one(cfg, fb)) if fb else primary

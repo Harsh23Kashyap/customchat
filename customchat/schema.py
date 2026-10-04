@@ -23,9 +23,10 @@ DEFAULTS = {
         "api_key_env": "",         # NAME of the env var that holds the key, never the key
         "temperature": 0.2,
         "timeout": 120,
+        "fallback": None,          # optional second provider block used if the first is unreachable
     },
     "sources": [],                 # list of connector blocks, see docs/SCHEMA.md
-    "retrieval": {"top_k": 6, "min_score": 0.0},
+    "retrieval": {"top_k": 6, "min_score": 0.0, "query_rewrite": False, "cache_ttl": 0},
     "prompt": {
         "system": "You answer only from the numbered evidence. Cite with [n]. "
                   "If the evidence does not cover the question, say so.",
@@ -101,6 +102,12 @@ def validate(raw):
     if p["type"] in ("openai", "openai_compatible") and not p["api_key_env"]:
         if p["type"] == "openai":
             p["api_key_env"] = "OPENAI_API_KEY"
+    fb = p.get("fallback")
+    if fb is not None:
+        if not isinstance(fb, dict) or fb.get("type") not in PROVIDERS or "api_key" in fb:
+            raise ConfigError("provider.fallback needs a valid type and no api_key")
+        if fb["type"] in ("ollama", "openai", "openai_compatible") and not fb.get("model"):
+            raise ConfigError("provider.fallback.model is required")
     if "api_key" in p:
         raise ConfigError("Do not put keys in the app file. Use provider.api_key_env with an env var name.")
     if not isinstance(cfg["sources"], list):
@@ -111,6 +118,8 @@ def validate(raw):
             raise ConfigError("sources[%d].type must be one of %s" % (i, ", ".join(sorted(CONNECTORS))))
         s.setdefault("id", "%s%d" % (s["type"], i))
         s.setdefault("label", s["id"])
+        if not isinstance(s.get("weight", 1.0), (int, float)) or s.get("weight", 1.0) <= 0:
+            raise ConfigError("sources[%d].weight must be a positive number" % i)
         if s["id"] in seen:
             raise ConfigError("Duplicate source id " + s["id"])
         seen.add(s["id"])

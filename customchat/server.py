@@ -45,7 +45,7 @@ def make_handler(cfg, engine):
 
         def _body(self):
             n = int(self.headers.get("Content-Length") or 0)
-            if n > 200_000:
+            if n > 400_000:
                 raise ValueError("Request too large")
             return json.loads(self.rfile.read(n) or b"{}")
 
@@ -68,6 +68,9 @@ def make_handler(cfg, engine):
                 return self._send(200, {"id": store.new_chat(o, b.get("title") or "New chat")})
             if path == "/api/turns":
                 return self._send(200, store.turns(o, qs.get("chat", "")))
+            if path == "/api/export-all":
+                return self._send(200, json.dumps(store.export_all(o), indent=1).encode(), "application/json",
+                                  {"Content-Disposition": 'attachment; filename="customchat-export.json"'})
             if path == "/api/export":
                 ch = store.chat(o, qs.get("chat", ""))
                 return self._send(200, chat_markdown(ch["title"], store.turns(o, ch["id"])).encode(), "text/markdown; charset=utf-8",
@@ -78,6 +81,8 @@ def make_handler(cfg, engine):
                     return self._send(429, {"error": "Too many questions, wait a moment"})
                 hits[o].append(now)
             if path == "/api/ask-stream":
+                if not str(b.get("question") or "").strip():
+                    raise ValueError("Question must be 1-2000 characters")
                 chat = b.get("chat") or store.new_chat(o)
                 gen = engine.ask_stream(o, chat, b.get("question"), b.get("sources"), b.get("style", "standard"),
                                         b.get("topic"), bool(b.get("new_topic")), not b.get("fresh"))
@@ -114,6 +119,19 @@ def make_handler(cfg, engine):
                 store.delete_chat(o, b.get("chat")); return self._send(200, {"ok": True})
             if path == "/api/restore":
                 store.restore_chat(o, b.get("chat")); return self._send(200, {"ok": True})
+            if path == "/api/delete-turn":
+                store.delete_turn(o, b.get("turn")); return self._send(200, {"ok": True})
+            if path == "/api/restore-turn":
+                store.restore_turn(o, b.get("turn")); return self._send(200, {"ok": True})
+            if path == "/api/uploads" and method == "GET":
+                return self._send(200, [{"id": u["id"], "name": u["name"], "chars": len(u["text"])} for u in store.uploads(o)])
+            if path == "/api/uploads" and method == "POST":
+                name, text = str(b.get("name", "")).strip(), str(b.get("text", ""))
+                if not name or not text.strip() or len(text) > 150_000:
+                    raise ValueError("Upload needs a name and text up to 150,000 characters")
+                return self._send(200, {"id": store.add_upload(o, name, text)})
+            if path == "/api/delete-upload":
+                store.delete_upload(o, b.get("upload")); engine._cache.clear(); return self._send(200, {"ok": True})
             if path == "/api/topics":
                 return self._send(200, store.topics(o))
             if path == "/api/topic-turns":
