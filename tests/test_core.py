@@ -1,0 +1,171 @@
+import json, os, tempfile, threading, unittest, urllib.request
+from http.server import ThreadingHTTPServer
+from customchat import schema
+from customchat.pipeline import Engine
+from customchat.store import Store
+from customchat.server import make_handler
+from customchat.exports import bibtex, pdf_bytes
+from customchat.connectors.local_files import LocalFiles
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+APP = os.path.join(ROOT, "apps", "minimal", "app.yaml")
+
+
+def engine():
+    cfg = schema.load(APP)
+    return Engine(cfg, Store(":memory:")), cfg
+
+
+class Schema(unittest.TestCase):
+    def test_defaults_and_validation(self):
+        c = schema.validate({})
+        self.assertEqual(c["provider"]["type"], "mock")
+        for bad in ({"nope": 1}, {"provider": {"type": "x"}}, {"provider": {"type": "ollama"}},
+                    {"provider": {"api_key": "sk-1"}}, {"sources": [{"type": "zzz"}]},
+                    {"sources": [{"type": "local_files", "id": "a"}, {"type": "local_files", "id": "a"}]},
+                    {"retrieval": {"top_k": 0}}, {"auth": {"mode": "x"}}):
+            with self.assertRaises(schema.ConfigError, msg=str(bad)):
+                schema.validate(bad)
+
+    def test_public_view_hides_internals(self):
+        c = schema.validate({"provider": {"type": "openai", "model": "m", "api_key_env": "SECRET_ENV"}})
+        self.assertNotIn("SECRET_ENV", json.dumps(schema.public_view(c)))
+
+    def test_example_apps_validate(self):
+        for a in ("minimal", "dietchat", "wirelesschat"):
+            schema.load(os.path.join(ROOT, "apps", a, "app.yaml"))
+
+
+class Retrieval(unittest.TestCase):
+    def test_bm25_prefers_matching_section(self):
+        c = schema.load(APP)
+        lf = LocalFiles(c["sources"][0], c["_dir"])
+        r = lf.search("conversation memory follow-up", 3)
+        self.assertEqual(r[0]["title"], "Conversation memory")
+        self.assertEqual(lf.search("zzzz qqqq", 3), [])
+
+
+class Pipeline(unittest.TestCase):
+    def test_answer_cites_and_stores(self):
+        e, _ = engine()
+        chat = e.store.new_chat("local")
+        r = e.ask("local", chat, "What is CustomChat?")
+        self.assertIn("[1]", r["answer"])
+        self.assertTrue(all(l["supported"] for l in r["ledger"]))
+        self.assertEqual(len(e.store.turns("local", chat)), 1)
+        self.assertEqual(e.store.chat("local", chat)["title"], "What is CustomChat?")
+
+    def test_no_evidence_message(self):
+        e, cfg = engine()
+        r = e.ask("local", e.store.new_chat("local"), "xyzzy plugh")
+        self.assertEqual(r["answer"], cfg["prompt"]["no_evidence"])
+
+    def test_ledger_flags_invalid_citation(self):
+        led = Engine.ledger("A claim [9]. Another [1].", [{"n": 1}])
+        self.assertFalse(led[0]["supported"]); self.assertEqual(led[0]["invalid"], [9]); self.assertTrue(led[1]["supported"])
+
+    def test_followup_is_resolved_with_history(self):
+        class P:
+            def __init__(s): s.calls = []
+            def complete(s, m):
+                s.calls.append(m); return "How does conversation memory work in CustomChat?" if "Rewrite" in m[0]["content"] else "ok [1]"
+        e, cfg = engine()
+        cfg["provider"]["type"] = "ollama"
+        e.provider = P()
+        chat = e.store.new_chat("local")
+        e.ask("local", chat, "What is conversation memory?")
+        r = e.ask("local", chat, "How does it work?")
+        self.assertIn("conversation memory", r["standalone"].lower())
+
+    def test_topics_span_chats_and_new_topic(self):
+        e, _ = engine()
+        c1 = e.store.new_chat("local")
+        a = e.ask("local", c1, "What is CustomChat?")
+        b = e.ask("local", c1, "What is conversation memory?")
+        self.assertEqual(a["topic"], b["topic"])
+        c = e.ask("local", c1, "What is CustomChat?", new_topic=True)
+        self.assertNotEqual(c["topic"], a["topic"])
+        c2 = e.store.new_chat("local")
+        d = e.ask("local", c2, "memory again", topic=a["topic"])
+        self.assertEqual(len(e.store.topic_turns("local", a["topic"])), 3)
+
+    def test_owner_isolation(self):
+        e, _ = engine()
+        chat = e.store.new_chat("alice")
+        with self.assertRaises(PermissionError):
+            e.store.turns("bob", chat)
+        with self.assertRaises(PermissionError):
+            e.ask("bob", chat, "hi")
+
+    def test_failing_source_does_not_sink_answer(self):
+        e, _ = engine()
+        class Boom:
+            def search(self, q, k): raise OSError("down")
+        e.connectors["bad"] = Boom()
+        r = e.ask("local", e.store.new_chat("local"), "What is CustomChat?")
+        self.assertTrue(r["evidence"])
+        e._cache.clear()
+        self.assertEqual(e.retrieve("What is CustomChat?", ["bad"])[1], {"bad": "OSError"})
+
+    def test_chat_lifecycle(self):
+        s = Store(":memory:")
+        c = s.new_chat("o", "A"); s.pin("o", c, True); s.rename_chat("o", c, "B")
+        self.assertEqual(s.chats("o")[0]["title"], "B")
+        s.delete_chat("o", c); self.assertEqual(s.chats("o"), [])
+        s.restore_chat("o", c); self.assertEqual(len(s.chats("o")), 1)
+
+
+class Exports(unittest.TestCase):
+    def test_bibtex_and_pdf(self):
+        ev = [{"title": "T {x}", "authors": ["Ada Lovelace"], "year": "1843", "venue": "J", "url": "u"}]
+        self.assertIn("@article{Lovelace18431", bibtex(ev)); self.assertNotIn("{x}", bibtex(ev))
+        p = pdf_bytes("App", {"question": "q (1)", "answer": "a [1]", "evidence": ev})
+        self.assertTrue(p.startswith(b"%PDF-1.4") and p.rstrip().endswith(b"%%EOF"))
+
+
+class Http(unittest.TestCase):
+    def setUp(self):
+        self.e, self.cfg = engine()
+        self.srv = ThreadingHTTPServer(("127.0.0.1", 0), make_handler(self.cfg, self.e))
+        threading.Thread(target=self.srv.serve_forever, daemon=True).start()
+        self.base = "http://127.0.0.1:%d" % self.srv.server_port
+
+    def tearDown(self): self.srv.shutdown()
+
+    def call(self, path, body=None, headers=None):
+        req = urllib.request.Request(self.base + path, data=None if body is None else json.dumps(body).encode(), headers=headers or {})
+        try:
+            with urllib.request.urlopen(req) as r: return r.status, r.read()
+        except urllib.error.HTTPError as ex: return ex.code, ex.read()
+
+    def test_flow(self):
+        self.assertEqual(self.call("/api/health")[0], 200)
+        code, body = self.call("/")
+        self.assertIn(b"Docs Chat", body)
+        code, body = self.call("/api/ask", {"question": "What is CustomChat?"})
+        r = json.loads(body); self.assertEqual(code, 200); self.assertIn("[1]", r["answer"])
+        self.assertEqual(len(json.loads(self.call("/api/turns?chat=" + r["chat"])[1])), 1)
+        self.assertEqual(self.call("/api/bibtex?turn=" + r["id"])[0], 200)
+        self.assertEqual(self.call("/api/pdf?turn=" + r["id"])[1][:4], b"%PDF")
+        self.assertEqual(self.call("/api/ask", {"question": ""})[0], 400)
+        self.assertEqual(self.call("/api/turns?chat=nope")[0], 404)
+
+    def test_static_traversal_blocked(self):
+        self.assertEqual(self.call("/..%2f..%2fsetup.py")[0], 404)
+        self.assertEqual(self.call("/../README.md")[0], 404)
+
+    def test_token_auth(self):
+        self.cfg["auth"] = {"mode": "token", "token_env": "CC_TEST_TOKEN"}
+        srv = ThreadingHTTPServer(("127.0.0.1", 0), make_handler(self.cfg, self.e))
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        os.environ["CC_TEST_TOKEN"] = "s3cret"
+        base = "http://127.0.0.1:%d" % srv.server_port
+        def get(h):
+            try: return urllib.request.urlopen(urllib.request.Request(base + "/api/chats", headers=h)).status
+            except urllib.error.HTTPError as ex: return ex.code
+        self.assertEqual(get({}), 401); self.assertEqual(get({"Authorization": "Bearer wrong"}), 401)
+        self.assertEqual(get({"Authorization": "Bearer s3cret"}), 200); srv.shutdown()
+
+
+if __name__ == "__main__":
+    unittest.main()
