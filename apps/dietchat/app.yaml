@@ -1,0 +1,24 @@
+# DietChat as a CustomChat app: PubMed evidence, saved conversations, citations.
+app:
+  id: dietchat
+  title: DietChat
+  tagline: Evidence-based answers on diet and nutrition, cited from PubMed.
+  accent: "#30a46c"
+  examples:
+    - Does intermittent fasting improve insulin sensitivity?
+    - Is a Mediterranean diet good for heart health?
+  footer: Informational only, not medical advice.
+provider:
+  type: ollama          # fully local; or: openai + api_key_env: OPENAI_API_KEY
+  model: llama3.2
+sources:
+  - id: pubmed
+    type: pubmed
+    label: PubMed
+prompt:
+  system: >
+    You are a careful nutrition research assistant. Answer only from the numbered evidence,
+    cite every claim with [n], state study type and limits when the evidence shows them,
+    and never give personal medical advice.
+retrieval: {top_k: 8}
+memory: {enabled: true, recent_turns: 4}
