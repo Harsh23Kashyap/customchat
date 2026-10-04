@@ -1,0 +1,15 @@
+# docker compose up            -> app on http://localhost:8080 with a local Ollama
+# docker compose exec ollama ollama pull llama3.2
+services:
+  ollama:
+    image: ollama/ollama
+    volumes: [ollama:/root/.ollama]
+    ports: ["11434:11434"]
+  chat:
+    build: .
+    ports: ["8080:8080"]
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+    volumes: ["./apps:/app/apps", "chatdata:/app/apps/minimal/data"]
+    depends_on: [ollama]
+volumes: {ollama: {}, chatdata: {}}

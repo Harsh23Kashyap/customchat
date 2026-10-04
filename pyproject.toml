@@ -1,0 +1,16 @@
+[project]
+name = "customchat"
+version = "0.1.0"
+description = "Build a chat application over any evidence source from one YAML file."
+requires-python = ">=3.10"
+dependencies = ["PyYAML>=6.0"]
+license = {text = "MIT"}
+
+[project.scripts]
+customchat = "customchat.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["customchat*"]
+
+[tool.setuptools.package-data]
+customchat = ["web/*"]
