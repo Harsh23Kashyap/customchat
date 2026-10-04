@@ -210,3 +210,37 @@ class JsonSchemaFile(unittest.TestCase):
         for k, v in schema.DEFAULTS.items():
             if isinstance(v, dict) and "properties" in js["properties"][k]:
                 self.assertLessEqual(set(v), set(js["properties"][k]["properties"]) , k)
+
+
+class Streaming(unittest.TestCase):
+    def test_ask_stream_matches_ask(self):
+        e, _ = engine()
+        chat = e.store.new_chat("local")
+        events = list(e.ask_stream("local", chat, "What is CustomChat?"))
+        kinds = [k for k, _ in events]
+        self.assertEqual(kinds[0], "meta"); self.assertEqual(kinds[-1], "done"); self.assertIn("token", kinds)
+        done = events[-1][1]
+        self.assertEqual("".join(d for k, d in events if k == "token").strip(), done["answer"])
+        self.assertEqual(len(e.store.turns("local", chat)), 1)
+
+    def test_http_stream_and_validation(self):
+        e, cfg = engine()
+        srv = ThreadingHTTPServer(("127.0.0.1", 0), make_handler(cfg, e))
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        base = "http://127.0.0.1:%d" % srv.server_port
+        def post(b):
+            return urllib.request.urlopen(urllib.request.Request(base + "/api/ask-stream", data=json.dumps(b).encode()))
+        lines = [json.loads(l) for l in post({"question": "What is CustomChat?"}).read().decode().splitlines()]
+        self.assertEqual(lines[0]["type"], "meta"); self.assertEqual(lines[-1]["type"], "done")
+        with self.assertRaises(urllib.error.HTTPError) as c: post({"question": ""})
+        self.assertEqual(c.exception.code, 400); srv.shutdown()
+
+
+class Theme(unittest.TestCase):
+    def test_theme_validation_and_render(self):
+        with self.assertRaises(schema.ConfigError): schema.validate({"app": {"theme": "neon"}})
+        e, cfg = engine(); cfg["app"]["theme"] = "dark"
+        srv = ThreadingHTTPServer(("127.0.0.1", 0), make_handler(cfg, e))
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        html = urllib.request.urlopen("http://127.0.0.1:%d/" % srv.server_port).read().decode()
+        self.assertIn('data-theme="dark"', html); srv.shutdown()
