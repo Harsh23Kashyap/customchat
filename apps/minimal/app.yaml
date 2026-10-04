@@ -1,4 +1,5 @@
 # The smallest working app. Run: python -m customchat run apps/minimal/app.yaml
+# yaml-language-server: $schema=../../schema/chat-app.schema.json
 app:
   id: minimal
   title: Docs Chat
