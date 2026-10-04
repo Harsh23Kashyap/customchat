@@ -265,3 +265,11 @@ async function init() {
 }
 init().catch((e) => { document.body.textContent = "Could not start: " + e.message; });
 })();
+
+document.addEventListener("keydown", (e) => {
+  const t = e.target.tagName;
+  if (t === "INPUT" || t === "TEXTAREA" || t === "SELECT" || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === "/") { e.preventDefault(); const s = document.getElementById("search"); if (s) s.focus(); }
+  else if (e.key === "n") { e.preventDefault(); const b = document.getElementById("newChat"); if (b) b.click(); }
+  else if (e.key === "?") { const u = document.createElement("div"); u.className = "toast"; u.textContent = "Shortcuts: / search, n new chat, Enter send, Shift+Enter new line, Esc close"; document.body.append(u); setTimeout(() => u.remove(), 5000); }
+});
