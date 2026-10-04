@@ -43,3 +43,13 @@ def pdf_bytes(title, turn):
         out += ("%010d 00000 n \n" % o).encode()
     out += ("trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF" % (len(objs) + 1, x)).encode()
     return out
+
+
+def chat_markdown(title, turns):
+    out = ["# " + title, ""]
+    for t in turns:
+        out += ["**Q:** " + t["question"], "", t["answer"], ""]
+        for i, e in enumerate(t["evidence"], 1):
+            out.append("%d. %s%s" % (i, e["title"], " <%s>" % e["url"] if e["url"] else ""))
+        out.append("")
+    return "\n".join(out)

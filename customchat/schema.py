@@ -59,6 +59,17 @@ def _merge(base, over):
     return out
 
 
+def _load_env(directory):
+    """Load KEY=VALUE lines from a .env next to the app file. Existing environment wins."""
+    f = os.path.join(directory, ".env")
+    if os.path.isfile(f):
+        for line in open(f, encoding="utf-8"):
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip().strip("\"'"))
+
+
 def load(path):
     """Load and validate an app file (YAML or JSON). Returns the merged config dict."""
     with open(path, "r", encoding="utf-8") as f:
@@ -68,6 +79,7 @@ def load(path):
     else:
         import yaml
         raw = yaml.safe_load(text) or {}
+    _load_env(os.path.dirname(os.path.abspath(path)))
     cfg = validate(raw)
     cfg["_dir"] = os.path.dirname(os.path.abspath(path))
     return cfg

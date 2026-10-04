@@ -5,7 +5,8 @@ from urllib.parse import urlparse, parse_qs
 from . import schema, providers
 from .pipeline import Engine
 from .store import Store
-from .exports import bibtex, pdf_bytes
+from .exports import bibtex, pdf_bytes, chat_markdown
+import time, collections
 
 WEB = os.path.join(os.path.dirname(__file__), "web")
 
@@ -13,6 +14,7 @@ WEB = os.path.join(os.path.dirname(__file__), "web")
 def make_handler(cfg, engine):
     store = engine.store
     token_env = cfg["auth"]["token_env"]
+    hits = collections.defaultdict(list)
 
     class H(BaseHTTPRequestHandler):
         server_version = "CustomChat"
@@ -66,6 +68,15 @@ def make_handler(cfg, engine):
                 return self._send(200, {"id": store.new_chat(o, b.get("title") or "New chat")})
             if path == "/api/turns":
                 return self._send(200, store.turns(o, qs.get("chat", "")))
+            if path == "/api/export":
+                ch = store.chat(o, qs.get("chat", ""))
+                return self._send(200, chat_markdown(ch["title"], store.turns(o, ch["id"])).encode(), "text/markdown; charset=utf-8",
+                                  {"Content-Disposition": 'attachment; filename="chat.md"'})
+            if path in ("/api/ask", "/api/regenerate"):
+                now = time.time(); hits[o] = [t for t in hits[o] if now - t < 60]
+                if len(hits[o]) >= 30:
+                    return self._send(429, {"error": "Too many questions, wait a moment"})
+                hits[o].append(now)
             if path == "/api/ask":
                 r = engine.ask(o, b.get("chat") or store.new_chat(o), b.get("question"), b.get("sources"),
                                b.get("style", "standard"), b.get("topic"), bool(b.get("new_topic")), not b.get("fresh"))

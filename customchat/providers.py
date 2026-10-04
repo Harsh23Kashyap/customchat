@@ -12,7 +12,19 @@ class ProviderError(RuntimeError):
     pass
 
 
-def _post(url, payload, headers, timeout):
+def _post(url, payload, headers, timeout, retries=2):
+    import time
+    for attempt in range(retries + 1):
+        try:
+            return _post_once(url, payload, headers, timeout)
+        except ProviderError as e:
+            transient = any(c in str(e) for c in ("HTTP 429", "HTTP 500", "HTTP 502", "HTTP 503", "unreachable"))
+            if attempt == retries or not transient:
+                raise
+            time.sleep(0.6 * (2 ** attempt))
+
+
+def _post_once(url, payload, headers, timeout):
     req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers={"Content-Type": "application/json", **headers})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
@@ -36,7 +48,7 @@ class Mock:
         for n, text in blocks[:3]:
             body = re.sub(r"^.*?\([^)]*\)\.\s*", "", text.strip().replace("\n", " "), count=1)
             first = re.split(r"(?<=[.!?])\s", body)[0]
-            out.append("%s [%s]" % (first[:240], n))
+            out.append("%s [%s]" % (first if len(first) <= 240 else first[:240].rsplit(" ", 1)[0] + "...", n))
         return " ".join(out)
 
 
