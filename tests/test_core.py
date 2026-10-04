@@ -244,3 +244,99 @@ class Theme(unittest.TestCase):
         threading.Thread(target=srv.serve_forever, daemon=True).start()
         html = urllib.request.urlopen("http://127.0.0.1:%d/" % srv.server_port).read().decode()
         self.assertIn('data-theme="dark"', html); srv.shutdown()
+
+
+class Round10(unittest.TestCase):
+    def test_uploads_become_evidence_and_are_private(self):
+        e, _ = engine()
+        e.store.add_upload("local", "notes", "Zebrafish regeneration needs fgf signalling in the fin blastema.")
+        chat = e.store.new_chat("local")
+        r = e.ask("local", chat, "zebrafish fin regeneration")
+        self.assertEqual(r["evidence"][0]["title"], "notes")
+        e2 = e.ask("someone-else", e.store.new_chat("someone-else"), "zebrafish fin regeneration")
+        self.assertNotIn("notes", [x["title"] for x in e2["evidence"]])
+
+    def test_delete_and_restore_turn(self):
+        e, _ = engine()
+        chat = e.store.new_chat("local")
+        r = e.ask("local", chat, "What is CustomChat?")
+        e.store.delete_turn("local", r["id"]); self.assertEqual(e.store.turns("local", chat), [])
+        e.store.restore_turn("local", r["id"]); self.assertEqual(len(e.store.turns("local", chat)), 1)
+
+    def test_weight_validated_and_applied(self):
+        with self.assertRaises(schema.ConfigError): schema.validate({"sources": [{"type": "local_files", "weight": 0}]})
+        e, cfg = engine()
+        a = e.retrieve("What is CustomChat?")[0][0]["score"]
+        e.cfg["sources"][0]["weight"] = 3.0; e._cache.clear()
+        self.assertAlmostEqual(e.retrieve("What is CustomChat?")[0][0]["score"], a * 3, places=6)
+
+    def test_followups_present(self):
+        e, _ = engine()
+        done = [d for k, d in e.ask_stream("local", e.store.new_chat("local"), "What is CustomChat?") if k == "done"][0]
+        self.assertTrue(done["followups"])
+
+    def test_url_dedupe(self):
+        e, _ = engine()
+        class Dup:
+            def search(self, q, k): return [{"id": "1", "title": "A", "text": "t", "url": "http://x", "authors": [], "year": "", "venue": "", "source": "d", "score": 1.0},
+                                             {"id": "2", "title": "B different title", "text": "t", "url": "http://x", "authors": [], "year": "", "venue": "", "source": "d", "score": 0.9}]
+        e.connectors = {"d": Dup()}
+        self.assertEqual(len(e.retrieve("anything")[0]), 1)
+
+
+class Round16(unittest.TestCase):
+    def test_support_score_and_ledger_overlap(self):
+        ev = [{"n": 1, "title": "Memory", "text": "Every question is rewritten into a standalone question"}]
+        led = Engine.ledger("Every question is rewritten into a standalone question [1]. Bananas are yellow [1].", ev)
+        self.assertGreater(led[0]["overlap"], 0.8); self.assertLess(led[1]["overlap"], 0.4)
+
+    def test_fallback_provider_used_when_primary_fails(self):
+        from customchat import providers
+        class Bad:
+            def complete(self, m): raise providers.ProviderError("down")
+            def stream(self, m): raise providers.ProviderError("down"); yield
+        class Good:
+            def complete(self, m): return "ok"
+            def stream(self, m): yield "ok"
+        w = providers.WithFallback(Bad(), Good())
+        self.assertEqual(w.complete([]), "ok"); self.assertEqual(list(w.stream([])), ["ok"])
+        with self.assertRaises(schema.ConfigError): schema.validate({"provider": {"type": "mock", "fallback": {"type": "bogus"}}})
+        c = schema.validate({"provider": {"type": "ollama", "model": "m", "fallback": {"type": "mock"}}})
+        self.assertIsInstance(providers.make(c), providers.WithFallback)
+
+    def test_parallel_retrieval_survives_slow_and_failing_sources(self):
+        import time as _t
+        e, _ = engine()
+        class Slow:
+            def search(self, q, k): _t.sleep(0.2); return [{"id": "s", "title": "Slow", "text": "t", "url": "u1", "authors": [], "year": "", "venue": "", "source": "slow", "score": 0.5}]
+        class Boom:
+            def search(self, q, k): raise RuntimeError("x")
+        e.connectors = {"slow": Slow(), "boom": Boom()}
+        found, errors = e.retrieve("anything")
+        self.assertEqual([f["title"] for f in found], ["Slow"]); self.assertEqual(errors, {"boom": "RuntimeError"})
+
+    def test_query_rewrite_with_model(self):
+        class P:
+            def complete(s, m): return "1. alpha beta\n2. gamma"
+        e, cfg = engine(); cfg["provider"]["type"] = "ollama"; cfg["retrieval"]["query_rewrite"] = True; e.provider = P()
+        self.assertEqual(e.queries("what is it"), ["what is it", "alpha beta", "gamma"])
+        cfg["retrieval"]["query_rewrite"] = False; self.assertEqual(e.queries("q"), ["q"])
+
+    def test_persistent_cache_skips_second_remote_call(self):
+        e, cfg = engine(); cfg["retrieval"]["cache_ttl"] = 60
+        cfg["sources"] = [{"id": "remote", "type": "arxiv", "label": "r"}]
+        calls = []
+        class R:
+            def search(self, q, k): calls.append(q); return [{"id": "r", "title": "R", "text": "t", "url": "u", "authors": [], "year": "", "venue": "", "source": "remote", "score": 1.0}]
+        e.connectors = {"remote": R()}
+        e.retrieve("same question"); e._cache.clear(); e.retrieve("same question")
+        self.assertEqual(len(calls), 1)
+
+    def test_export_all(self):
+        e, _ = engine(); chat = e.store.new_chat("local"); e.ask("local", chat, "What is CustomChat?")
+        out = e.store.export_all("local"); self.assertEqual(len(out), 1); self.assertEqual(len(out[0]["turns"]), 1)
+
+    def test_cli_ask_json(self):
+        import subprocess, sys
+        r = subprocess.run([sys.executable, "-m", "customchat", "ask", APP, "What is CustomChat?", "--json"], cwd=ROOT, capture_output=True, text=True)
+        self.assertIn("evidence", json.loads(r.stdout))
