@@ -5,9 +5,9 @@
   "additionalProperties": false,
   "properties": {
     "app": {"type": "object", "properties": {"id": {"type": "string"}, "title": {"type": "string"}, "tagline": {"type": "string"}, "accent": {"type": "string", "pattern": "^#[0-9a-fA-F]{6}$"}, "footer": {"type": "string"}, "examples": {"type": "array", "items": {"type": "string"}}, "language": {"type": "string"}, "theme": {"enum": ["auto", "light", "dark"]}}},
-    "provider": {"type": "object", "properties": {"type": {"enum": ["mock", "ollama", "openai", "openai_compatible"]}, "model": {"type": "string"}, "base_url": {"type": "string"}, "api_key_env": {"type": "string"}, "temperature": {"type": "number"}, "timeout": {"type": "number"}}, "additionalProperties": false},
+    "provider": {"type": "object", "properties": {"type": {"enum": ["mock", "ollama", "openai", "openai_compatible"]}, "model": {"type": "string"}, "base_url": {"type": "string"}, "api_key_env": {"type": "string"}, "temperature": {"type": "number"}, "timeout": {"type": "number"}, "fallback": {"type": ["object", "null"]}}, "additionalProperties": false},
     "sources": {"type": "array", "items": {"type": "object", "required": ["type"], "properties": {"type": {"enum": ["local_files", "http_json", "pubmed", "arxiv", "python"]}, "id": {"type": "string"}, "label": {"type": "string"}}}},
-    "retrieval": {"type": "object", "properties": {"top_k": {"type": "integer", "minimum": 1, "maximum": 50}, "min_score": {"type": "number"}}},
+    "retrieval": {"type": "object", "properties": {"top_k": {"type": "integer", "minimum": 1, "maximum": 50}, "min_score": {"type": "number"}, "query_rewrite": {"type": "boolean"}, "cache_ttl": {"type": "integer", "minimum": 0}}},
     "prompt": {"type": "object", "properties": {"system": {"type": "string"}, "style": {"type": "object", "additionalProperties": {"type": "string"}}, "no_evidence": {"type": "string"}}},
     "memory": {"type": "object", "properties": {"enabled": {"type": "boolean"}, "recent_turns": {"type": "integer"}, "summary_every": {"type": "integer"}}},
     "citations": {"type": "object", "properties": {"required": {"type": "boolean"}, "ledger": {"type": "boolean"}}},
