@@ -201,3 +201,12 @@ class Extras(unittest.TestCase):
             with self.assertRaises(providers.ProviderError): providers._post("u", {}, {}, 1)
             self.assertEqual(len(calls), 1)
         finally: providers._post_once = orig
+
+
+class JsonSchemaFile(unittest.TestCase):
+    def test_json_schema_matches_defaults(self):
+        js = json.load(open(os.path.join(ROOT, "schema", "chat-app.schema.json")))
+        self.assertEqual(set(js["properties"]), set(schema.DEFAULTS))
+        for k, v in schema.DEFAULTS.items():
+            if isinstance(v, dict) and "properties" in js["properties"][k]:
+                self.assertLessEqual(set(v), set(js["properties"][k]["properties"]) , k)
