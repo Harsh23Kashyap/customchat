@@ -23,3 +23,13 @@ Each round is one change plus a check (a test, or a screenshot reviewed).
 |---|---|---|
 | F5 | `schema/chat-app.schema.json` for editor autocomplete and validation; a test keeps it in step with the loader | unit test |
 | F6 | Lint pass over Custom-Nerd (`pyflakes`): no functional bugs found statically, only unused imports and variables in main.py and helper_functions.py. Runtime bug hunt needs its dependencies and is still open | static check |
+
+## Batch 3
+| # | Change | Check |
+|---|---|---|
+| F7 | Streaming answers: `/api/ask-stream` (NDJSON), real token streaming for Ollama and OpenAI, word streaming for mock | unit + HTTP test, browser run |
+| F8 | `app.theme: auto, light, dark` | unit test |
+| F9 | Mock provider ignores earlier-turn text, parses only the evidence block | browser run |
+| U5 | Answers appear as they stream, thinking dots until first token | browser run |
+| U6 | Skip link, labelled conversation log region (screen readers) | markup review |
+| U7 | Forced light or dark theme through CSS variables | unit test |
