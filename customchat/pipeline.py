@@ -396,7 +396,7 @@ class Engine:
         if self.cfg["provider"]["type"] != "mock" and evidence:
             try:
                 out = self.provider.complete([{"role": "system", "content": self.prompts.text("followups")},
-                                              {"role": "user", "content": "Question: %s\nAnswer: %s\n\nSuggest only NEW questions that these passages can answer and that the answer above does not already cover:\n%s" % (question, answer[:800], "\n".join("- %s. %s" % (e["title"][:80], e["text"][:200]) for e in evidence[:4]))}])
+                                              {"role": "user", "content": "Question: %s\nAnswer: %s\n\nSuggest only NEW questions that these passages can answer and that the answer above does not already cover. Ask about the topic itself, never about the wording of an example:\n%s" % (question, answer[:800], "\n".join("- %s. %s" % (e["title"][:80], e["text"][:200]) for e in evidence[:4]))}])
                 qs = [re.sub(r"^[-*\d.)\s]+", "", l.replace("`", "").replace("**", "")).strip() for l in out.splitlines() if "?" in l]
                 if qs:
                     return qs[:3]
