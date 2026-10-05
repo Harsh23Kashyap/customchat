@@ -90,7 +90,14 @@ function promptsPanel(host) {
 let keyStatus = {};
 async function codePanel(host) {
   host.replaceChildren(el("div", { class: "pvhead" }, el("b", { text: "Live search keys" })), el("p", { class: "h", text: "Optional. A search key lets the code helper look up an API's documentation, and lets answers include live web results. Keys stay on this computer and are never shown again." }));
-  try { keyStatus = Object.fromEntries((await api("/api/websearch/status")).providers.map((p) => [p.id, p.has_key])); } catch (e) { }
+  let src = { on: false, provider: "" };
+  try { const d = await api("/api/websearch/status"); keyStatus = Object.fromEntries(d.providers.map((p) => [p.id, p.has_key])); src = d.source || src; } catch (e) { }
+  const sst = el("small", { class: "h", role: "status" });
+  const psel = el("select", { "aria-label": "Search provider for answers" }); SEARCH.forEach((p) => psel.append(el("option", { value: p.id, text: p.name + (keyStatus[p.id] ? "" : " (no key)") }))); psel.value = src.provider || (SEARCH.find((p) => keyStatus[p.id]) || SEARCH[0]).id;
+  const tog = el("input", { type: "checkbox", id: "websrc" }); tog.checked = !!src.on;
+  const push = async () => { try { const r = await api("/api/websearch/source", { on: tog.checked, provider: psel.value }); sst.textContent = r.on ? "On. Answers now also use live results from " + psel.value + ". If it fails, local sources still answer." : "Off."; } catch (e) { tog.checked = false; sst.textContent = e.message; } };
+  tog.addEventListener("change", push); psel.addEventListener("change", () => { if (tog.checked) push(); });
+  host.append(el("div", { class: "gcard" }, el("label", { class: "check sw" }, tog, " Add live web results to answers"), psel, sst));
   for (const p of SEARCH) {
     const st = el("span", { class: "testres", role: "status" }); const key = el("input", { type: "password", placeholder: keyStatus[p.id] ? "Key saved" : "Paste key", autocomplete: "off", "aria-label": p.name + " key" });
     const save = el("button", { type: "button", class: "go blue", text: "Save", onclick: async () => { try { const r = await api("/api/websearch/key", { id: p.id, key: key.value }); key.value = ""; key.placeholder = r.has_key ? "Key saved" : "Paste key"; st.textContent = "Saved."; } catch (e) { st.textContent = e.message; } } });
@@ -98,7 +105,7 @@ async function codePanel(host) {
     const clear = el("button", { type: "button", class: "go ghost", text: "Remove", onclick: async () => { await api("/api/websearch/key", { id: p.id, clear: true }); key.placeholder = "Paste key"; st.textContent = "Removed."; } });
     host.append(el("details", { class: "stage" }, el("summary", {}, el("b", { text: p.name }), el("small", { text: keyStatus[p.id] ? "Key saved" : "No key" })), el("div", { class: "sbody" }, el("p", { text: p.pro }), el("p", { class: "h", text: p.free }), el("div", { class: "keyrow" }, key, save, test, clear), st, stepsBlock({ url: p.url, help: p.docs, steps: STEPS }))));
   }
-  host.append(el("p", { class: "h", text: "To use live web results in answers, add a source with type web_search and provider set to one of these, in your app file. The code helper's research option uses the first provider that has a key." }));
+  host.append(el("p", { class: "h", text: "The code helper's research option uses the provider chosen above, or the first one that has a key." }));
 }
 
 function boot() {
