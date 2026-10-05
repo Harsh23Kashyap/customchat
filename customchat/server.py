@@ -2,7 +2,8 @@
 import uuid, hmac, json, mimetypes, os, re, sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
-from . import schema, providers, fetch
+import base64
+from . import schema, providers, fetch, pdfread
 from .pipeline import Engine
 from .store import Store
 from .accounts import Accounts
@@ -94,7 +95,7 @@ def make_handler(cfg, engine):
 
         def _body(self):
             n = int(self.headers.get("Content-Length") or 0)
-            if n > 400_000:
+            if n > 11_500_000:
                 raise ValueError("Request too large")
             return json.loads(self.rfile.read(n) or b"{}")
 
@@ -243,6 +244,10 @@ def make_handler(cfg, engine):
                 if not name or not text.strip() or len(text) > 150_000:
                     raise ValueError("Upload needs a name and text up to 150,000 characters")
                 return self._send(200, {"id": store.add_upload(o, name, text)})
+            if path == "/api/upload-pdf" and method == "POST":
+                name = str(b.get("name", "document.pdf")).strip()[:120] or "document.pdf"
+                text = pdfread.extract(base64.b64decode(str(b.get("data", "")), validate=True))
+                return self._send(200, {"id": store.add_upload(o, name, text), "name": name, "chars": len(text)})
             if path == "/api/load-url" and method == "POST":
                 name, text = fetch.load(str(b.get("url", "")).strip())
                 return self._send(200, {"id": store.add_upload(o, name, text), "name": name, "chars": len(text)})
