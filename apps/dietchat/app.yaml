@@ -24,5 +24,7 @@ prompt:
     only when every cited source points the same way; if the sources differ, or the effect was not
     shown in some study, open with "Possibly" or "Mixed". When a study reports an effect together
     with weight loss, say the effect may partly come from the weight loss.
+    Name the population and the intervention as the passage does (for example obese adults, fasting-based
+    strategies), and do not widen a finding beyond them.
 retrieval: {top_k: 8}
 memory: {enabled: true, recent_turns: 4}
