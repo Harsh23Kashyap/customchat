@@ -111,3 +111,12 @@ Provider chips: five up front (OpenAI, Claude, Gemini, DeepSeek, Ollama) and Loa
 
 ## Config pass 9: logo, progressive disclosure, font-bundled presets
 Logo upload with in-browser plain-background removal and feathered edges (shrunk to 256px PNG, validated on the server as a PNG data URL, shown in the top bar and the welcome screen). Every tab shows only essentials; the rest sits under a collapsed More section. Presets show their font pairing and always set both fonts, so one click gives colors and type.
+
+## Pass 10 (config)
+- One shape language: 12px controls, 16px cards, no mixed round/rect boxes on the Model tab.
+- Model tab shows a status card (provider, model, key, test result) instead of the sample chat.
+- Real provider logos (10 SVGs from the MIT-licensed @lobehub/icons-static-svg package, bundled in web/logos). Not official brand-kit files; marks stay trademarks of their owners.
+- Ollama cards: green/blue/red fit with a plain reason, numbers behind Details, Download button pulling through the local Ollama API with a progress bar (POST/GET /api/ollama/pull, admin only, tag validated).
+- Logo control: Original / After blending / In your app tiles, updating live on every toggle and slider.
+- Preview shows the hero and a doughnut chart card.
+- Preview audit: every control changes the preview except those that only act in another state (gradient colour and angle only with a gradient, image link only with Image, pattern colour only with a pattern, Font "custom"). Emoji for the welcome screen needs a recheck.
