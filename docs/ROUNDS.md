@@ -231,3 +231,6 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Code check, not only prompt: a year after "a/an/the" that no passage or source record contains is removed. Years that appear in the answers (2021, 2022) come from the PubMed record's year field (PMID 34633860 is 2021, 35371260 and 35871650 are 2022), not model memory.
 - Adjacent citations are sorted and spaced: "[4] [1] [2] [3]" becomes "[1] [2] [3] [4]".
 - New app option prompt.answer_note: a fixed line added to every answer that has sources. The Nutrition app sets "General research information, not medical advice." so it no longer depends on the model.
+
+## Pass 30
+- Related questions no longer show literal backticks or bold marks (plain text only).
