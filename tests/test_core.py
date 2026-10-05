@@ -710,6 +710,38 @@ def test_prompts_and_generators():
 
 test_prompts_and_generators()
 
+def test_websearch():
+    import threading, tempfile, json as _j
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+    from customchat import websearch as w, secrets as sec
+    from customchat.connectors.base import make_connector
+    seen = {}
+    class H(BaseHTTPRequestHandler):
+        def do_POST(s):
+            n = int(s.headers.get("Content-Length", 0)); seen["body"] = _j.loads(s.rfile.read(n)); seen["auth"] = s.headers.get("Authorization")
+            if s.path == "/bad": s.send_response(401); s.end_headers(); return
+            s.send_response(200); s.end_headers(); s.wfile.write(_j.dumps({"results": [{"title": "T", "content": "C", "url": "https://x.org"}, "junk"]}).encode())
+        def log_message(s, *a): pass
+    srv = HTTPServer(("127.0.0.1", 0), H); threading.Thread(target=srv.serve_forever, daemon=True).start()
+    base = "http://127.0.0.1:%d" % srv.server_port
+    sec.STORE = sec.SecretStore(tempfile.mkdtemp())
+    try:
+        w.search("tavily", "q"); assert False
+    except w.SearchError as e: assert "No key" in str(e)
+    sec.STORE.set("search:tavily", "tvly-test-key-1234")
+    w.PROVIDERS["tavily"]["url"] = base + "/search"
+    items = w.search("tavily", "hello", 3); assert items == [{"title": "T", "text": "C", "url": "https://x.org"}]
+    assert seen["auth"] == "Bearer tvly-test-key-1234" and seen["body"]["query"] == "hello"
+    c = make_connector({"id": "web", "label": "Web", "type": "web_search", "provider": "tavily"})
+    ev = c.search("hello", 3); assert ev[0]["source"] == "web" and ev[0]["venue"].startswith("Web")
+    w.PROVIDERS["tavily"]["url"] = base + "/bad"
+    try: w.search("tavily", "q"); assert False
+    except w.SearchError as e: assert "did not accept" in str(e)
+    assert c.search("q", 3) == []  # fails safe
+    srv.shutdown(); print("websearch ok")
+
+test_websearch()
+
 test_ollama_fit_and_pull_validation()
 
 if __name__ == "__main__":
