@@ -299,3 +299,8 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Phone drawer has a close button; backdrop tap closes it (both tested by script).
 - Touch targets measured by DOM box: row actions 44x44, rows 60 tall, close 44x44.
 - Refund ranking log: 8 phrasings, refunds.md#0 top-1 in 8 of 8 (refund_rank2.txt, scores). Only one passage returned per question, so there is no top-3 to log.
+
+## Pass 43
+- PubMed search: full questions returned 0 papers because PubMed ANDs every word ("does", "beat"). Now question words are dropped, and if nothing matches the last word is dropped (down to 2 words). After the change the type 2 diabetes question returns 4 papers (before: 0).
+- 34086376 read in full: it is a rat study. New ledger flag `animal_unmarked`: a sentence citing a passage about rats/mice that never says so is flagged, and the existing rewrite step is asked to say it. Tests: 2 (flagged, marked passes). In 6 live weight-loss runs the rat paper was no longer retrieved (keyword search changed the result set), so the live effect is untested.
+- Tests: PubMedQuery (2), AnimalFlag (2). Phone checks: pin/unpin state, rename vs delete taps, undo toast.
