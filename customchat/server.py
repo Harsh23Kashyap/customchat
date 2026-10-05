@@ -198,7 +198,11 @@ def make_handler(cfg, engine):
                     if path == "/api/prompts/generate" and method == "POST":
                         return self._send(200, generators.generate_prompt(engine.provider, cfg, str(b.get("key") or ""), b.get("brief"), str(b.get("current") or ""), cfg["prompt"]["system"]))
                     if path == "/api/codegen" and method == "POST":
-                        return self._send(200, generators.generate_code(engine.provider, cfg, str(b.get("kind") or ""), b.get("brief")))
+                        return self._send(200, generators.generate_code(engine.provider, cfg, str(b.get("kind") or ""), b.get("brief"), b.get("sample")))
+                    if path == "/api/codegen/test" and method == "POST":
+                        return self._send(200, generators.test_code(str(b.get("kind") or ""), str(b.get("code") or ""), b.get("query")))
+                    if path == "/api/codegen/sample" and method == "POST":
+                        return self._send(200, generators.fetch_sample(b.get("url"), b.get("query")))
                     if path == "/api/codegen/review" and method == "POST":
                         kind = str(b.get("kind") or "")
                         if kind not in generators.KINDS:
