@@ -3,7 +3,7 @@ import uuid, hmac, json, mimetypes, os, re, sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 import base64
-from . import schema, providers, fetch, pdfread, secrets, hardware, theme as themes, generators, prompts as promptmod
+from . import websearch, schema, providers, fetch, pdfread, secrets, hardware, theme as themes, generators, prompts as promptmod
 from .pipeline import Engine
 from .store import Store
 from .accounts import Accounts
@@ -195,10 +195,48 @@ def make_handler(cfg, engine):
                     if path == "/api/prompts/reset" and method == "POST":
                         engine.prompts.reset(str(b.get("key") or "")); engine._cache.clear()
                         return self._send(200, {"stages": engine.prompts.view(cfg["prompt"]["system"])})
+                    if path == "/api/prompts/test" and method == "POST":
+                        if cfg["provider"]["type"] == "mock":
+                            return self._send(200, {"ok": False, "error": "Demo mode has no model to run a prompt. Connect a model on the Model tab, then try again."})
+                        text = str(b.get("text") or "")[:6000]; q = str(b.get("question") or "")[:1000]; ps = str(b.get("passages") or "")[:6000]
+                        if not text.strip() or not q.strip():
+                            return self._send(400, {"error": "Add a prompt and a sample question first"})
+                        try:
+                            out = engine.provider.complete([{"role": "system", "content": text}, {"role": "user", "content": q + (("\n\nPassages:\n" + ps) if ps.strip() else "")}])
+                        except providers.ProviderError as e:
+                            return self._send(200, {"ok": False, "error": str(e)})
+                        return self._send(200, {"ok": True, "output": (out or "")[:4000]})
                     if path == "/api/prompts/generate" and method == "POST":
                         return self._send(200, generators.generate_prompt(engine.provider, cfg, str(b.get("key") or ""), b.get("brief"), str(b.get("current") or ""), cfg["prompt"]["system"]))
+                    if path == "/api/websearch/status":
+                        return self._send(200, {"providers": [{"id": k, "label": v["label"], "has_key": websearch.has_key(k)} for k, v in websearch.PROVIDERS.items()]})
+                    if path == "/api/websearch/key" and method == "POST":
+                        pid = str(b.get("id") or "")
+                        if pid not in websearch.PROVIDERS:
+                            return self._send(400, {"error": "Unknown search provider"})
+                        if b.get("clear"):
+                            secrets.STORE.delete("search:" + pid)
+                        else:
+                            secrets.STORE.set("search:" + pid, b.get("key"))
+                        return self._send(200, {"has_key": websearch.has_key(pid)})
+                    if path == "/api/websearch/test" and method == "POST":
+                        pid = str(b.get("id") or "")
+                        try:
+                            items, raw = websearch.search(pid, str(b.get("query") or "test")[:300], 3, with_raw=True)
+                            return self._send(200, {"ok": True, "items": [{"title": i["title"], "text": i["text"][:200], "url": i["url"]} for i in items], "raw": raw})
+                        except websearch.SearchError as e:
+                            return self._send(200, {"ok": False, "error": str(e), "items": []})
                     if path == "/api/codegen" and method == "POST":
-                        return self._send(200, generators.generate_code(engine.provider, cfg, str(b.get("kind") or ""), b.get("brief"), b.get("sample")))
+                        research = ""
+                        if b.get("research") and engine.provider is not None:
+                            pid = str(b.get("research_with") or "")
+                            if pid in websearch.PROVIDERS and websearch.has_key(pid):
+                                try:
+                                    found = websearch.search(pid, "API documentation request parameters response format " + str(b.get("brief") or "")[:200], 4)
+                                    research = "\n\n".join("%s (%s)\n%s" % (i["title"], i["url"], i["text"][:900]) for i in found)
+                                except websearch.SearchError:
+                                    research = ""
+                        return self._send(200, dict(generators.generate_code(engine.provider, cfg, str(b.get("kind") or ""), b.get("brief"), b.get("sample"), research), researched=bool(research)))
                     if path == "/api/codegen/test" and method == "POST":
                         return self._send(200, generators.test_code(str(b.get("kind") or ""), str(b.get("code") or ""), b.get("query")))
                     if path == "/api/codegen/sample" and method == "POST":

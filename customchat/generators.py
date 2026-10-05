@@ -211,7 +211,7 @@ def search(query, limit=6):
 '''
 
 
-def generate_code(provider, cfg, kind, brief, sample=""):
+def generate_code(provider, cfg, kind, brief, sample="", research=""):
     if kind not in KINDS:
         raise ValueError("Unknown code type")
     spec = KINDS[kind]
@@ -219,6 +219,7 @@ def generate_code(provider, cfg, kind, brief, sample=""):
     if not brief:
         raise ValueError("Describe what it should do first, for example the API address and what its results look like.")
     sample = str(sample or "")[:6000]
+    research = str(research or "")[:5000]
     if not _real(provider, cfg):
         code = code_template(kind, brief); ok, probs = review_code(kind, code)
         return {"code": code, "ok": ok, "problems": probs, "filename": spec["filename"], "model_used": False,
@@ -229,7 +230,7 @@ def generate_code(provider, cfg, kind, brief, sample=""):
     for attempt in range(3):
         try:
             out = provider.complete([{"role": "system", "content": system + (("\nFix these problems from your last attempt: %s" % err) if err else "")},
-                                     {"role": "user", "content": brief + (("\n\nHere is a real raw response from the API. Write the parsing for exactly this shape, and stay tolerant of missing fields:\n" + sample) if sample else "")}])
+                                     {"role": "user", "content": brief + (("\n\nNotes found on the web about this API (may be incomplete; trust the user description first):\n" + research) if research else "") + (("\n\nHere is a real raw response from the API. Write the parsing for exactly this shape, and stay tolerant of missing fields:\n" + sample) if sample else "")}])
         except providers.ProviderError as e:
             raise ValueError(str(e))
         m = re.search(r"```(?:python)?\s*(.*?)```", out or "", flags=re.S)
