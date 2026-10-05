@@ -688,7 +688,7 @@ def test_prompts_and_generators():
     r = g.generate_prompt(f, real, "relevance", "nutrition"); assert r["model_used"] and f.calls == 2 and r["prompt"].startswith("You judge")
     try: g.generate_prompt(Fake(["x", "y"]), real, "relevance", "nutrition"); assert False
     except ValueError: pass
-    good = "import json, urllib.request\n\ndef search(query, limit=6):\n    return []\n"
+    good = g.code_template("search", "x")
     assert g.review_code("search", good)[0]
     for bad in ["import os\nos.system('x')\ndef search(q): pass", "import subprocess\ndef search(q): pass", "def search(q):\n    return eval(q)", "def search(q):\n    open('f','w')", "def other(): pass", "def search(:", "KEY='sk-abcdefghijklmnop12345'\ndef search(q): pass"]:
         assert not g.review_code("search", bad)[0], bad
@@ -698,6 +698,14 @@ def test_prompts_and_generators():
     r = g.generate_code(f, real, "search", "my api"); assert r["ok"] and f.calls == 2
     r = g.generate_code(None, mock_cfg, "search", "my api"); assert r["ok"] and not r["model_used"]
     r = g.generate_code(None, mock_cfg, "clean_query", "strip filler"); assert r["ok"]
+    assert not g.review_code("search", "def search(q, limit=6):\n    return []")[0]
+    r = g.test_code("clean_query", "import re\ndef clean_query(q):\n    return re.sub(r'\\s+', ' ', q).strip()", "  hi   there "); assert r["ok"] and r["result"] == "hi there"
+    assert not g.test_code("search", "import os\ndef search(q, limit=6):\n    os.system('x')", "q")["ran"]
+    assert g.check_shape("search", [{"title": "a", "text": "b", "url": "", "year": None}]) == []
+    assert g.check_shape("search", [{"title": 1}])
+    for bad in ["http://x.org", "https://127.0.0.1/", "https://localhost/"]:
+        try: g.fetch_sample(bad, "q"); assert False
+        except ValueError: pass
     print("prompts and generators ok")
 
 test_prompts_and_generators()
