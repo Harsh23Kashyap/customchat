@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS chats(id TEXT PRIMARY KEY, owner TEXT, title TEXT, pi
 CREATE TABLE IF NOT EXISTS topics(id TEXT PRIMARY KEY, owner TEXT, title TEXT, summary TEXT DEFAULT '', created REAL);
 CREATE TABLE IF NOT EXISTS turns(id TEXT PRIMARY KEY, chat TEXT, topic TEXT, question TEXT, standalone TEXT, answer TEXT, evidence TEXT, ledger TEXT, style TEXT, created REAL);
 CREATE TABLE IF NOT EXISTS feedback(turn TEXT PRIMARY KEY, owner TEXT, rating INTEGER, created REAL);
+CREATE TABLE IF NOT EXISTS profile(owner TEXT PRIMARY KEY, text TEXT, updated REAL);
 CREATE TABLE IF NOT EXISTS evidence_cache(key TEXT PRIMARY KEY, payload TEXT, created REAL);
 CREATE TABLE IF NOT EXISTS uploads(id TEXT PRIMARY KEY, owner TEXT, name TEXT, text TEXT, created REAL);
 CREATE INDEX IF NOT EXISTS turns_chat ON turns(chat, created);
@@ -177,6 +178,21 @@ class Store:
                 "uploads": one("SELECT COUNT(*) n FROM uploads WHERE owner=?"),
                 "helpful": one("SELECT COUNT(*) n FROM feedback WHERE owner=? AND rating>0"),
                 "not_helpful": one("SELECT COUNT(*) n FROM feedback WHERE owner=? AND rating<0")}
+
+    def get_profile(self, owner):
+        r = self.q("SELECT text FROM profile WHERE owner=?", (owner,), one=True)
+        return r["text"] if r else ""
+
+    def set_profile(self, owner, text):
+        text = (text or "").strip()[:3000]
+        if text:
+            self.q("INSERT OR REPLACE INTO profile VALUES(?,?,?)", (owner, text, time.time()), write=True)
+        else:
+            self.q("DELETE FROM profile WHERE owner=?", (owner,), write=True)
+        return text
+
+    def recent_questions(self, owner, limit=400):
+        return self.q("SELECT t.id, t.chat, t.question FROM turns t JOIN chats c ON c.id=t.chat WHERE c.owner=? AND c.deleted IS NULL AND t.style NOT LIKE 'deleted:%' ORDER BY t.created DESC LIMIT ?", (owner, limit))
 
     def ping(self):
         try:

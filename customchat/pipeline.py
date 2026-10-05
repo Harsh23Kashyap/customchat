@@ -7,7 +7,7 @@ question -> (1) resolve follow-up into a standalone question using memory
          -> (5) check citations, build a claim-to-evidence ledger
          -> (6) store the turn under a conversation and refresh its summary
 """
-import re, time, json, hashlib
+import collections, math, re, time, json, hashlib
 from concurrent.futures import ThreadPoolExecutor
 from . import providers
 from .connectors import make_connector
@@ -125,10 +125,10 @@ class Engine:
             self.store.q("INSERT OR REPLACE INTO evidence_cache VALUES(?,?,?)", (key, json.dumps(hit), time.time()), write=True)
 
     # (4) generation
-    def prompt(self, question, evidence, style, history, summary):
+    def prompt(self, question, evidence, style, history, summary, profile=""):
         p = self.cfg["prompt"]
         ev = "\n".join("[%d] %s (%s). %s" % (e["n"], e["title"], e["year"] or "n.d.", e["text"][:1200]) for e in evidence)
-        mem = ("Conversation summary: %s\n" % summary if summary else "") + "".join(
+        mem = ("About the reader (self-reported background, not evidence): %s\n" % profile[:1500] if profile else "") + ("Conversation summary: %s\n" % summary if summary else "") + "".join(
             "Earlier Q: %s\nEarlier A: %s\n" % (h["question"], h["answer"][:240]) for h in history[-self.cfg["memory"]["recent_turns"]:])
         return [{"role": "system", "content": p["system"] + " " + p["style"].get(style, p["style"]["standard"])},
                 {"role": "user", "content": "%sQuestion: %s\n\nEvidence:\n%s" % (mem, question, ev)}]
@@ -155,43 +155,57 @@ class Engine:
                             "invalid": [c for c in cites if c not in valid], "supported": bool(cites) and all(c in valid for c in cites)})
         return out
 
-    def ask_stream(self, owner, chat, question, sources=None, style="standard", topic=None, new_topic=False, use_cache=True):
+    def ask_stream(self, owner, chat, question, sources=None, style="standard", topic=None, new_topic=False, use_cache=True, temporary=False, temp_history=None, use_profile=False):
         """Yield ('meta', {...}), ('token', str)..., ('done', result). Same behaviour as ask()."""
         t0 = time.time()
         q = (question or "").strip()
         if not q or len(q) > 2000:
             raise ValueError("Question must be 1-2000 characters")
-        self.store.chat(owner, chat)
-        if topic:
-            self.store.topic(owner, topic)
-        elif not new_topic:
-            topic = self.store.last_topic(chat)
-        if not topic:
-            topic = self.store.new_topic(owner, q[:80])
         mem_on = self.cfg["memory"]["enabled"]
-        history = self.store.topic_turns(owner, topic, 12) if mem_on else []
-        summary = self.store.topic(owner, topic)["summary"] if mem_on else ""
-        standalone = self.standalone(q, history, summary)
-        evidence, errors = self.retrieve(standalone, sources, owner) if use_cache else self._fresh(standalone, sources, owner)
+        profile = ""
+        if temporary:
+            # nothing is read from or written to the saved history, uploads or profile
+            chat = topic = None
+            history = [{"question": str(h.get("question", ""))[:500], "answer": str(h.get("answer", ""))[:600]}
+                       for h in (temp_history or [])[-6:] if isinstance(h, dict)] if mem_on else []
+            summary = ""
+            standalone = self.standalone(q, history, summary)
+            evidence, errors = self.retrieve(standalone, sources, None)
+        else:
+            self.store.chat(owner, chat)
+            if topic:
+                self.store.topic(owner, topic)
+            elif not new_topic:
+                topic = self.store.last_topic(chat)
+            if not topic:
+                topic = self.store.new_topic(owner, q[:80])
+            history = self.store.topic_turns(owner, topic, 12) if mem_on else []
+            summary = self.store.topic(owner, topic)["summary"] if mem_on else ""
+            profile = self.store.get_profile(owner) if use_profile else ""
+            standalone = self.standalone(q, history, summary)
+            evidence, errors = self.retrieve(standalone, sources, owner) if use_cache else self._fresh(standalone, sources, owner)
         yield "meta", {"standalone": standalone, "evidence": evidence, "source_errors": errors}
         if not evidence:
             answer = self.cfg["prompt"]["no_evidence"]
             yield "token", answer
         else:
             parts = []
-            for piece in self.provider.stream(self.prompt(standalone, evidence, style, history, summary)):
+            for piece in self.provider.stream(self.prompt(standalone, evidence, style, history, summary, profile)):
                 parts.append(piece)
                 yield "token", piece
             answer = "".join(parts).strip()
         ledger = self.ledger(answer, evidence) if evidence else []
-        tid = self.store.add_turn(chat, topic, q, standalone, answer, evidence, ledger, style)
-        if mem_on:
-            self._summarize(owner, topic)
-        if self.store.chat(owner, chat)["title"] == "New chat":
-            self.store.rename_chat(owner, chat, q[:60])
+        if temporary:
+            tid = None
+        else:
+            tid = self.store.add_turn(chat, topic, q, standalone, answer, evidence, ledger, style)
+            if mem_on:
+                self._summarize(owner, topic)
+            if self.store.chat(owner, chat)["title"] == "New chat":
+                self.store.rename_chat(owner, chat, q[:60])
         fu = self.followups(q, answer, evidence)
         yield "done", {"seconds": round(time.time() - t0, 1), "followups": fu, "id": tid, "chat": chat, "topic": topic, "question": q, "standalone": standalone, "answer": answer,
-                       "evidence": evidence, "ledger": ledger, "style": style, "source_errors": errors}
+                       "evidence": evidence, "ledger": ledger, "style": style, "source_errors": errors, "temporary": temporary}
 
     def ask(self, owner, chat, question, sources=None, style="standard", topic=None, new_topic=False, use_cache=True):
         q = (question or "").strip()
@@ -221,6 +235,28 @@ class Engine:
             self.store.rename_chat(owner, chat, q[:60])
         return {"id": tid, "chat": chat, "topic": topic, "question": q, "standalone": standalone, "answer": answer,
                 "evidence": evidence, "ledger": ledger, "style": style, "source_errors": errors}
+
+    def similar(self, owner, question, limit=3, threshold=0.3):
+        """Earlier questions of this reader that look like `question` (idf-weighted token overlap)."""
+        rows = self.store.recent_questions(owner, 400)
+        stop = {"how", "does", "what", "the", "and", "for", "are", "can", "you", "please", "tell", "about", "explain", "with", "this", "that", "why", "who", "when", "where", "which", "work", "works"}
+        tok = lambda s: {t for t in re.findall(r"[a-z0-9]{3,}", s.lower()) if t not in stop}
+        qt = tok(question)
+        if not qt or not rows:
+            return []
+        df = collections.Counter(t for r in rows for t in tok(r["question"]))
+        n = len(rows)
+        w = lambda t: math.log(1 + n / (1 + df.get(t, 0)))
+        out, seen = [], set()
+        for r in rows:
+            rt = tok(r["question"])
+            if not rt or r["question"].strip().lower() == question.strip().lower() or r["question"] in seen:
+                continue
+            inter = sum(w(t) for t in qt & rt); union = sum(w(t) for t in qt | rt)
+            score = inter / union if union else 0
+            if score >= threshold:
+                seen.add(r["question"]); out.append({"turn": r["id"], "chat": r["chat"], "question": r["question"], "score": round(score, 2)})
+        return sorted(out, key=lambda x: -x["score"])[:limit]
 
     def _fresh(self, q, sources, owner=None):
         self._cache.clear()

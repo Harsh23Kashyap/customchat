@@ -76,6 +76,12 @@ def make_handler(cfg, engine):
             if path == "/api/export-all":
                 return self._send(200, json.dumps(store.export_all(o), indent=1).encode(), "application/json",
                                   {"Content-Disposition": 'attachment; filename="customchat-export.json"'})
+            if path == "/api/profile":
+                if method == "POST":
+                    return self._send(200, {"text": store.set_profile(o, str(b.get("text", "")))})
+                return self._send(200, {"text": store.get_profile(o)})
+            if path == "/api/similar":
+                return self._send(200, engine.similar(o, qs.get("q", "")))
             if path == "/api/rate" and method == "POST":
                 return self._send(200, {"rating": store.rate(o, str(b.get("turn", "")), int(b.get("rating", 0)))})
             if path == "/api/ratings":
@@ -97,9 +103,11 @@ def make_handler(cfg, engine):
             if path == "/api/ask-stream":
                 if not str(b.get("question") or "").strip():
                     raise ValueError("Question must be 1-2000 characters")
-                chat = b.get("chat") or store.new_chat(o)
+                temp = bool(b.get("temporary"))
+                chat = None if temp else (b.get("chat") or store.new_chat(o))
                 gen = engine.ask_stream(o, chat, b.get("question"), b.get("sources"), b.get("style", "standard"),
-                                        b.get("topic"), bool(b.get("new_topic")), not b.get("fresh"))
+                                        b.get("topic"), bool(b.get("new_topic")), not b.get("fresh"),
+                                        temporary=temp, temp_history=b.get("history"), use_profile=bool(b.get("use_profile")))
                 first = next(gen)  # validation errors surface as a normal 400 before streaming starts
                 self.send_response(200)
                 self.send_header("Content-Type", "application/x-ndjson")
@@ -171,7 +179,7 @@ def make_handler(cfg, engine):
             data = open(full, "rb").read()
             if name == "index.html":
                 a = cfg["app"]
-                data = data.decode().replace("{{TITLE}}", _esc(a["title"])).replace("{{ACCENT}}", _esc(a["accent"])).replace("{{THEME}}", _esc(a["theme"])).encode()
+                data = data.decode().replace("{{TITLE}}", _esc(a["title"])).replace("{{ACCENT}}", _esc(a["accent"])).replace("{{ACCENT2}}", _esc(a.get("accent2", "#d7ef72"))).replace("{{THEME}}", _esc(a["theme"])).encode()
             self._send(200, data, ctype + ("; charset=utf-8" if ctype.startswith("text") or "javascript" in ctype else ""))
 
         def _guard(self, method):
