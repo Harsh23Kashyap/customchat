@@ -475,15 +475,16 @@ function applyIcons() {
     const b = $(id); if (!b) continue; const e = TV(key); if (id === "#send" && S.busy) continue; b.replaceChildren(e ? document.createTextNode(e) : svg(name));
   }
 }
+function pvBottom() { const t = $("#thread"); if (t) { t.style.scrollBehavior = "auto"; t.scrollTop = t.scrollHeight; } }
 function previewMode() {
   document.documentElement.classList.add("preview");
   S.turns = [
     { id: "p1", chat: "p", question: "What does the refund policy say?", answer: "Refunds are available within 30 days of purchase [1]. After that, store credit is offered instead [2].", evidence: [{ n: 1, title: "Refund policy", text: "" }, { n: 2, title: "Store credit FAQ", text: "" }], ledger: [], seconds: 2 },
     { id: "p2", chat: "p", question: "And for digital items?", answer: "Digital items can be refunded within 14 days if they were not downloaded [1].", evidence: [{ n: 1, title: "Refund policy", text: "" }], ledger: [], seconds: 1 },
   ];
-  S.chat = "p"; drawThread(); $("#chatTitle").textContent = "Refund questions";
+  S.chat = "p"; drawThread(); pvBottom(); $("#chatTitle").textContent = "Refund questions";
   const list = $("#list"); list.replaceChildren(...["Refund questions", "Shipping times", "Warranty"].map((t, i) => el("div", { class: "item" + (i ? "" : " on") }, el("span", { text: t }))));
-  window.addEventListener("message", (e) => { if (e.origin === location.origin && e.data && e.data.ccTheme) { applyWording(); applyIcons(); drawThread(); $("#chatTitle").textContent = "Refund questions"; } });
+  window.addEventListener("message", (e) => { if (e.origin === location.origin && e.data && e.data.ccTheme) { applyWording(); applyIcons(); drawThread(); pvBottom(); $("#chatTitle").textContent = "Refund questions"; } });
 }
 function tour() {
   if (localStorage.getItem("cc_tour")) return;

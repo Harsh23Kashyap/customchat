@@ -125,8 +125,8 @@ const C = (k, label, help) => ({ key: k, label, help, type: "color", colors: tru
 const SECTIONS = [
   { id: "wording", icon: "Aa", tone: "green", title: "Wording", sub: "The words people read", help: "Leave a box empty to keep the default text from the app file.", fields: [
     { key: "logo", label: "Logo", help: "Optional. Drop a picture; it blends into the page.", type: "logo" },
-    { key: "txt_title", label: "App name", help: "Shown in the top bar, the welcome screen and the browser tab.", type: "text", ph: "Docs Chat" },
-    { key: "txt_tagline", label: "Welcome line", help: "The sentence under the name on an empty chat.", type: "text" },
+    { key: "txt_title", label: "App name", help: "Shown in the top bar, the welcome screen and the browser tab.", type: "text", ph: "Blank uses the app default" },
+    { key: "txt_tagline", label: "Welcome line", help: "The sentence under the name on an empty chat.", type: "text", ph: "Blank uses the app default" },
     { key: "txt_examples", label: "Example questions", help: "One per line (up to 8). They appear as buttons on an empty chat.", type: "area" },
     { key: "txt_placeholder", label: "Question box hint", help: "The grey text inside the question box.", type: "text", ph: "Ask a question" },
     { key: "txt_hint", label: "Small line under the box (left)", help: "A short reminder under the question box.", type: "text" },
@@ -411,7 +411,7 @@ function buildPresets() {
   for (const [name, p] of Object.entries(all)) {
     const t = Object.assign(clone(meta.default), clone(p)); t.light = Object.assign(clone(meta.default.light), p.light || {}); t.dark = Object.assign(clone(meta.default.dark), p.dark || {});
     const c = t.mode === "dark" ? t.dark : t.light;
-    const b = el("button", { type: "button", class: "preset", title: "Apply the " + name + " look", disabled: canEdit ? undefined : "" }, el("span", { class: "sw", style: `background:linear-gradient(135deg,${c.bg} 0 50%,${c.brand} 50% 75%,${c.accent} 75%)` }), el("span", { class: "pn" }, el("span", { text: name }), el("small", { text: (FONTNAMES[t.font] || t.font) + " + " + (FONTNAMES[t.heading_font] || t.heading_font) })));
+    const b = el("button", { type: "button", class: "preset", title: "Apply the " + name + " look", disabled: canEdit ? undefined : "" }, el("span", { class: "sw", style: `background:linear-gradient(135deg,${c.bg} 0 50%,${c.brand} 50% 75%,${c.accent} 75%)` }), el("span", { class: "pn" }, el("span", { text: name }), el("small", { text: (FONTNAMES[t.font] || t.font) + (t.heading_font && t.heading_font !== t.font ? " + " + (FONTNAMES[t.heading_font] || t.heading_font) : "") })));
     b.addEventListener("click", () => { const keep = ["txt_title", "txt_tagline", "txt_examples", "txt_placeholder", "txt_hint", "txt_disclaimer", "txt_sidebar", "txt_footer"]; for (const k of keep) t[k] = theme[k]; theme = t; editMode = theme.mode === "dark" ? "dark" : "light"; setPvMode(editMode); drawLook(); pvPop(); changed(); say("Preset \u201c" + name + "\u201d applied to the preview. Press Save look to keep it."); });
     box.append(b);
   }
