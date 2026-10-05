@@ -45,3 +45,7 @@ Features: deep health (`/api/health?deep=1`), chat import (`/api/import`), store
 Features (4): answer ratings (`/api/rate`, `/api/ratings`), usage stats (`/api/stats`), `customchat eval` (citation coverage over a question file), X-Request-Id header.
 UI (6): fixed the phone layout (the page was squeezed into a zero-width column below 860px), Helpful / Not helpful buttons, textarea focus ring, phone padding, scroll-to-bottom button position, "<1s" time label.
 Running total: about 33 features, 35 UI.
+
+## Batch 7
+UI (7): opaque phone drawer, dim backdrop with tap to close, dark-mode phone check of the sources sheet, skip link, live-region toasts, document title follows the chat, long-word wrapping.
+Running total: about 33 features, 42 UI.
