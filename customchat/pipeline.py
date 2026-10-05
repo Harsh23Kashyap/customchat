@@ -134,7 +134,7 @@ class Engine:
                 for e in f.result(timeout=60)[1]:
                     e["score"] *= weights.get(sid, 1.0)
                     sig = e["url"] or re.sub(r"\W+", "", e["title"].lower())[:80] or e["id"]
-                    if not (e.get("text") or "").strip() or not (e.get("title") or "").strip():
+                    if not Engine.usable(e):
                         continue  # a record with no text or no title cannot be cited
                     if sig not in seen and e["score"] >= self.cfg["retrieval"]["min_score"]:
                         seen.add(sig); found.append(e)
@@ -168,6 +168,34 @@ class Engine:
             "Earlier Q: %s\nEarlier A: %s\n" % (h["question"], h["answer"][:240]) for h in history[-self.cfg["memory"]["recent_turns"]:])
         return [{"role": "system", "content": self.prompts.text("answer", p["system"]) + " " + p["style"].get(style, p["style"]["standard"])},
                 {"role": "user", "content": "%sQuestion: %s\n\nEvidence:\n%s" % (mem, question, ev)}]
+
+    @staticmethod
+    def usable(e):
+        return bool((e.get("text") or "").strip() and (e.get("title") or "").strip())
+
+    def correct(self, answer, evidence, ledger):
+        """When a sentence is flagged as vague about regain, rewrite once with the passages and the flagged sentences, then keep the rewrite only if the flag is gone."""
+        flagged = [l["claim"] for l in ledger if l.get("vague_regain")]
+        if not flagged or self.cfg["provider"]["type"] == "mock":
+            return answer
+        ev = "\n".join("[%d] %s. %s" % (e["n"], e["title"], e["text"][:3000]) for e in evidence)
+        try:
+            out = self.provider.complete([{"role": "system", "content": self.prompts.text("revise")},
+                                          {"role": "user", "content": "These sentences are too vague: %s\nSay exactly what the passage measured (for example fat mass regain, and which group had more).\n\nAnswer:\n%s\n\nEvidence:\n%s" % (" | ".join(flagged)[:800], answer, ev)}]).strip()
+        except providers.ProviderError:
+            return answer
+        if len(out) < 0.4 * len(answer) or not re.search(r"\[\d+\]", out):
+            return answer
+        new, ev2 = self.tidy(out, evidence)
+        return out if not any(l.get("vague_regain") for l in self.ledger(new, ev2)) else answer
+
+    def _fix(self, answer, evidence, ledger, asked):
+        fixed = self.correct(answer, evidence, ledger)
+        if fixed == answer:
+            return answer, evidence, ledger
+        self.corrections = (getattr(self, "corrections", []) + [{"before": answer, "after": fixed}])[-20:]
+        new, ev2 = self.tidy(fixed, evidence)
+        return new, ev2, self.ledger(new, ev2, asked)
 
     @staticmethod
     def tidy(answer, evidence):
@@ -356,6 +384,7 @@ class Engine:
             # show only the sources the answer cites; a refusal cites nothing, so it shows none
             answer, evidence = self.tidy(answer, evidence)
             ledger = self.ledger(answer, evidence, standalone)
+            answer, evidence, ledger = self._fix(answer, evidence, ledger, standalone)
             note = (self.cfg["prompt"].get("answer_note") or "").strip()
             if evidence and note and note not in answer:
                 answer += "\n\n" + note
@@ -396,6 +425,7 @@ class Engine:
             if self.cfg["provider"]["type"] != "mock":
                 answer, evidence = self.tidy(answer, evidence)
                 ledger = self.ledger(answer, evidence, standalone)
+                answer, evidence, ledger = self._fix(answer, evidence, ledger, standalone)
                 note = (self.cfg["prompt"].get("answer_note") or "").strip()
                 if evidence and note and note not in answer:
                     answer += "\n\n" + note
