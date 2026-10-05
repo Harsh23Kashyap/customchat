@@ -170,3 +170,9 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 ## Pass 19 (from B2's critique of 3e870eac8f)
 - Phone header: Standard select is no longer cut. It keeps a 92px minimum and the chat title takes the leftover room.
 - Save bar is opaque and as wide as the form column. It is a floating bar, so it can sit over content mid-page; it hides when nothing is unsaved.
+
+## Pass 20 (from B2's critique of c2b37aee68)
+- The save bar is now a docked strip at the bottom of the window with reserved space under the page. Content ends at its edge, so it never covers a field at any scroll position. Hidden when nothing is unsaved.
+- App name and Welcome line show a hint ("Blank uses the app default").
+- Preview chat opens scrolled to the newest message, so the last bubble is not cut.
+- Preset font label shows one name when the body and heading fonts are the same.
