@@ -3,7 +3,7 @@ import uuid, hmac, json, mimetypes, os, re, sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 import base64
-from . import schema, providers, fetch, pdfread, theme as themes
+from . import schema, providers, fetch, pdfread, secrets, theme as themes
 from .pipeline import Engine
 from .store import Store
 from .accounts import Accounts
@@ -155,6 +155,30 @@ def make_handler(cfg, engine):
                     return self._send(403, {"error": "Settings can only be changed from this computer or with the access token"})
                 apply_settings(b.get("settings") or {})
                 return self._send(200, {"settings": settings_view()})
+            if path.startswith("/api/provider/"):
+                if not can_edit(self):
+                    return self._send(403, {"error": "Provider settings can only be changed from this computer or by the admin"})
+                if path == "/api/provider/status":
+                    return self._send(200, {"keys": {k: providers.has_key(k) for k in sorted(schema.PROVIDERS)}})
+                kind = str(b.get("provider") or qs.get("provider") or "")
+                if kind not in schema.PROVIDERS:
+                    return self._send(400, {"error": "Unknown provider"})
+                base = str(b.get("base_url") or "")[:300]
+                if path == "/api/provider/key" and method == "POST":
+                    if b.get("clear"):
+                        secrets.STORE.delete(kind)
+                    else:
+                        secrets.STORE.set(kind, b.get("key"))
+                    engine.provider = providers.make(cfg); engine._cache.clear()
+                    return self._send(200, {"key": providers.has_key(kind)})
+                if path == "/api/provider/models" and method == "POST":
+                    try:
+                        return self._send(200, {"models": providers.list_models(cfg, kind, base)})
+                    except providers.ProviderError as e:
+                        return self._send(200, {"models": [], "note": str(e)})
+                if path == "/api/provider/test" and method == "POST":
+                    ok, msg = providers.test_connection(cfg, kind, str(b.get("model") or "")[:120], base)
+                    return self._send(200, {"ok": ok, "message": msg})
             if path == "/api/states" and method == "GET":
                 return self._send(200, {"states": store.states(o)})
             if path == "/api/states/save" and method == "POST":
@@ -312,6 +336,7 @@ def _esc(s):
 def serve(path, host=None, port=None):
     cfg = schema.load(path)
     store = Store(os.path.join(cfg["_dir"], cfg["storage"]["path"]) if not os.path.isabs(cfg["storage"]["path"]) else cfg["storage"]["path"])
+    secrets.STORE = secrets.SecretStore(os.path.dirname(os.path.abspath(store.path)) if store.path != ":memory:" else "/tmp")
     engine = Engine(cfg, store)
     host, port = host or cfg["server"]["host"], port or cfg["server"]["port"]
     srv = ThreadingHTTPServer((host, port), make_handler(cfg, engine))

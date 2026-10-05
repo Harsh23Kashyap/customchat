@@ -150,13 +150,13 @@ class Ollama(Streams):
 
 
 class OpenAICompatible(Streams):
+    def _auth(self):
+        local = self.kind == "openai_compatible" and not self.key_env
+        key = _key(self.key_env, self.kind, required=not local)
+        return {"Authorization": "Bearer " + key} if key else {}
+
     def stream(self, messages):
-        headers = {}
-        if self.key_env:
-            key = os.environ.get(self.key_env, "")
-            if not key:
-                raise ProviderError("Set the %s environment variable" % self.key_env)
-            headers["Authorization"] = "Bearer " + key
+        headers = self._auth()
         for line in _stream_lines(self.base + "/chat/completions", {"model": self.model, "messages": messages,
                                   "temperature": self.temp, "stream": True}, headers, self.t):
             if not line.startswith("data:") or line.endswith("[DONE]"):
@@ -175,14 +175,10 @@ class OpenAICompatible(Streams):
         self.base = (p["base_url"] or dbase).rstrip("/")
         self.model, self.t, self.temp = p["model"], p["timeout"], p["temperature"]
         self.key_env = p["api_key_env"] or denv
+        self.kind = p["type"]
 
     def complete(self, messages):
-        headers = {}
-        if self.key_env:
-            key = os.environ.get(self.key_env, "")
-            if not key:
-                raise ProviderError("Set the %s environment variable" % self.key_env)
-            headers["Authorization"] = "Bearer " + key
+        headers = self._auth()
         r = _post(self.base + "/chat/completions", {"model": self.model, "messages": messages,
                                                     "temperature": self.temp}, headers, self.t)
         try:
@@ -191,10 +187,12 @@ class OpenAICompatible(Streams):
             raise ProviderError("Unexpected provider response") from None
 
 
-def _key(env):
-    key = os.environ.get(env, "")
-    if not key:
-        raise ProviderError("Set the %s environment variable" % env)
+def _key(env, kind=None, required=True):
+    """Saved key first (typed in the Configuration page), then the environment variable."""
+    from . import secrets
+    key = (secrets.saved(kind) if kind else "") or (os.environ.get(env, "") if env else "")
+    if not key and required:
+        raise ProviderError("No API key yet. Add one in Configuration, Model, or set the %s environment variable" % env, 401)
     return key
 
 
@@ -209,7 +207,7 @@ class Claude(Streams):
         system = "\n\n".join(m["content"] for m in messages if m["role"] == "system")
         turns = [{"role": m["role"], "content": m["content"]} for m in messages if m["role"] in ("user", "assistant")]
         r = _post(self.base + "/v1/messages", {"model": self.model, "max_tokens": 1500, "temperature": self.temp,
-                  "system": system, "messages": turns}, {"x-api-key": _key(self.key_env), "anthropic-version": "2023-06-01"}, self.t)
+                  "system": system, "messages": turns}, {"x-api-key": _key(self.key_env, "claude"), "anthropic-version": "2023-06-01"}, self.t)
         try:
             return "".join(b.get("text", "") for b in r["content"] if b.get("type") == "text").strip()
         except (KeyError, TypeError):
@@ -229,7 +227,7 @@ class Gemini(Streams):
         body = {"contents": contents, "generationConfig": {"temperature": self.temp}}
         if system:
             body["systemInstruction"] = {"parts": [{"text": system}]}
-        r = _post("%s/v1beta/models/%s:generateContent" % (self.base, self.model), body, {"x-goog-api-key": _key(self.key_env)}, self.t)
+        r = _post("%s/v1beta/models/%s:generateContent" % (self.base, self.model), body, {"x-goog-api-key": _key(self.key_env, "gemini")}, self.t)
         try:
             return "".join(x.get("text", "") for x in r["candidates"][0]["content"]["parts"]).strip()
         except (KeyError, IndexError, TypeError):
@@ -271,3 +269,76 @@ def make(cfg):
     primary = _one(cfg, {})
     fb = cfg["provider"].get("fallback")
     return WithFallback(primary, _one(cfg, fb)) if fb else primary
+
+
+# ---------- model picker and connection test (used by the Configuration page) ----------
+def _get(url, headers, timeout=15):
+    req = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.loads(r.read().decode())
+    except urllib.error.HTTPError as e:
+        raise _http_error(e) from None
+    except (urllib.error.URLError, TimeoutError, OSError) as e:
+        raise ProviderError("Could not reach the provider: %s" % getattr(e, "reason", e)) from None
+    except ValueError:
+        raise ProviderError("The provider sent a reply that could not be read", 502) from None
+
+
+def _block(cfg, kind, model="", base=""):
+    p = {**cfg["provider"], "type": kind, "model": model, "base_url": base, "api_key_env": "", "fallback": None}
+    return {**cfg, "provider": p}
+
+
+def has_key(kind, env=""):
+    from . import secrets
+    from .schema import PRESET_PROVIDERS
+    if kind in ("mock", "ollama"):
+        return {"needed": False, "has": True, "source": ""}
+    env = env or {"openai": "OPENAI_API_KEY", "claude": "ANTHROPIC_API_KEY", "gemini": "GEMINI_API_KEY"}.get(kind) or PRESET_PROVIDERS.get(kind, ("", ""))[1]
+    if secrets.saved(kind):
+        return {"needed": kind != "openai_compatible", "has": True, "source": "saved"}
+    if env and os.environ.get(env):
+        return {"needed": True, "has": True, "source": "env"}
+    return {"needed": kind != "openai_compatible", "has": False, "source": ""}
+
+
+def list_models(cfg, kind, base=""):
+    """Return sorted model ids for the provider. Raises ProviderError with a plain reason."""
+    from .schema import PRESET_PROVIDERS
+    if kind == "mock":
+        return ["demo"]
+    if kind == "ollama":
+        b = (base or "http://localhost:11434").rstrip("/")
+        return sorted(m["name"] for m in _get(b + "/api/tags", {}).get("models", []))
+    if kind == "claude":
+        b = (base or "https://api.anthropic.com").rstrip("/")
+        d = _get(b + "/v1/models?limit=100", {"x-api-key": _key("ANTHROPIC_API_KEY", "claude"), "anthropic-version": "2023-06-01"})
+        return sorted(m["id"] for m in d.get("data", []))
+    if kind == "gemini":
+        b = (base or "https://generativelanguage.googleapis.com").rstrip("/")
+        d = _get(b + "/v1beta/models?pageSize=200", {"x-goog-api-key": _key("GEMINI_API_KEY", "gemini")})
+        return sorted(m["name"].split("/", 1)[-1] for m in d.get("models", []) if "generateContent" in m.get("supportedGenerationMethods", []))
+    pv = OpenAICompatible(_block(cfg, kind, "", base))
+    d = _get(pv.base + "/models", pv._auth())
+    items = d.get("data", d if isinstance(d, list) else [])
+    return sorted({(m.get("id") if isinstance(m, dict) else str(m)) for m in items if m})
+
+
+def test_connection(cfg, kind, model, base=""):
+    """One tiny real request. Returns (ok, plain-language message)."""
+    import time
+    if not model and kind != "mock":
+        return False, "Pick or type a model first."
+    t0 = time.time()
+    try:
+        pv = _one(_block(cfg, kind, model, base), {})
+        pv.t = min(getattr(pv, "t", 30), 30)
+        out = pv.complete([{"role": "user", "content": "Reply with the single word OK."}])
+    except ProviderError as e:
+        return False, str(e)
+    except Exception:
+        return False, "Something unexpected went wrong while testing."
+    if not out:
+        return False, "The model answered with nothing. Check the model name."
+    return True, "Works. The model answered in %.1f seconds." % (time.time() - t0)
