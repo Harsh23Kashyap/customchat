@@ -738,6 +738,12 @@ def test_websearch():
     try: w.search("tavily", "q"); assert False
     except w.SearchError as e: assert "did not accept" in str(e)
     assert c.search("q", 3) == []  # fails safe
+    # several providers at once: merged, deduped, and one failing does not hurt the rest
+    sec.STORE.set("search:exa", "exa-test-key-123456"); w.PROVIDERS["tavily"]["url"] = base + "/search"; w.PROVIDERS["exa"]["url"] = base + "/bad"
+    m = make_connector({"id": "web", "label": "Web", "type": "web_search", "providers": ["tavily", "exa", "nope"]})
+    assert m.providers == ["tavily", "exa"] and len(m.search("hello", 4)) == 1
+    w.PROVIDERS["exa"]["url"] = base + "/search"
+    ev2 = m.search("hello", 4); assert len(ev2) == 1  # same URL from both providers is kept once
     srv.shutdown(); print("websearch ok")
 
 test_websearch()
@@ -752,7 +758,7 @@ def test_web_toggle():
     cfg = schema.load("apps/minimal/app.yaml")
     e = Engine(cfg, Store(":memory:"))
     assert not e.web_state()["on"]
-    e.set_web(True, "tavily"); assert e.web_state() == {"on": True, "provider": "tavily"} and "web" in e.connectors
+    e.set_web(True, ["tavily"]); assert e.web_state() == {"on": True, "providers": ["tavily"]} and "web" in e.connectors
     ev, errs = e.retrieve("conversation memory", None, None)  # web fails, local docs still answer
     assert ev and all(x["source"] != "web" for x in ev)
     e.set_web(False); assert not e.web_state()["on"] and "web" not in e.connectors
