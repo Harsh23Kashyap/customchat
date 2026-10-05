@@ -268,3 +268,6 @@ body{padding-bottom:104px!important}
 .rangerow output,label output{color:#1a202c}
 .rangerow output{font-weight:600}
 [hidden]{display:none!important}
+
+.menu a:hover{background:transparent;box-shadow:none;color:#1a202c;text-decoration:underline;text-underline-offset:4px}
+.menu a.on:hover{background:#e8f0fc;text-decoration:none}

@@ -43,7 +43,7 @@ async function loadModels(force) {
   for (const n of list) sel.append(el("option", { value: n, text: n }));
   sel.append(el("option", { value: OTHER, text: list.length ? "Other (type a name)" : "Type a name" }));
   sel.value = list.includes(m) ? m : OTHER;
-  const demo = p === "mock"; sel.hidden = demo; $("#refreshModels").hidden = demo; if (sel.parentElement) sel.parentElement.hidden = demo; const typed = !demo && sel.value === OTHER; $("#model").hidden = !typed; if (typed) $("#model").value = m;
+  const demo = p === "mock"; sel.hidden = demo; $("#refreshModels").hidden = demo; { const ml = document.querySelector("label[for=modelPick]"); if (ml) ml.hidden = demo; } { const kr = sel.closest(".keyrow"); if (kr) kr.hidden = demo; } const typed = !demo && sel.value === OTHER; $("#model").hidden = !typed; if (typed) $("#model").value = m;
   $("#modelh").textContent = demo ? "The demo answers without a model." : list.length ? list.length + (list.length === 1 ? " model found." : " models found.") : (modelNote || "Type the model name your provider uses.");
 }
 function pickChanged() { const v = $("#modelPick").value; const typed = v === OTHER; $("#model").hidden = !typed; if (!typed) { $("#model").value = v; cur.model = v; } }
@@ -65,8 +65,8 @@ let hwView = "simple";
 /* Cloud picks, checked against the providers' own model pages on 5 Oct 2026:
    developers.openai.com/api/docs/models and ai.google.dev/gemini-api/docs/models */
 const CLOUD_PICKS = [
-  { p: "openai", id: "gpt-6.1-sol", name: "GPT-6.1 Sol", why: "OpenAI's balance of intelligence and cost for complex work." },
-  { p: "gemini", id: "gemini-3.8-flash", name: "Gemini 3.8 Flash", why: "Google's fast model for reasoning and long tasks." },
+  { p: "openai", id: "gpt-6.1-sol", name: "GPT-6.1 Sol", why: "Near-flagship performance for complex work at a lower cost." },
+  { p: "gemini", id: "gemini-3.8-flash", name: "Gemini 3.8 Flash", why: "Google's most intelligent Flash model, for software engineering, agents and complex workflows." },
 ]; const testLog = [];
 async function ollamaPanel() {
   const box = $("#ollamabox"); if (activeSec !== "model") return; box.hidden = false; box.dataset.loaded = "1";
@@ -247,7 +247,7 @@ function logoControl(f, current) {
   onpage.append(pgimg, pgname); if (current) pgimg.src = current;
   const paintPage = () => { const c = theme.light || {}; onpage.style.background = c.bg || "#f8f4e9"; onpage.style.color = c.ink || "#222"; pgname.textContent = theme.txt_title || "Your app"; };
   paintPage();
-  const stage = el("div", { class: "logostage" }, el("figure", {}, before, el("figcaption", { text: "Original" })), el("figure", {}, prev, el("figcaption", { text: "After blending" })), el("figure", {}, onpage, el("figcaption", { text: "In your app" })));
+  const stage = el("div", { class: "logostage", hidden: current ? undefined : "" }, el("figure", {}, before, el("figcaption", { text: "Original" })), el("figure", {}, prev, el("figcaption", { text: "After blending" })), el("figure", {}, onpage, el("figcaption", { text: "In your app" })));
   const file = el("input", { type: "file", accept: "image/png,image/jpeg,image/webp,image/gif", id: "f-logo-file", "aria-label": "Choose a logo picture" });
   const fe = el("input", { type: "range", min: "0", max: "50", value: "25", "aria-label": "Edge softness", disabled: "" });
   const rb = el("input", { type: "checkbox", checked: "", disabled: "" });
@@ -274,7 +274,7 @@ function logoControl(f, current) {
   file.addEventListener("change", () => {
     const fl = file.files[0]; if (!fl) return; if (fl.size > 4000000) { say("That picture is over 4 MB. Choose a smaller one.", true); return; }
     const u = URL.createObjectURL(fl), im = new Image();
-    im.onload = () => { orig = im; before.src = im.src; before.hidden = false; fe.disabled = rb.disabled = false; note.textContent = "Soft edges and background removal run on this computer."; render(); /* keep the object URL while the Original tile shows it */ };
+    im.onload = () => { orig = im; before.src = im.src; before.hidden = false; stage.hidden = false; fe.disabled = rb.disabled = false; note.textContent = "Soft edges and background removal run on this computer."; render(); /* keep the object URL while the Original tile shows it */ };
     im.onerror = () => { say("That file could not be read as a picture.", true); URL.revokeObjectURL(u); };
     im.src = u;
   });
@@ -348,7 +348,7 @@ function pvFollow() {
     const k = keyInfo[cur.provider] || {}, r = $("#testres"), st = r && r.classList.contains("ok") ? "ok" : (r && r.classList.contains("bad") ? "bad" : "");
     const keyTxt = k.source === "saved" ? "Key saved on this computer" : (k.source === "env" ? "Key from environment variable" : (k.needed === false ? "No key needed" : "No key yet"));
     card.replaceChildren(
-      el("div", { class: "pvm-top" }, mark(cur.provider), el("div", {}, el("b", { text: NAMES[cur.provider] || cur.provider }), el("div", { class: "pvm-row", text: chosenModel() || "No model chosen yet" }))),
+      el("div", { class: "pvm-top" }, mark(cur.provider), el("div", {}, el("b", { text: NAMES[cur.provider] || cur.provider }), el("div", { class: "pvm-row", text: chosenModel() || (cur.provider === "mock" ? "Built-in demo, no model needed" : "No model chosen yet") }))),
       el("div", { class: "pvm-row", text: keyTxt }),
       el("div", { class: "pvm-badge " + st, text: st === "ok" ? "Connected" : (st === "bad" ? "Not working" : "Not tested yet") }),
       el("div", { class: "pvm-row " + st, text: (r && r.textContent) || "Press Test connection to check the key and model." }));
