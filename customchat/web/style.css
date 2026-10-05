@@ -180,3 +180,8 @@ html.preview .toolbar a.tb-link{pointer-events:none}
 .chip.del{border-color:var(--line)}
 .bar select{min-width:128px;padding-right:30px;text-overflow:ellipsis}.bar .title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .a sup,.cite{white-space:nowrap}
+/* Polish pass 3: answer actions as quiet text buttons */
+.meta .chip{border-color:transparent;background:transparent;color:var(--mut);font-weight:500;padding:4px 9px}
+.meta .chip:hover,.meta details[open]>summary{background:var(--soft);color:var(--ink)}
+.meta .chip.on{background:var(--soft);color:var(--brand);font-weight:600;border-color:transparent}
+.meta{gap:2px 4px}
