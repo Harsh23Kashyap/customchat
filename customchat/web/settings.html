@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Configuration</title>
+<link rel="stylesheet" href="/settings.css">
+</head>
+<body>
+<nav class="toolbar"><a href="/">Chat</a><a href="/settings.html" class="on">Configuration</a></nav>
+<main class="card">
+  <h1 id="h">Configuration</h1>
+  <p class="lead" id="lead">Change how this app answers. Keys are never shown or stored here: they come from environment variables.</p>
+  <div class="two">
+    <section class="tile"><div class="head"><span class="ic green">&#9638;</span><div><b>Save Current State</b><small>Save the current configuration for later</small></div></div>
+      <input id="sname" placeholder="Enter state name" aria-label="State name"><button class="go green" id="save">SAVE</button></section>
+    <section class="tile"><div class="head"><span class="ic blue">&#9776;</span><div><b>Load Saved State</b><small>Load a previously saved configuration</small></div></div>
+      <select id="states" aria-label="Saved states"></select><div class="row2"><button class="go blue" id="load">LOAD</button><button class="go ghost" id="del">DELETE</button></div></section>
+  </div>
+  <section class="tile wide"><div class="head"><span class="ic purple">&#9881;</span><div><b>Model provider</b><small>Pick where answers come from</small></div></div>
+    <div class="seg" id="seg" role="radiogroup" aria-label="Provider"></div>
+    <label>Model<input id="model" placeholder="e.g. gpt-4o-mini, llama3.1, claude-sonnet-4-5"></label>
+    <label>Base URL <em>(Ollama and OpenAI-compatible servers only)</em><input id="base" placeholder="http://localhost:11434"></label>
+    <div class="two">
+      <label>Temperature <output id="tv"></output><input id="temp" type="range" min="0" max="2" step="0.05"></label>
+      <label>Sources per answer <output id="kv"></output><input id="topk" type="range" min="1" max="20" step="1"></label>
+    </div>
+    <label class="check"><input id="rewrite" type="checkbox"> Rewrite follow-up questions before searching</label>
+    <button class="go blue big" id="apply">Apply</button>
+  </section>
+  <p class="msg" id="msg" role="status" aria-live="polite"></p>
+</main>
+<script src="/settings.js"></script>
+</body>
+</html>

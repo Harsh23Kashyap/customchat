@@ -1,0 +1,35 @@
+/* Mirrors CustomNerd's Configuration page: pale blue page, one big white card, icon tiles, gradient buttons, segmented provider switch. */
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Roboto,"Open Sans",-apple-system,"Segoe UI",sans-serif;background:#f0f8ff;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 20px 60px;color:#1a202c}
+.toolbar{align-self:flex-end;display:flex;gap:8px;margin-bottom:24px}
+.toolbar a{color:#1a202c;text-decoration:none;padding:12px 20px;border:1px solid rgba(255,255,255,.7);border-radius:12px;background:rgba(255,255,255,.7);font-weight:500;font-size:14px;box-shadow:0 4px 16px rgba(0,0,0,.08);transition:.3s}
+.toolbar a:hover,.toolbar a.on{color:#007bff;transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.card{width:min(1040px,100%);background:rgba(255,255,255,.88);border-radius:28px;padding:44px;box-shadow:0 20px 60px rgba(0,60,120,.10)}
+h1{text-align:center;font-size:34px;font-weight:700;margin-bottom:10px}
+.lead{text-align:center;color:#5a6676;font-size:14px;margin-bottom:28px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+.tile{background:linear-gradient(135deg,#f9fcff,#f0f6fc);border-radius:26px;padding:30px;box-shadow:0 10px 36px rgba(0,40,90,.09);display:flex;flex-direction:column;gap:16px}
+.tile.wide{margin-top:4px}
+.head{display:flex;gap:14px;align-items:center}.head b{display:block;font-size:16px}.head small{font-size:12px;color:#4a5568}
+.ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:#fff;font-size:18px;flex:none}
+.ic.green{background:linear-gradient(135deg,#28a745,#20c997)}.ic.blue{background:linear-gradient(135deg,#007bff,#0056b3)}.ic.purple{background:linear-gradient(135deg,#7c3aed,#a855f7)}
+input:not([type=range]):not([type=checkbox]),select{width:100%;border:1px solid #e3e9f0;border-radius:14px;background:#fff;padding:15px 18px;font:inherit;font-size:15px;outline:none;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+input:focus,select:focus{border-color:#007bff;box-shadow:0 0 0 4px rgba(0,123,255,.12)}
+label{display:flex;flex-direction:column;gap:8px;font-size:13px;font-weight:600;color:#2d3748}label em{font-weight:400;color:#718096;font-style:normal}
+label output{float:right;color:#007bff}label.check{flex-direction:row;align-items:center;font-weight:500}label.check input{width:18px;height:18px}
+input[type=range]{width:100%;accent-color:#007bff}
+.go{align-self:center;border:0;border-radius:12px;padding:12px 56px;font:600 14px Roboto,sans-serif;letter-spacing:.06em;color:#fff;cursor:pointer;transition:.25s;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.go:hover{transform:translateY(-2px)}.go.green{background:linear-gradient(135deg,#28a745,#20c997)}.go.blue{background:linear-gradient(135deg,#007bff,#0056b3)}.go.ghost{background:#fff;color:#c53030;border:1px solid #e3e9f0;box-shadow:none}.go.big{padding:14px 70px;border-radius:999px}
+.row2{display:flex;gap:12px;justify-content:center}.row2 .go{padding:12px 36px}
+.seg{position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:rgba(0,0,0,.05);border-radius:999px;padding:3px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.seg button{position:relative;z-index:1;border:0;background:none;padding:12px 8px;border-radius:999px;font:600 14px Roboto,sans-serif;color:#6c757d;cursor:pointer;transition:.3s}
+.seg button[aria-checked=true]{color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.18)}
+.seg button[data-p=openai][aria-checked=true],.seg button[data-p=openai_compatible][aria-checked=true]{background:linear-gradient(135deg,#007bff,#0056b3)}
+.seg button[data-p=gemini][aria-checked=true]{background:linear-gradient(135deg,#28a745,#20c997)}
+.seg button[data-p=claude][aria-checked=true]{background:linear-gradient(135deg,#c27800,#e69b00)}
+.seg button[data-p=ollama][aria-checked=true]{background:linear-gradient(135deg,#7c3aed,#a855f7)}
+.seg button[data-p=mock][aria-checked=true]{background:linear-gradient(135deg,#4a5568,#718096)}
+.msg{text-align:center;margin-top:18px;font-size:14px;min-height:20px;color:#2d3748}.msg.err{color:#c53030}
+button:focus-visible{outline:2px solid #007bff;outline-offset:2px}
+@media(max-width:760px){.two{grid-template-columns:1fr}.card{padding:24px 16px;border-radius:22px}.tile{padding:22px}.seg{grid-auto-flow:row;border-radius:20px}}
+.tile{min-width:0}select{max-width:100%}
