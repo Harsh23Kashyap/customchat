@@ -144,16 +144,28 @@ async function download(path, name) {
   const a = el("a", { href: URL.createObjectURL(await r.blob()), download: name }); a.click();
 }
 
+function heroView() {
+  const a = S.cfg.app;
+  const he = TV("emoji_hero") || TV("emoji_bot"), exs = TV("txt_examples") ? TV("txt_examples").split("\n").map((x) => x.trim()).filter(Boolean).slice(0, 8) : a.examples;
+  return el("div", { class: "hero" + (PREVIEW ? " mini" : "") }, TV("logo") ? el("img", { class: "hero-logo", src: TV("logo"), alt: "" }) : el("div", { class: "av bot" + (he ? " emo" : ""), text: he || (TV("txt_title") || a.title || "AI").replace(/[^A-Za-z]/g, "").slice(0, 2) }), el("div", {}, el("h1", { text: TV("txt_title") || a.title }), el("p", { text: TV("txt_tagline") || a.tagline }),
+    el("div", { class: "ex" }, exs.map((x) => el("button", { onclick: () => { $("#q").value = x; send(); } }, x)))));
+}
+function chartCard() {
+  const parts = [["Late delivery", 46, "var(--brand)"], ["Wrong item", 31, "var(--lime)"], ["Changed mind", 23, "var(--mut)"]];
+  let off = 0; const C = 2 * Math.PI * 15.9155;
+  const ring = parts.map(([n, v, c]) => { const e = '<circle r="15.9155" cx="21" cy="21" fill="none" stroke="' + c + '" stroke-width="6" stroke-dasharray="' + (v * C / 100) + ' ' + C + '" stroke-dashoffset="' + (-off * C / 100) + '" transform="rotate(-90 21 21)"></circle>'; off += v; return e; }).join("");
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.setAttribute("viewBox", "0 0 42 42"); svg.setAttribute("class", "donut"); svg.setAttribute("role", "img"); svg.setAttribute("aria-label", "Refund requests by reason"); svg.innerHTML = ring;
+  return el("div", { class: "chartcard" }, el("b", { text: "Refund requests by reason" }), el("div", { class: "chartrow" }, svg, el("ul", {}, parts.map(([n, v, c]) => el("li", {}, el("i", { style: "background:" + c }), n + " " + v + "%")))));
+}
 function drawThread() {
   const th = $("#thread"); th.replaceChildren();
   const w = el("div", { class: "wrap" });
   if (!S.turns.length) {
     const a = S.cfg.app;
     const he = TV("emoji_hero") || TV("emoji_bot"), exs = TV("txt_examples") ? TV("txt_examples").split("\n").map((x) => x.trim()).filter(Boolean).slice(0, 8) : a.examples;
-    w.append(el("div", { class: "hero" }, TV("logo") ? el("img", { class: "hero-logo", src: TV("logo"), alt: "" }) : el("div", { class: "av bot" + (he ? " emo" : ""), text: he || (TV("txt_title") || a.title || "AI").replace(/[^A-Za-z]/g, "").slice(0, 2) }), el("div", {}, el("h1", { text: TV("txt_title") || a.title }), el("p", { text: TV("txt_tagline") || a.tagline }),
-      el("div", { class: "ex" }, exs.map((x) => el("button", { onclick: () => { $("#q").value = x; send(); } }, x))))));
-  } else S.turns.forEach((t, i) => w.append(...turnView(t, S.turns[i - 1])));
-  th.append(w); th.scrollTop = th.scrollHeight;
+    w.append(heroView());
+  } else { if (PREVIEW) w.append(heroView()); S.turns.forEach((t, i) => w.append(...turnView(t, S.turns[i - 1]))); if (PREVIEW) w.append(chartCard()); }
+  th.append(w); th.scrollTop = PREVIEW ? 0 : th.scrollHeight;
   $("#pills").replaceChildren();
 }
 

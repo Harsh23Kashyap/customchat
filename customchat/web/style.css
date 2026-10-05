@@ -226,3 +226,8 @@ body,.app,aside,.main,.bar,.bubble,.srcs button.s,.send,.composer,.chip,.icon,.c
 
 .tb-logo{height:28px;width:auto;max-width:90px;object-fit:contain;margin-right:8px;vertical-align:middle}
 .hero-logo{width:72px;height:72px;object-fit:contain}
+
+.hero.mini{margin:6px auto 18px;padding:0;gap:12px;transform:scale(.92);transform-origin:top left}.hero.mini h1{font-size:calc(22px*var(--fs,1))}.hero.mini .ex button{padding:8px 12px;font-size:calc(13px*var(--fs,1))}
+.chartcard{border:1px solid var(--line);border-radius:calc(14px*var(--rs,1));padding:14px 16px;margin:14px 0;background:var(--paper)}.chartcard b{font-size:calc(14px*var(--fs,1))}
+.chartrow{display:flex;align-items:center;gap:18px;margin-top:10px}.donut{width:92px;height:92px;flex:none}.chartrow ul{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:calc(13px*var(--fs,1));color:var(--ink)}
+.chartrow li{display:flex;align-items:center;gap:8px}.chartrow i{width:10px;height:10px;border-radius:3px;display:inline-block}

@@ -51,12 +51,13 @@ const chosenModel = () => ($("#modelPick").value === OTHER ? $("#model").value.t
 const BRAND = { openai: ["#10a37f", "O"], claude: ["#d97757", "C"], gemini: ["#4285f4", "G"], ollama: ["#2b2b2b", "Ol"], deepseek: ["#4d6bfe", "D"], groq: ["#f55036", "Gq"], mistral: ["#fa520f", "M"], minimax: ["#e0245e", "Mx"], mimo: ["#ff6900", "Mi"], openrouter: ["#6467f2", "Or"], mock: ["#8a94a3", "\u2022"], openai_compatible: ["#5b6b7f", "+"] };
 const TOP = ["openai", "claude", "gemini", "deepseek", "ollama"];
 let chipsMore = false, chipList = [];
-function mark(p) { const b = BRAND[p] || ["#667", (NAMES[p] || p)[0]]; return el("span", { class: "pm", style: "background:" + (p === "gemini" ? "linear-gradient(135deg,#4285f4,#9b72cb 60%,#d96570)" : b[0]), "aria-hidden": "true", text: b[1] }); }
+const LOGOS = ["openai", "claude", "gemini", "deepseek", "ollama", "groq", "mistral", "openrouter", "minimax", "mimo"];
+function mark(p) { if (LOGOS.includes(p)) return el("img", { class: "plogo", src: "/logos/" + p + ".svg", alt: "", width: "20", height: "20" }); const b = BRAND[p] || ["#667", (NAMES[p] || p)[0]]; return el("span", { class: "pm", style: "background:" + b[0], "aria-hidden": "true", text: b[1] }); }
 function buildChips(list) {
   if (list) chipList = list; const seg = $("#seg"); seg.replaceChildren();
   const top = TOP.filter((p) => chipList.includes(p)), rest = chipList.filter((p) => !top.includes(p));
   if (rest.includes(cur.provider)) chipsMore = true;
-  for (const p of top.concat(chipsMore ? rest : [])) { const b = el("button", { type: "button", "data-p": p, role: "radio", "aria-checked": String(p === cur.provider) }, mark(p), NAMES[p] || p); b.addEventListener("click", () => { if (canEdit) { cur = { ...read(), provider: p, model: "" }; draw(); } }); seg.append(b); }
+  for (const p of top.concat(chipsMore ? rest : [])) { const b = el("button", { type: "button", "data-p": p, role: "radio", "aria-checked": String(p === cur.provider) }, mark(p), NAMES[p] || p); b.addEventListener("click", () => { if (canEdit) { cur = { ...read(), provider: p, model: "" }; draw(); pvFollow(); } }); seg.append(b); }
   if (rest.length) { const m = el("button", { type: "button", class: "chipmore" }, chipsMore ? "Show fewer" : "Load more"); m.addEventListener("click", () => { chipsMore = !chipsMore; buildChips(); }); seg.append(m); }
 }
 /* ---------- local model suggestions (Ollama) ---------- */
@@ -65,25 +66,48 @@ async function ollamaPanel() {
   const box = $("#ollamabox"); box.hidden = cur.provider !== "ollama"; if (box.hidden) return;
   box.replaceChildren(el("div", { class: "h", text: "Looking at this computer..." }));
   let r; try { r = await api("/api/hardware?base_url=" + encodeURIComponent($("#base").value.trim())); } catch (e) { box.replaceChildren(el("div", { class: "h", text: e.message })); return; }
-  const hw = r.hardware, rec = r.recommendation;
-  const tabs = el("div", { class: "seg mini", role: "radiogroup", "aria-label": "View" });
-  for (const [v, t] of [["simple", "Simple"], ["tech", "Technical"]]) tabs.append(el("button", { type: "button", role: "radio", "aria-checked": String(hwView === v), onclick: () => { hwView = v; ollamaPanel(); } }, t));
+  const hw = r.hardware, rec = r.recommendation, det = hwView === "tech";
+  const tabs = el("div", { class: "seg mini", role: "radiogroup", "aria-label": "Detail level" });
+  for (const [v, t] of [["simple", "Simple"], ["tech", "Details"]]) tabs.append(el("button", { type: "button", role: "radio", "aria-checked": String(hwView === v), onclick: () => { hwView = v; ollamaPanel(); } }, t));
   const head = el("div", { class: "ohead" }, el("b", { text: "Best models for this computer" }), tabs);
   const cards = el("div", { class: "ocards" });
   if (!rec.picks.length) cards.append(el("div", { class: "h", text: rec.note || "No suggestion available." }));
-  rec.picks.forEach((p, i) => {
-    const c = el("div", { class: "ocard" }, el("div", { class: "otag", text: p.label }), el("b", { text: p.name }), el("div", { class: "h", text: p.note }),
-      el("div", { class: "ometa", text: "About " + p.download_gb + " GB download. Speed: " + p.speed + "." }));
-    if (hwView === "tech") c.append(el("div", { class: "otech", text: p.tag + " | needs about " + p.needs_gb + " GB (" + p.uses_pct + "% of the " + rec.budget_gb + " GB budget) | " + p.params_b + "B parameters, 4-bit" }));
-    const act = el("div", { class: "oact" });
-    if (p.installed) act.append(el("span", { class: "ok", text: "Installed" }), el("button", { type: "button", class: "mini", onclick: () => { cur.model = p.tag; loadModels(true).then(() => { $("#modelPick").value = p.tag; pickChanged(); }); } }, "Use this model"));
-    else act.append(el("code", { text: p.pull }), el("button", { type: "button", class: "mini", onclick: () => { navigator.clipboard && navigator.clipboard.writeText(p.pull); say("Copied. Run it in a terminal, then press Refresh list."); } }, "Copy command"));
-    c.append(act); cards.append(c);
+  rec.picks.forEach((p) => {
+    const c = el("div", { class: "ocard fit-" + p.fit }, el("div", { class: "otag", text: p.label }), el("b", { text: p.name }), el("div", { class: "h", text: p.note }),
+      el("div", { class: "fitchip " + p.fit }, el("i"), p.fit_why));
+    if (det) c.append(el("div", { class: "otech", text: p.tag + " | " + p.download_gb + " GB download | needs about " + p.needs_gb + " GB (" + p.uses_pct + "% of budget) | speed " + p.speed }));
+    c.append(el("div", { class: "oact" }, modelAction(p.tag, p.installed)));
+    cards.append(c);
   });
   box.replaceChildren(head, cards);
-  if (hwView === "tech") box.append(el("pre", { class: "otechbox", text: ["Computer: " + hw.os + " " + hw.arch + ", " + hw.cores + " CPU cores, " + hw.ram_gb + " GB RAM", "GPU: " + (hw.gpu ? hw.gpu + " (" + hw.vram_gb + " GB video memory)" : (hw.apple_silicon ? "Apple Silicon (shared memory)" : "none found")), "Ollama: " + (r.ollama_running ? "running, " + (r.installed || []).length + " models installed" : "not reachable at the Base URL"), "", "Memory budget: " + rec.budget_gb + " GB. " + rec.budget_why, "A model must fit in 85% of that (" + rec.limit_gb + " GB), counting its file size plus about 1.5 GB for the conversation.", "Picks: largest that fits, largest using at most 60%, largest using at most 30%."].join("\n") }));
-  else box.append(el("div", { class: "h", text: "Based on " + hw.ram_gb + " GB of memory" + (hw.gpu ? " and your " + hw.gpu : "") + ". Switch to Technical to see the math." }));
+  if (r.others && r.others.length) {
+    const d = el("details", { class: "grp" }, el("summary", { text: "See other models" }), el("div", { class: "oother" }, r.others.map((o) => el("div", { class: "orow" }, el("span", { class: "fitdot " + o.fit }), el("span", { class: "oname", text: o.name }), el("span", { class: "h", text: o.why })))));
+    box.append(d);
+  }
+  if (det) box.append(el("pre", { class: "otechbox", text: ["Computer: " + hw.os + " " + hw.arch + ", " + hw.cores + " CPU cores, " + hw.ram_gb + " GB RAM", "GPU: " + (hw.gpu ? hw.gpu + " (" + hw.vram_gb + " GB video memory)" : (hw.apple_silicon ? "Apple Silicon (shared memory)" : "none found")), "Ollama: " + (r.ollama_running ? "running, " + (r.installed || []).length + " models installed" : "not reachable at the Base URL"), "", "Memory budget: " + rec.budget_gb + " GB. " + rec.budget_why, "A model must fit in 85% of that (" + rec.limit_gb + " GB), counting its file size plus about 1.5 GB for the conversation.", "Green = uses at most 60% of the budget. Blue = fits in 85%. Red = does not fit."].join("\n") }));
+  else box.append(el("div", { class: "h", text: "Based on " + hw.ram_gb + " GB of memory" + (hw.gpu ? " and your " + hw.gpu : "") + ". Choose Details to see the math." }));
   if (rec.note && rec.picks.length) box.append(el("div", { class: "h", text: rec.note }));
+}
+function modelAction(tag, installed) {
+  const wrap = el("div", { class: "mact" });
+  const use = () => { cur.model = tag; loadModels(true).then(() => { $("#modelPick").value = tag; pickChanged(); pvFollow(); }); };
+  if (installed) { wrap.append(el("span", { class: "okt", text: "Installed" }), el("button", { type: "button", class: "mini", onclick: use }, "Use this model")); return wrap; }
+  const bar = el("div", { class: "pbar", hidden: "" }, el("i")), msg = el("span", { class: "h" });
+  const btn = el("button", { type: "button", class: "mini dl", disabled: canEdit ? undefined : "" }, "Download");
+  btn.addEventListener("click", async () => {
+    btn.disabled = true; bar.hidden = false; msg.textContent = "Starting...";
+    try {
+      const { id } = await api("/api/ollama/pull", { model: tag, base_url: $("#base").value.trim() });
+      for (;;) {
+        await new Promise((r) => setTimeout(r, 700));
+        const st = await api("/api/ollama/pull?id=" + id);
+        bar.firstChild.style.width = st.pct + "%"; msg.textContent = st.error || (st.done ? "Done" : (st.status || "Downloading") + " " + st.pct + "%");
+        if (st.error) { btn.disabled = false; btn.textContent = "Try again"; bar.hidden = true; msg.className = "h bad"; break; }
+        if (st.done) { wrap.replaceChildren(el("span", { class: "okt", text: "Installed" }), el("button", { type: "button", class: "mini", onclick: use }, "Use this model")); use(); break; }
+      }
+    } catch (e) { btn.disabled = false; bar.hidden = true; msg.textContent = e.message; msg.className = "h bad"; }
+  });
+  wrap.append(btn, bar, msg); return wrap;
 }
 async function states() {
   const s = (await api("/api/states")).states; const sel = $("#states"); sel.replaceChildren();
@@ -212,7 +236,12 @@ function changed() {
    and its edges are feathered so it melts into the page instead of sitting in a hard box. */
 function logoControl(f, current) {
   let orig = null; const st = { feather: 25, strip: true };
-  const prev = el("img", { class: "logoprev", alt: "Logo preview", hidden: current ? undefined : "" }); if (current) prev.src = current;
+  const prev = el("img", { class: "logoprev", alt: "Result", hidden: current ? undefined : "" }); if (current) prev.src = current;
+  const before = el("img", { class: "logoprev", alt: "Original", hidden: "" }), onpage = el("div", { class: "logopage", hidden: current ? undefined : "" }), pgimg = el("img", { alt: "" }), pgname = el("span");
+  onpage.append(pgimg, pgname); if (current) pgimg.src = current;
+  const paintPage = () => { const c = theme.light || {}; onpage.style.background = c.bg || "#f8f4e9"; onpage.style.color = c.ink || "#222"; pgname.textContent = theme.txt_title || "Your app"; };
+  paintPage();
+  const stage = el("div", { class: "logostage" }, el("figure", {}, before, el("figcaption", { text: "Original" })), el("figure", {}, prev, el("figcaption", { text: "After blending" })), el("figure", {}, onpage, el("figcaption", { text: "In your app" })));
   const file = el("input", { type: "file", accept: "image/png,image/jpeg,image/webp,image/gif", id: "f-logo-file", "aria-label": "Choose a logo picture" });
   const fe = el("input", { type: "range", min: "0", max: "50", value: "25", "aria-label": "Edge softness", disabled: "" });
   const rb = el("input", { type: "checkbox", checked: "", disabled: "" });
@@ -234,19 +263,19 @@ function logoControl(f, current) {
     }
     x.putImageData(im, 0, 0); let url = c.toDataURL("image/png");
     if (url.length > 280000) { c.width = 128; c.height = Math.round(128 * h / w); const y = c.getContext("2d"); y.drawImage(orig, 0, 0, c.width, c.height); url = c.toDataURL("image/png"); }
-    prev.src = url; prev.hidden = false; rm.hidden = false; setv(f, url);
+    prev.src = url; prev.hidden = false; pgimg.src = url; onpage.hidden = false; paintPage(); rm.hidden = false; setv(f, url);
   }
   file.addEventListener("change", () => {
     const fl = file.files[0]; if (!fl) return; if (fl.size > 4000000) { say("That picture is over 4 MB. Choose a smaller one.", true); return; }
     const u = URL.createObjectURL(fl), im = new Image();
-    im.onload = () => { orig = im; fe.disabled = rb.disabled = false; note.textContent = "Soft edges and background removal run on this computer."; render(); URL.revokeObjectURL(u); };
+    im.onload = () => { orig = im; before.src = im.src; before.hidden = false; fe.disabled = rb.disabled = false; note.textContent = "Soft edges and background removal run on this computer."; render(); /* keep the object URL while the Original tile shows it */ };
     im.onerror = () => { say("That file could not be read as a picture.", true); URL.revokeObjectURL(u); };
     im.src = u;
   });
   fe.addEventListener("input", () => { st.feather = +fe.value; render(); });
   rb.addEventListener("change", () => { st.strip = rb.checked; render(); });
-  rm.addEventListener("click", () => { orig = null; prev.hidden = true; rm.hidden = true; fe.disabled = rb.disabled = true; file.value = ""; setv(f, ""); });
-  return el("div", { class: "logobox" }, prev, el("div", { class: "logoctl" }, file, el("label", { class: "check" }, rb, "Remove plain background"), el("label", { class: "h" }, "Edge softness", fe), note, rm));
+  rm.addEventListener("click", () => { orig = null; prev.hidden = true; before.hidden = true; onpage.hidden = true; rm.hidden = true; fe.disabled = rb.disabled = true; file.value = ""; setv(f, ""); });
+  return el("div", { class: "logobox" }, stage, el("div", { class: "logoctl" }, file, el("label", { class: "check" }, rb, "Remove plain background"), el("label", { class: "h" }, "Edge softness", fe), note, rm));
 }
 function control(f) {
   const id = "f-" + f.key; let input;
@@ -291,9 +320,15 @@ function pvFollow() {
   const names = { presets: "Whole look", wording: "Wording", colors: "Colors", background: "Background", fonts: "Fonts", shape: "Shape and spacing", emoji: "Icons", motion: "Motion", layout: "Layout", model: "Model" };
   if (cap) cap.textContent = "Showing: " + (names[activeSec] || "Chat");
   if (card.hidden === m) { (m ? card : fr).hidden = false; (m ? fr : card).hidden = true; (m ? card : fr).animate([{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }], { duration: 180, easing: "ease-out" }); }
+  { const pn = document.querySelector(".pvnote:not(#pvcap)"), ph = document.querySelector(".pvhead b"), pm = $("#pvmode"); if (pn) pn.hidden = m; if (ph) ph.textContent = m ? "Model status" : "Live preview"; if (pm) pm.hidden = m; }
   if (m) {
-    const k = keyInfo[cur.provider] || {}, r = $("#testres");
-    card.replaceChildren(el("b", { text: NAMES[cur.provider] || cur.provider }), el("div", { class: "pvm-row", text: "Model: " + (chosenModel() || "not chosen yet") }), el("div", { class: "pvm-row", text: k.source === "saved" ? "Key saved" : (k.source === "env" ? "Key from environment" : (k.needed === false ? "No key needed" : "No key yet")) }), el("div", { class: "pvm-row " + (r && r.classList.contains("ok") ? "ok" : (r && r.classList.contains("bad") ? "bad" : "")), text: (r && r.textContent) || "Connection not tested yet" }), el("div", { class: "pvm-ans", text: "Sample answer: Refunds are available within 30 days of purchase [1]." }));
+    const k = keyInfo[cur.provider] || {}, r = $("#testres"), st = r && r.classList.contains("ok") ? "ok" : (r && r.classList.contains("bad") ? "bad" : "");
+    const keyTxt = k.source === "saved" ? "Key saved on this computer" : (k.source === "env" ? "Key from environment variable" : (k.needed === false ? "No key needed" : "No key yet"));
+    card.replaceChildren(
+      el("div", { class: "pvm-top" }, mark(cur.provider), el("div", {}, el("b", { text: NAMES[cur.provider] || cur.provider }), el("div", { class: "pvm-row", text: chosenModel() || "No model chosen yet" }))),
+      el("div", { class: "pvm-row", text: keyTxt }),
+      el("div", { class: "pvm-badge " + st, text: st === "ok" ? "Connected" : (st === "bad" ? "Not working" : "Not tested yet") }),
+      el("div", { class: "pvm-row " + st, text: (r && r.textContent) || "Press Test connection to check the key and model." }));
   }
 }
 function pvPop() { const f = document.getElementById("pv"); if (!f || matchMedia("(prefers-reduced-motion:reduce)").matches) return; f.animate([{ opacity: .55, transform: "scale(.985)" }, { opacity: 1, transform: "scale(1)" }], { duration: 220, easing: "ease-out" }); }
