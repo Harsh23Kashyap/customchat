@@ -236,3 +236,9 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Related questions no longer show literal backticks or bold marks (plain text only).
 - Related prompt now asks for new angles the answer does not already cover.
 - Run logs list PMID and year for every source (29754952 = 2018, 34633860 = 2021, 35371260 = 2022, 35871650 = 2022, 39193706 = 2025, 34391831 = 2021).
+
+## Pass 31
+- Default prompt: no remarks about limits (small, short) unless a passage states them; refer to "the sources" or "the studies cited", never "the evidence provided"; include a result that cuts against the main conclusion.
+- Related questions ask about the topic, not the wording of an example.
+- Related hover shown (underline) in the Acme shot.
+- Source chips: long titles are cut to one line with an ellipsis and the number stays on one line (they used to wrap into tall pills with "[ 2 ]" split across lines). Full title on hover.
