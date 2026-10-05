@@ -17,6 +17,7 @@ function draw() {
   $("#model").value = cur.model || ""; $("#base").value = cur.base_url || ""; $("#temp").value = cur.temperature; $("#topk").value = cur.top_k; $("#rewrite").checked = !!cur.query_rewrite;
   $("#tv").textContent = (+cur.temperature).toFixed(2); $("#kv").textContent = cur.top_k;
   document.querySelectorAll("#seg button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.p === cur.provider)));
+  buildChips();
   provExtras();
   for (const id of ["model", "apikey", "keysave", "keyclear", "modelPick", "refreshModels", "testconn", "base", "temp", "topk", "rewrite", "apply", "load", "saveLook", "resetAll", "imp"]) $("#" + id).disabled = !canEdit;
 }
@@ -31,6 +32,7 @@ async function provExtras() {
   const ks = $("#keystate"); ks.className = "keystate" + (k.has ? " ok" : "");
   ks.textContent = k.has ? (k.source === "env" ? "Key found in an environment variable." : "A key is saved.") : (k.needed ? "No key yet." : "");
   $("#keyclear").hidden = k.source !== "saved"; $("#apikey").value = "";
+  ollamaPanel();
   await loadModels(false);
 }
 async function loadModels(force) {
@@ -46,6 +48,43 @@ async function loadModels(force) {
 }
 function pickChanged() { const v = $("#modelPick").value; const typed = v === OTHER; $("#model").hidden = !typed; if (!typed) { $("#model").value = v; cur.model = v; } }
 const chosenModel = () => ($("#modelPick").value === OTHER ? $("#model").value.trim() : $("#modelPick").value);
+const BRAND = { openai: ["#10a37f", "O"], claude: ["#d97757", "C"], gemini: ["#4285f4", "G"], ollama: ["#2b2b2b", "Ol"], deepseek: ["#4d6bfe", "D"], groq: ["#f55036", "Gq"], mistral: ["#fa520f", "M"], minimax: ["#e0245e", "Mx"], mimo: ["#ff6900", "Mi"], openrouter: ["#6467f2", "Or"], mock: ["#8a94a3", "\u2022"], openai_compatible: ["#5b6b7f", "+"] };
+const TOP = ["openai", "claude", "gemini", "deepseek", "ollama"];
+let chipsMore = false, chipList = [];
+function mark(p) { const b = BRAND[p] || ["#667", (NAMES[p] || p)[0]]; return el("span", { class: "pm", style: "background:" + (p === "gemini" ? "linear-gradient(135deg,#4285f4,#9b72cb 60%,#d96570)" : b[0]), "aria-hidden": "true", text: b[1] }); }
+function buildChips(list) {
+  if (list) chipList = list; const seg = $("#seg"); seg.replaceChildren();
+  const top = TOP.filter((p) => chipList.includes(p)), rest = chipList.filter((p) => !top.includes(p));
+  if (rest.includes(cur.provider)) chipsMore = true;
+  for (const p of top.concat(chipsMore ? rest : [])) { const b = el("button", { type: "button", "data-p": p, role: "radio", "aria-checked": String(p === cur.provider) }, mark(p), NAMES[p] || p); b.addEventListener("click", () => { if (canEdit) { cur = { ...read(), provider: p, model: "" }; draw(); } }); seg.append(b); }
+  if (rest.length) { const m = el("button", { type: "button", class: "chipmore" }, chipsMore ? "Show fewer" : "Load more"); m.addEventListener("click", () => { chipsMore = !chipsMore; buildChips(); }); seg.append(m); }
+}
+/* ---------- local model suggestions (Ollama) ---------- */
+let hwView = "simple";
+async function ollamaPanel() {
+  const box = $("#ollamabox"); box.hidden = cur.provider !== "ollama"; if (box.hidden) return;
+  box.replaceChildren(el("div", { class: "h", text: "Looking at this computer..." }));
+  let r; try { r = await api("/api/hardware?base_url=" + encodeURIComponent($("#base").value.trim())); } catch (e) { box.replaceChildren(el("div", { class: "h", text: e.message })); return; }
+  const hw = r.hardware, rec = r.recommendation;
+  const tabs = el("div", { class: "seg mini", role: "radiogroup", "aria-label": "View" });
+  for (const [v, t] of [["simple", "Simple"], ["tech", "Technical"]]) tabs.append(el("button", { type: "button", role: "radio", "aria-checked": String(hwView === v), onclick: () => { hwView = v; ollamaPanel(); } }, t));
+  const head = el("div", { class: "ohead" }, el("b", { text: "Best models for this computer" }), tabs);
+  const cards = el("div", { class: "ocards" });
+  if (!rec.picks.length) cards.append(el("div", { class: "h", text: rec.note || "No suggestion available." }));
+  rec.picks.forEach((p, i) => {
+    const c = el("div", { class: "ocard" }, el("div", { class: "otag", text: p.label }), el("b", { text: p.name }), el("div", { class: "h", text: p.note }),
+      el("div", { class: "ometa", text: "About " + p.download_gb + " GB download. Speed: " + p.speed + "." }));
+    if (hwView === "tech") c.append(el("div", { class: "otech", text: p.tag + " | needs about " + p.needs_gb + " GB (" + p.uses_pct + "% of the " + rec.budget_gb + " GB budget) | " + p.params_b + "B parameters, 4-bit" }));
+    const act = el("div", { class: "oact" });
+    if (p.installed) act.append(el("span", { class: "ok", text: "Installed" }), el("button", { type: "button", class: "mini", onclick: () => { cur.model = p.tag; loadModels(true).then(() => { $("#modelPick").value = p.tag; pickChanged(); }); } }, "Use this model"));
+    else act.append(el("code", { text: p.pull }), el("button", { type: "button", class: "mini", onclick: () => { navigator.clipboard && navigator.clipboard.writeText(p.pull); say("Copied. Run it in a terminal, then press Refresh list."); } }, "Copy command"));
+    c.append(act); cards.append(c);
+  });
+  box.replaceChildren(head, cards);
+  if (hwView === "tech") box.append(el("pre", { class: "otechbox", text: ["Computer: " + hw.os + " " + hw.arch + ", " + hw.cores + " CPU cores, " + hw.ram_gb + " GB RAM", "GPU: " + (hw.gpu ? hw.gpu + " (" + hw.vram_gb + " GB video memory)" : (hw.apple_silicon ? "Apple Silicon (shared memory)" : "none found")), "Ollama: " + (r.ollama_running ? "running, " + (r.installed || []).length + " models installed" : "not reachable at the Base URL"), "", "Memory budget: " + rec.budget_gb + " GB. " + rec.budget_why, "A model must fit in 85% of that (" + rec.limit_gb + " GB), counting its file size plus about 1.5 GB for the conversation.", "Picks: largest that fits, largest using at most 60%, largest using at most 30%."].join("\n") }));
+  else box.append(el("div", { class: "h", text: "Based on " + hw.ram_gb + " GB of memory" + (hw.gpu ? " and your " + hw.gpu : "") + ". Switch to Technical to see the math." }));
+  if (rec.note && rec.picks.length) box.append(el("div", { class: "h", text: rec.note }));
+}
 async function states() {
   const s = (await api("/api/states")).states; const sel = $("#states"); sel.replaceChildren();
   sel.append(el("option", { value: "", text: "Select a state..." })); s.forEach((n) => sel.append(el("option", { value: n, text: n })));
@@ -273,7 +312,7 @@ async function init() {
   const d = await api("/api/settings"); cur = d.settings; canEdit = d.can_edit; try { keyInfo = (await api("/api/provider/status")).keys; } catch (e) { keyInfo = {}; }
   const th = await api("/api/theme"); theme = th.theme; meta = th.meta; saved = clone(theme); canEdit = canEdit && th.can_edit !== false;
   const seg = $("#seg");
-  d.providers.forEach((p) => { const b = el("button", { type: "button", "data-p": p, role: "radio" }, NAMES[p] || p); b.addEventListener("click", () => { if (canEdit) { cur = { ...read(), provider: p, model: "" }; draw(); } }); seg.append(b); });
+  buildChips(d.providers);
   draw(); await states(); buildPresets(); drawLook();
   document.querySelectorAll("#pvmode button").forEach((b) => b.addEventListener("click", () => { setPvMode(b.dataset.m); pushPreview(); }));
   $("#pv").addEventListener("load", () => { setPvMode(theme.mode === "dark" ? "dark" : "light"); setTimeout(pushPreview, 250); });

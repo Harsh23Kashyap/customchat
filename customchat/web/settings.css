@@ -141,3 +141,15 @@ input[type=range]{transition:opacity .15s}
 .tile{animation:tilein .25s ease-out}@keyframes tilein{from{opacity:.4}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){.tile,.testres{animation:none}.go,.mini,.menu a{transition:none}}
 .pvmodel[hidden],#pv[hidden]{display:none!important}
+
+.pm{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;color:#fff;font-size:10px;font-weight:700;margin-right:7px;vertical-align:-5px;letter-spacing:0}
+#seg button[aria-checked=true] .pm{box-shadow:0 0 0 2px rgba(255,255,255,.7)}
+#seg .chipmore{border-style:dashed;color:var(--cfg-accent,#1d5fd1);font-weight:600}
+.ollamabox{margin:10px 0 14px;padding:14px;border:1px solid #e3e9f0;border-radius:16px;background:#fbfdff}
+.ohead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.ocards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.ocard{border:1px solid #e3e9f0;border-radius:14px;padding:12px;background:#fff;display:flex;flex-direction:column;gap:5px;animation:tilein .25s ease-out}
+.otag{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase!important;color:var(--cfg-accent,#1d5fd1)}
+.ometa{font-size:13px;color:#4a5568}.otech{font-size:12px;color:#5a6676;font-family:ui-monospace,Menlo,monospace}
+.oact{margin-top:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.oact code{font-size:12px;background:#f2f6fb;padding:4px 8px;border-radius:8px}.oact .ok{color:#1d7a46;font-weight:600;font-size:13px}
+.otechbox{margin:10px 0 0;white-space:pre-wrap;font-size:12px;line-height:1.55;background:#f2f6fb;border-radius:12px;padding:12px;color:#2d3748}
