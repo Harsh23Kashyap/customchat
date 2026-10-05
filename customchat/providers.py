@@ -155,10 +155,16 @@ class OpenAICompatible(Streams):
         key = _key(self.key_env, self.kind, required=not local)
         return {"Authorization": "Bearer " + key} if key else {}
 
+    def _body(self, messages, **extra):
+        b = {"model": self.model, "messages": messages, **extra}
+        # OpenAI's newer models (gpt-5, gpt-6, o-series) only accept the default temperature.
+        if not (self.kind == "openai" and self.model.lower().startswith(("gpt-5", "gpt-6", "o1", "o3", "o4"))):
+            b["temperature"] = self.temp
+        return b
+
     def stream(self, messages):
         headers = self._auth()
-        for line in _stream_lines(self.base + "/chat/completions", {"model": self.model, "messages": messages,
-                                  "temperature": self.temp, "stream": True}, headers, self.t):
+        for line in _stream_lines(self.base + "/chat/completions", self._body(messages, stream=True), headers, self.t):
             if not line.startswith("data:") or line.endswith("[DONE]"):
                 continue
             try:
@@ -174,13 +180,12 @@ class OpenAICompatible(Streams):
         dbase, denv = PRESET_PROVIDERS.get(p["type"], ("https://api.openai.com/v1", ""))
         self.base = (p["base_url"] or dbase).rstrip("/")
         self.model, self.t, self.temp = p["model"], p["timeout"], p["temperature"]
-        self.key_env = p["api_key_env"] or denv
+        self.key_env = p["api_key_env"] or denv or {"openai": "OPENAI_API_KEY"}.get(p["type"], "")
         self.kind = p["type"]
 
     def complete(self, messages):
         headers = self._auth()
-        r = _post(self.base + "/chat/completions", {"model": self.model, "messages": messages,
-                                                    "temperature": self.temp}, headers, self.t)
+        r = _post(self.base + "/chat/completions", self._body(messages), headers, self.t)
         try:
             return r["choices"][0]["message"]["content"].strip()
         except (KeyError, IndexError, TypeError):
