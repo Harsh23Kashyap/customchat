@@ -3,6 +3,8 @@
 mock               deterministic, no network (tests, demos, first run)
 ollama             local model via http://localhost:11434
 openai             OpenAI chat completions, key from an env var
+claude             Anthropic Messages API, key from ANTHROPIC_API_KEY
+gemini             Google Gemini, key from GEMINI_API_KEY
 openai_compatible  any OpenAI-style server (LM Studio, vLLM, llama.cpp) via base_url
 """
 import json, os, re, urllib.request, urllib.error
@@ -139,6 +141,51 @@ class OpenAICompatible(Streams):
             raise ProviderError("Unexpected provider response") from None
 
 
+def _key(env):
+    key = os.environ.get(env, "")
+    if not key:
+        raise ProviderError("Set the %s environment variable" % env)
+    return key
+
+
+class Claude(Streams):
+    """Anthropic Messages API. Key from an env var (default ANTHROPIC_API_KEY)."""
+    def __init__(self, cfg):
+        p = cfg["provider"]
+        self.base = (p["base_url"] or "https://api.anthropic.com").rstrip("/")
+        self.model, self.t, self.temp, self.key_env = p["model"], p["timeout"], p["temperature"], p["api_key_env"] or "ANTHROPIC_API_KEY"
+
+    def complete(self, messages):
+        system = "\n\n".join(m["content"] for m in messages if m["role"] == "system")
+        turns = [{"role": m["role"], "content": m["content"]} for m in messages if m["role"] in ("user", "assistant")]
+        r = _post(self.base + "/v1/messages", {"model": self.model, "max_tokens": 1500, "temperature": self.temp,
+                  "system": system, "messages": turns}, {"x-api-key": _key(self.key_env), "anthropic-version": "2023-06-01"}, self.t)
+        try:
+            return "".join(b.get("text", "") for b in r["content"] if b.get("type") == "text").strip()
+        except (KeyError, TypeError):
+            raise ProviderError("Unexpected provider response") from None
+
+
+class Gemini(Streams):
+    """Google Gemini generateContent. Key from an env var (default GEMINI_API_KEY), sent as a header."""
+    def __init__(self, cfg):
+        p = cfg["provider"]
+        self.base = (p["base_url"] or "https://generativelanguage.googleapis.com").rstrip("/")
+        self.model, self.t, self.temp, self.key_env = p["model"], p["timeout"], p["temperature"], p["api_key_env"] or "GEMINI_API_KEY"
+
+    def complete(self, messages):
+        system = "\n\n".join(m["content"] for m in messages if m["role"] == "system")
+        contents = [{"role": "model" if m["role"] == "assistant" else "user", "parts": [{"text": m["content"]}]} for m in messages if m["role"] in ("user", "assistant")]
+        body = {"contents": contents, "generationConfig": {"temperature": self.temp}}
+        if system:
+            body["systemInstruction"] = {"parts": [{"text": system}]}
+        r = _post("%s/v1beta/models/%s:generateContent" % (self.base, self.model), body, {"x-goog-api-key": _key(self.key_env)}, self.t)
+        try:
+            return "".join(x.get("text", "") for x in r["candidates"][0]["content"]["parts"]).strip()
+        except (KeyError, IndexError, TypeError):
+            raise ProviderError("Unexpected provider response") from None
+
+
 class WithFallback:
     """Try the primary provider; on ProviderError use the fallback (before any text was produced)."""
     def __init__(self, primary, secondary):
@@ -164,7 +211,7 @@ class WithFallback:
 
 def _one(cfg, block):
     c = {**cfg, "provider": {**cfg["provider"], **block, "fallback": None}}
-    return {"mock": Mock, "ollama": Ollama, "openai": OpenAICompatible, "openai_compatible": OpenAICompatible}[c["provider"]["type"]](c)
+    return {"mock": Mock, "ollama": Ollama, "openai": OpenAICompatible, "openai_compatible": OpenAICompatible, "claude": Claude, "gemini": Gemini}[c["provider"]["type"]](c)
 
 
 def make(cfg):

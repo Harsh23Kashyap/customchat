@@ -2,7 +2,7 @@
 import uuid, hmac, json, mimetypes, os, re, sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
-from . import schema, providers
+from . import schema, providers, fetch
 from .pipeline import Engine
 from .store import Store
 from .exports import bibtex, pdf_bytes, chat_markdown
@@ -152,6 +152,9 @@ def make_handler(cfg, engine):
                 if not name or not text.strip() or len(text) > 150_000:
                     raise ValueError("Upload needs a name and text up to 150,000 characters")
                 return self._send(200, {"id": store.add_upload(o, name, text)})
+            if path == "/api/load-url" and method == "POST":
+                name, text = fetch.load(str(b.get("url", "")).strip())
+                return self._send(200, {"id": store.add_upload(o, name, text), "name": name, "chars": len(text)})
             if path == "/api/delete-upload":
                 store.delete_upload(o, b.get("upload")); engine._cache.clear(); return self._send(200, {"ok": True})
             if path == "/api/topics":

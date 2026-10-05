@@ -18,7 +18,7 @@ DEFAULTS = {
         "theme": "auto",           # auto | light | dark
     },
     "provider": {
-        "type": "mock",            # mock | ollama | openai | openai_compatible
+        "type": "mock",            # mock | ollama | openai | claude | gemini | openai_compatible
         "model": "",
         "base_url": "",            # ollama default http://localhost:11434
         "api_key_env": "",         # NAME of the env var that holds the key, never the key
@@ -43,7 +43,7 @@ DEFAULTS = {
     "server": {"host": "127.0.0.1", "port": 8080},
 }
 
-PROVIDERS = {"mock", "ollama", "openai", "openai_compatible"}
+PROVIDERS = {"mock", "ollama", "openai", "openai_compatible", "claude", "gemini"}
 CONNECTORS = {"local_files", "http_json", "pubmed", "arxiv", "python"}
 AUTH_MODES = {"none", "token"}
 
@@ -98,7 +98,7 @@ def validate(raw):
     p = cfg["provider"]
     if p["type"] not in PROVIDERS:
         raise ConfigError("provider.type must be one of " + ", ".join(sorted(PROVIDERS)))
-    if p["type"] in ("ollama", "openai", "openai_compatible") and not p["model"]:
+    if p["type"] in ("ollama", "openai", "openai_compatible", "claude", "gemini") and not p["model"]:
         raise ConfigError("provider.model is required for provider " + p["type"])
     if p["type"] in ("openai", "openai_compatible") and not p["api_key_env"]:
         if p["type"] == "openai":
@@ -107,7 +107,7 @@ def validate(raw):
     if fb is not None:
         if not isinstance(fb, dict) or fb.get("type") not in PROVIDERS or "api_key" in fb:
             raise ConfigError("provider.fallback needs a valid type and no api_key")
-        if fb["type"] in ("ollama", "openai", "openai_compatible") and not fb.get("model"):
+        if fb["type"] in ("ollama", "openai", "openai_compatible", "claude", "gemini") and not fb.get("model"):
             raise ConfigError("provider.fallback.model is required")
     if "api_key" in p:
         raise ConfigError("Do not put keys in the app file. Use provider.api_key_env with an env var name.")
