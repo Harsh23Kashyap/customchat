@@ -175,20 +175,20 @@ class Engine:
 
     def correct(self, answer, evidence, ledger, asked=""):
         """When a sentence is flagged as vague about regain, rewrite once with the passages and the flagged sentences, then keep the rewrite only if the flag is gone."""
-        flagged = [l["claim"] for l in ledger if l.get("vague_regain") or l.get("animal_unmarked")]
+        flagged = [l["claim"] for l in ledger if l.get("vague_regain") or l.get("animal_unmarked") or l.get("unhedged_lead")]
         if not flagged or self.cfg["provider"]["type"] == "mock":
             return answer
         ev = "\n".join("[%d] %s. %s" % (e["n"], e["title"], e["text"][:3000]) for e in evidence)
         try:
             out = self.provider.complete([{"role": "system", "content": self.prompts.text("revise")},
-                                          {"role": "user", "content": "These sentences are too vague: %s\nSay exactly what the passage measured (for example fat mass regain, and which group had more). If a sentence rests on an animal study, say plainly that it was in rats or mice.\n\nAnswer:\n%s\n\nEvidence:\n%s" % (" | ".join(flagged)[:800], answer, ev)}]).strip()
+                                          {"role": "user", "content": "These sentences are too vague: %s\nSay exactly what the passage measured (for example fat mass regain, and which group had more). If a sentence rests on an animal study, say plainly that it was in rats or mice. If the opening says Yes or Probably and the effect came with weight loss, open with Possibly or say the effect may partly come from the weight loss.\n\nAnswer:\n%s\n\nEvidence:\n%s" % (" | ".join(flagged)[:800], answer, ev)}]).strip()
         except providers.ProviderError:
             return answer
         if len(out) < 0.4 * len(answer) or not re.search(r"\[\d+\]", out):
             return answer
         new, ev2 = self.tidy(out, evidence)
         led2 = self.ledger(new, ev2, asked)
-        if any(l.get("vague_regain") or l.get("animal_unmarked") for l in led2) or any(l.get("bad_numbers") for l in led2):
+        if any(l.get("vague_regain") or l.get("animal_unmarked") or l.get("unhedged_lead") for l in led2) or any(l.get("bad_numbers") for l in led2):
             return answer  # the rewrite must clear the flag and add no number the cited passages lack
         return out
 
@@ -267,7 +267,7 @@ class Engine:
     def ledger(answer, evidence, asked=""):
         valid = {e["n"] for e in evidence}
         out = []
-        for sent in re.split(r"(?<=[.!?])\s+(?!\[\d+\])|(?<=\])\s+(?=[A-Z0-9*])", answer):
+        for sent in re.split(r"(?<=[.!?])\s+(?!\[\d+\])|(?<=[.!?]\*\*)\s+|(?<=\])\s+(?=[A-Z0-9*])", answer):
             cites = [int(n) for n in re.findall(r"\[(\d+)\]", sent)]
             if sent.strip():
                 claim = re.sub(r"\s*\[\d+\]", "", sent).strip()
@@ -276,8 +276,16 @@ class Engine:
                 blob = " ".join(e.get("text", "").lower() for e in evidence if e.get("n") in good)
                 vague = "regain" in claim.lower() and "fat" not in claim.lower() and "fat mass regain" in blob
                 animal = bool(good) and re.search(r"\b(rats?|mice|mouse|murine|rodents?|mouse|monkeys?|zebrafish)\b", blob) is not None and re.search(r"\b(rats?|mice|mouse|murine|rodents?|animals?|preclinical|monkeys?|zebrafish)\b", claim.lower()) is None
-                out.append({"claim": claim, "overlap": Engine.support(claim, good, evidence), "cites": good, "bad_numbers": bad,
+                weak = [c for c in good if len(good) > 1 and Engine.support(claim, [c], evidence) < 0.34]
+                out.append({"weak_cites": weak, "claim": claim, "overlap": Engine.support(claim, good, evidence), "cites": good, "bad_numbers": bad,
                             "invalid": [c for c in cites if c not in valid], "supported": bool(cites) and all(c in valid for c in cites) and not bad and not vague and not animal, "vague_regain": vague, "animal_unmarked": animal})
+        if out:
+            lead = re.sub(r"[*_\s]", "", out[0]["claim"].lower())
+            allev = " ".join((e.get("title", "") + " " + e.get("text", "")).lower() for e in evidence)
+            # a confident lead ("Yes", "Probably") on an effect reported with weight loss needs the weight caveat somewhere
+            out[0]["unhedged_lead"] = bool(re.match(r"(yes|probably)\b", lead)) and "weight" in allev and not any("weight" in l["claim"].lower() for l in out[1:])
+            if out[0]["unhedged_lead"]:
+                out[0]["supported"] = False
         return out
 
     # optional steps, each off by default and only used with a real model
