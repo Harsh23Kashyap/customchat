@@ -194,3 +194,9 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Vendor blurbs follow the official wording: GPT-6.1 Sol "near-Astra performance at a lower cost, for complex coding, computer use and professional work" (developers.openai.com/api/docs/models/gpt-6.1-sol); Gemini 3.8 Flash "our most intelligent Flash model" (ai.google.dev/gemini-api/docs/models/gemini-3.8-flash).
 - Dark mode: the user's message bubble had almost no contrast (dark grey text on dark grey). Fixed. Answer action buttons lost their pill borders in dark to match light.
 - Disabled logo options now have a muted label.
+
+## Pass 24 (from B2's critique of 5e99f8a02c)
+- Test connection is disabled until a key exists, with "Save a key first, then test."
+- The missing-key message names the variable (OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY) and tells people to paste a key under Model.
+- More space under the Model heading and helper line.
+- Full dark chat shot taken (sidebar, answer, composer).
