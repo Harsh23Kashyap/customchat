@@ -44,10 +44,23 @@ function codeCard(kind, title, help, ph) {
   const code = el("textarea", { rows: "12", class: "code", spellcheck: "false", "aria-label": title + " code", placeholder: "The code appears here for you to read." });
   const out = el("div", { class: "review", role: "status", "aria-live": "polite" });
   async function review() { try { const r = await api("/api/codegen/review", { kind, code: code.value }); out.className = "review " + (r.ok ? "ok" : "bad"); out.replaceChildren(el("b", { text: r.ok ? "Safety check passed" : "Needs changes" }), ...(r.problems || []).map((p) => el("div", { text: p }))); } catch (x) { out.textContent = x.message; } }
-  const gen = el("button", { type: "button", class: "go blue", text: "Write the code", onclick: async () => { if (!brief.value.trim()) { out.className = "review bad"; out.textContent = "Describe what it should do first."; return; } gen.disabled = true; out.className = "review"; out.textContent = "Writing..."; try { const r = await api("/api/codegen", { kind, brief: brief.value }); code.value = r.code || ""; await review(); if (!r.model_used) out.append(el("div", { class: "h", text: "No model is connected, so this is a starting template to edit." })); } catch (x) { out.className = "review bad"; out.textContent = x.message; } gen.disabled = false; } });
+  const gen = el("button", { type: "button", class: "go blue", text: "Write the code", onclick: async () => { if (!brief.value.trim()) { out.className = "review bad"; out.textContent = "Describe what it should do first."; return; } gen.disabled = true; out.className = "review"; out.textContent = "Writing..."; try { const r = await api("/api/codegen", { kind, brief: brief.value, sample }); sample = ""; code.value = r.code || ""; await review(); if (!r.model_used) out.append(el("div", { class: "h", text: "No model is connected, so this is a starting template to edit." })); } catch (x) { out.className = "review bad"; out.textContent = x.message; } gen.disabled = false; } });
+  let sample = "";
+  const tq = el("input", { placeholder: "Sample question to try", "aria-label": "Sample question", value: kind === "search" ? "vitamin D and sleep" : "Can you tell me about vitamin D?" });
+  const tres = el("div", { class: "review", role: "status", "aria-live": "polite" });
+  const tryBtn = el("button", { type: "button", class: "go ghost", text: "Try it", title: "Runs this code once, in a separate limited process, with your sample question", onclick: async () => {
+    tryBtn.disabled = true; tres.className = "review"; tres.textContent = "Running once..."; try { const r = await api("/api/codegen/test", { kind, code: code.value, query: tq.value }); tres.className = "review " + (r.ok ? "ok" : "bad");
+      const rows = [el("b", { text: r.ok ? "Worked" + (kind === "search" ? ": " + r.count + " result" + (r.count === 1 ? "" : "s") + " in " + r.seconds + "s" : ": " + (r.result || "")) : r.error || (r.empty ? "It ran but returned no results. Try another sample question, or show a raw response and rewrite the parsing." : "Needs changes")})];
+      (r.problems || []).forEach((x) => rows.push(el("div", { text: x }))); (r.items || []).forEach((it) => rows.push(el("div", { class: "item", text: (it.title || "(no title)") + (it.year ? " (" + it.year + ")" : "") + ": " + (it.text || "").slice(0, 110) })));
+      tres.replaceChildren(...rows); } catch (x) { tres.className = "review bad"; tres.textContent = x.message; } tryBtn.disabled = false; } });
+  const url = el("input", { placeholder: "https://api.example.org/search?q={query}", "aria-label": "API address for a sample response" });
+  const raw = el("textarea", { rows: "5", class: "code", "aria-label": "Raw response", placeholder: "A raw response from the API appears here. You can also paste one.", spellcheck: "false" });
+  const show = el("button", { type: "button", class: "go ghost", text: "Show raw response", onclick: async () => { try { const r = await api("/api/codegen/sample", { url: url.value, query: tq.value }); raw.value = r.body; tres.className = "review"; tres.textContent = "Got HTTP " + r.status + " (" + (r.type || "unknown type") + "). Now press Rewrite parsing."; } catch (x) { tres.className = "review bad"; tres.textContent = x.message; } } });
+  const rewrite = el("button", { type: "button", class: "go blue", text: "Rewrite parsing from this response", onclick: () => { sample = raw.value; gen.click(); } });
+  const live = kind === "search" ? el("details", { class: "stage inner" }, el("summary", {}, el("b", { text: "Match a real response" }), el("small", { text: "Optional" })), el("div", { class: "sbody" }, el("p", { class: "h", text: "Show what the API really sends back, so the parsing fits it. This makes one request to the address you type." }), el("div", { class: "keyrow" }, url, show), raw, rewrite)) : null;
   const copy = el("button", { type: "button", class: "go ghost", text: "Copy", onclick: () => { navigator.clipboard && navigator.clipboard.writeText(code.value); out.textContent = "Copied."; } });
   const chk = el("button", { type: "button", class: "go ghost", text: "Check again", onclick: review });
-  return el("div", { class: "sub" }, el("b", { text: title }), el("small", { text: help }), brief, el("div", { class: "keyrow" }, gen, chk, copy), code, out);
+  return el("div", { class: "sub" }, el("b", { text: title }), el("small", { text: help }), brief, live, el("div", { class: "keyrow" }, gen, chk, copy), code, out, el("div", { class: "keyrow" }, tq, tryBtn), tres);
 }
 
 function build(col) {
@@ -57,7 +70,7 @@ function build(col) {
   stages.forEach((s) => prompts.append(stageCard(s)));
   if (!real) prompts.append(el("p", { class: "h", text: "Optional steps only run with a real model. In Demo mode they stay idle." }));
   const code = el("section", { class: "tile", id: "sec-code" }, el("div", { class: "head" }, el("span", { class: "ic green", text: "</>" }), el("div", {}, el("b", { text: "Code helpers" }), el("small", { text: "Describe it, read the code, then use it yourself" }))),
-    el("div", { class: "help", text: "These write small Python helpers. Nothing runs here. The code is checked for risky calls, then shown for you to read and save into your own project." }),
+    el("div", { class: "help", text: "These write small Python helpers. Nothing runs on its own. The code is checked for risky calls and shown for you to read. Press Try it to run it once, in a separate limited process, with a sample question." }),
     codeCard("search", "Search connector", "Pulls passages from your own API or website.", "Example: search my clinic's JSON API at https://example.org/api, using the q parameter, and return title, text and link."),
     codeCard("clean_query", "Query cleaning", "Tidies a question before it is searched.", "Example: remove filler words, keep drug names and numbers, and lowercase everything."));
   const m = $("#sec-model"); const anchor = $("#look");
