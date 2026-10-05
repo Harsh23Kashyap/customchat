@@ -105,16 +105,16 @@ def generate_prompt(provider, cfg, stage, brief, current="", fallback_default=""
 
 
 # ---------------- code ----------------
-def review_code(kind, code):
-    """Returns (ok, problems[]). Static checks only; this does not run the code."""
+def review_marks(kind, code):
+    """Returns [(line, message)]. Static checks only; this does not run the code."""
     spec = KINDS[kind]
-    problems = []
+    problems = []; add = lambda ln, m: problems.append((ln or 1, m))
     if len(code) > 12000:
-        return False, ["The code is too long (limit 12000 characters)."]
+        return [(1, "The code is too long (limit 12000 characters).")]
     try:
         tree = ast.parse(code)
     except SyntaxError as e:
-        return False, ["Not valid Python: line %s, %s" % (e.lineno, e.msg)]
+        return [(e.lineno or 1, "Not valid Python: %s" % e.msg)]
     has = False
     for n in ast.walk(tree):
         if isinstance(n, ast.FunctionDef) and n.name == spec["func"]:
@@ -122,27 +122,32 @@ def review_code(kind, code):
         elif isinstance(n, ast.Import):
             for a in n.names:
                 if a.name not in spec["allowed"] and a.name.split(".")[0] not in spec["allowed"]:
-                    problems.append("Imports %s, which is not allowed here." % a.name)
+                    add(getattr(n, "lineno", 1), "Imports %s, which is not allowed here." % a.name)
         elif isinstance(n, ast.ImportFrom):
             m = n.module or ""
             if m not in spec["allowed"] and m.split(".")[0] not in spec["allowed"]:
-                problems.append("Imports from %s, which is not allowed here." % m)
+                add(getattr(n, "lineno", 1), "Imports from %s, which is not allowed here." % m)
         elif isinstance(n, ast.Call):
             f = n.func
             if isinstance(f, ast.Name) and f.id in BANNED_CALLS:
-                problems.append("Calls %s(), which is not allowed." % f.id)
+                add(getattr(n, "lineno", 1), "Calls %s(), which is not allowed." % f.id)
             if isinstance(f, ast.Attribute) and f.attr in BANNED_ATTRS:
-                problems.append("Calls .%s(), which is not allowed." % f.attr)
+                add(getattr(n, "lineno", 1), "Calls .%s(), which is not allowed." % f.attr)
         elif isinstance(n, ast.Constant) and isinstance(n.value, str) and re.search(r"sk-[A-Za-z0-9]{16,}|AIza[0-9A-Za-z_-]{20,}", n.value):
-            problems.append("Looks like it contains an API key. Keys must come from environment variables.")
+            add(getattr(n, "lineno", 1), "Looks like it contains an API key. Keys must come from environment variables.")
     if not has:
-        problems.append("It must define %s." % spec["sig"])
+        add(1, "It must define %s." % spec["sig"])
     if kind == "search" and has:
         if not any(isinstance(n, ast.Try) for n in ast.walk(tree)):
-            problems.append("It has no try/except, so one odd response could crash a question. Wrap the request and the parsing.")
+            add(1, "It has no try/except, so one odd response could crash a question. Wrap the request and the parsing.")
         if "timeout" not in code:
-            problems.append("A request has no timeout, so a slow server could hang a question.")
-    return not problems, sorted(set(problems))
+            add(1, "A request has no timeout, so a slow server could hang a question.")
+    return sorted(set(problems))
+
+
+def review_code(kind, code):
+    marks = review_marks(kind, code)
+    return not marks, sorted({m for _, m in marks})
 
 
 def code_template(kind, brief):

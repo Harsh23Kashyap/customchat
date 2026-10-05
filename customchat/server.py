@@ -207,8 +207,8 @@ def make_handler(cfg, engine):
                         kind = str(b.get("kind") or "")
                         if kind not in generators.KINDS:
                             return self._send(400, {"error": "Unknown code type"})
-                        ok, probs = generators.review_code(kind, str(b.get("code") or ""))
-                        return self._send(200, {"ok": ok, "problems": probs})
+                        marks = generators.review_marks(kind, str(b.get("code") or ""))
+                        return self._send(200, {"ok": not marks, "problems": sorted({m for _, m in marks}), "marks": [{"line": l, "message": m} for l, m in marks]})
                 except ValueError as e:
                     return self._send(400, {"error": str(e)})
             if path == "/api/ollama/pull":
