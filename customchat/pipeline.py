@@ -280,6 +280,10 @@ class Engine:
                 answer += "\n\n" + note
                 yield "token", "\n\n" + note
         ledger = self.ledger(answer, evidence) if evidence else []
+        if evidence and self.cfg["provider"]["type"] != "mock":
+            # show only the sources the answer cites; a refusal cites nothing, so it shows none
+            cited = {c for l in ledger for c in l["cites"]}
+            evidence = [e for e in evidence if e["n"] in cited]
         if temporary:
             tid = None
         else:
@@ -313,6 +317,9 @@ class Engine:
         else:
             answer = self.provider.complete(self.prompt(standalone, evidence, style, history, summary))
             ledger = self.ledger(answer, evidence)
+            if self.cfg["provider"]["type"] != "mock":
+                cited = {c for l in ledger for c in l["cites"]}
+                evidence = [e for e in evidence if e["n"] in cited]
         tid = self.store.add_turn(chat, topic, q, standalone, answer, evidence, ledger, style)
         if mem_on:
             self._summarize(owner, topic)

@@ -29,8 +29,9 @@ DEFAULTS = {
     "sources": [],                 # list of connector blocks, see docs/SCHEMA.md
     "retrieval": {"top_k": 6, "min_score": 0.0, "query_rewrite": False, "cache_ttl": 0},
     "prompt": {
-        "system": "You answer only from the numbered evidence. Cite with [n]. "
-                  "If the evidence does not cover the question, say so.",
+        "system": "You answer only from the numbered evidence. Cite with [n], placing each number right after the clause it supports, not at the end of the answer. "
+                  "If the evidence does not cover the question, say so in one plain sentence with no citations and do not point the reader elsewhere. "
+                  "Take one clear stance that matches the evidence and do not add claims the passages do not make.",
         "style": {"quick": "Answer in 2 to 4 sentences.",
                   "standard": "Answer clearly with short paragraphs.",
                   "deep": "Answer in depth with sections, caveats and open questions."},
