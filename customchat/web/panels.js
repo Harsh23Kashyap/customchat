@@ -94,11 +94,15 @@ function promptsPanel(host) {
 
 let keyStatus = {};
 async function codePanel(host) {
-  host.replaceChildren(el("div", { class: "pvhead" }, el("b", { text: "Live search keys" })), el("p", { class: "h", text: "Optional. Keys stay on this computer." }));
+  host.replaceChildren(el("div", { class: "pvhead" }, el("b", { text: "Sources and search keys" })), el("p", { class: "h", text: "Optional. Keys stay on this computer." }));
   host.append(el("div", { class: "gcard why2" }, whySvg(), el("p", { class: "h", text: "A key lets answers use the live web too." })));
-  let src = { on: false, provider: "" };
-  try { const d = await api("/api/websearch/status"); keyStatus = Object.fromEntries(d.providers.map((p) => [p.id, p.has_key])); src = d.source || src; } catch (e) { }
+  let src = { on: false, provider: "" }, cat = [];
+  try { const d = await api("/api/websearch/status"); keyStatus = Object.fromEntries(d.providers.map((p) => [p.id, p.has_key])); src = d.source || src; cat = d.catalog || []; } catch (e) { }
   const sst = el("small", { class: "h", role: "status" });
+  const CAT = [["pubmed", "PubMed", "Medical papers"], ["arxiv", "arXiv", "Science preprints"], ["wikipedia", "Wikipedia", "General background"], ["crossref", "Crossref", "Papers by DOI"], ["openalex", "OpenAlex", "Open paper index"]];
+  const have = new Set(cat); const cst = el("small", { class: "h", role: "status" });
+  const pushCat = async () => { try { const r = await api("/api/catalog", { types: [...have] }); cst.textContent = r.types.length ? "Added: " + r.types.join(", ") : "None added."; } catch (e) { cst.textContent = e.message; } };
+  host.append(el("div", { class: "gcard" }, el("b", { text: "Ready-made sources" }), el("small", { class: "h", text: "Free, no key. Tick to add." }), el("div", { class: "picks" }, ...CAT.map(([id, n, d]) => { const cb = el("input", { type: "checkbox", "aria-label": n }); cb.checked = have.has(id); cb.addEventListener("change", () => { cb.checked ? have.add(id) : have.delete(id); pushCat(); }); return el("label", { class: "pick", title: d }, cb, " " + n); })), cst));
   const chosen = new Set(src.providers || []);
   const tog = el("input", { type: "checkbox", id: "websrc" }); tog.checked = !!src.on;
   const push = async () => { try { const r = await api("/api/websearch/source", { on: tog.checked, providers: [...chosen] }); sst.textContent = r.on ? "On. Answers also use live results from " + r.providers.join(", ") + ". Each one is optional: if it fails, the others and your local sources still answer." : "Off."; } catch (e) { tog.checked = false; sst.textContent = e.message; } };
