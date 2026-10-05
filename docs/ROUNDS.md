@@ -263,3 +263,8 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Number check now also accepts a year from the source record (PubMed year) for the cited source.
 - Code replaces "the evidence provided / the passages" with "the cited sources" (verbs fixed: "do not show").
 - Rubric, 3 runs per question, 2 Nutrition questions, revise OFF vs ON: words small/short/lasting/relatively/"evidence provided": 12 vs 1; number flags 4 vs 1 (the flags were years and a mis-split claim, both fixed above). Small n, one model.
+
+## Pass 36
+- Real bug: only the first 1200 characters of each passage were sent to the model. The PubMed abstract for PMID 40749646 is 1558 characters, so the conclusion (more fat mass regain in the calorie-restriction group, IF "may be superior for weight maintenance") was cut. Answers then said "the supplied summary does not give enough follow-up results" or "the passage does not state which group regained less". Limit raised to 3000 characters. After the fix, 6 of 6 runs state the regain direction (before: 0 of 6 stated it fully).
+- Revise prompt keeps the direction of every comparison and the key numbers of the main result. ON runs now carry SMD -0.21, 4-week -4.87 vs -2.82 kg, n = 50 and 46.
+- Quote check: PMID 35565749 abstract ends "These findings suggest that IF may be superior to CCR for weight loss in some respects."
