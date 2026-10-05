@@ -6,7 +6,8 @@ Every key is optional. Unknown top-level keys are rejected so typos fail loudly.
 | key | default | meaning |
 |---|---|---|
 | id, title, tagline | my-chat, My Chat, ... | names shown in the UI |
-| accent | #2563eb | accent colour |
+| accent | #173f35 | brand colour (buttons, active rows, user bubbles) |
+| accent2 | #d7ef72 | highlight colour (send button) |
 | examples | [] | starter questions on the empty screen |
 | footer | "" | small text under the sidebar |
 
