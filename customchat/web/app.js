@@ -26,6 +26,12 @@ const ICON = {
 const svg = (n) => { const e = document.createElementNS("http://www.w3.org/2000/svg", "svg"); e.setAttribute("viewBox", "0 0 24 24"); e.setAttribute("width", "18"); e.setAttribute("height", "18"); e.setAttribute("fill", "none"); e.setAttribute("stroke", "currentColor"); e.setAttribute("stroke-width", "2"); e.setAttribute("stroke-linecap", "round"); e.setAttribute("stroke-linejoin", "round"); const p = document.createElementNS("http://www.w3.org/2000/svg", "path"); p.setAttribute("d", ICON[n]); e.append(p); return e; };
 const S = { cfg: null, chat: null, topic: null, newTopic: false, tab: "chats", sources: new Set(), turns: [], ratings: {}, temp: false, useProfile: localStorage.getItem("cc_profile_on") === "1", busy: false, token: localStorage.getItem("cc_token") || "" };
 
+const TV = (k) => ((window.CCTheme && window.CCTheme.value) || {})[k] || "";
+const PREVIEW = !!window.__ccPreview;
+function avatar(kind) {
+  const e = TV(kind === "bot" ? "emoji_bot" : "emoji_you"), a = S.cfg.app;
+  return el("div", { class: "av " + kind + (e ? " emo" : ""), text: e || (kind === "bot" ? (TV("txt_title") || a.title || "AI").replace(/[^A-Za-z]/g, "").slice(0, 2) : "You") });
+}
 async function api(path, body) {
   const h = { "Content-Type": "application/json" };
   if (S.token) h.Authorization = "Bearer " + S.token;
@@ -95,10 +101,10 @@ function showSources(evidence, hl) {
 function turnView(t, prev) {
   const nodes = [];
   if (prev && prev.chat !== t.chat) nodes.push(el("div", { class: "divider", text: "Earlier chat" }));
-  nodes.push(el("div", { class: "row u" }, el("div", { class: "av you", text: "You" }), el("div", { class: "bubble ub", text: t.question })));
+  nodes.push(el("div", { class: "row u" }, avatar("you"), el("div", { class: "bubble ub", text: t.question })));
   const bub = el("div", { class: "bubble bb" }, renderAnswer(t.answer, t.evidence));
   if (t.evidence.length) bub.append(el("div", { class: "srcs" }, el("b", { text: "Sources" }), t.evidence.slice(0, 5).map((e) => el("button", { class: "s", onclick: () => showSources(t.evidence, e.n) }, el("span", { class: "n", text: "[" + e.n + "]" }), e.title))));
-  nodes.push(el("div", { class: "row" }, el("div", { class: "av bot", text: (S.cfg.app.title || "AI").replace(/[^A-Za-z]/g, "").slice(0, 2) }), bub));
+  nodes.push(el("div", { class: "row" }, avatar("bot"), bub));
   const meta = el("div", { class: "meta" });
   if (t.evidence.length) meta.append(el("button", { class: "chip", onclick: () => showSources(t.evidence) }, t.evidence.length + " sources"));
   const weak = (t.ledger || []).filter((l) => !l.supported || (l.overlap !== undefined && l.overlap < 0.35));
@@ -136,8 +142,9 @@ function drawThread() {
   const w = el("div", { class: "wrap" });
   if (!S.turns.length) {
     const a = S.cfg.app;
-    w.append(el("div", { class: "hero" }, el("div", { class: "av bot", text: (a.title || "AI").replace(/[^A-Za-z]/g, "").slice(0, 2) }), el("div", {}, el("h1", { text: a.title }), el("p", { text: a.tagline }),
-      el("div", { class: "ex" }, a.examples.map((x) => el("button", { onclick: () => { $("#q").value = x; send(); } }, x))))));
+    const he = TV("emoji_hero") || TV("emoji_bot"), exs = TV("txt_examples") ? TV("txt_examples").split("\n").map((x) => x.trim()).filter(Boolean).slice(0, 8) : a.examples;
+    w.append(el("div", { class: "hero" }, el("div", { class: "av bot" + (he ? " emo" : ""), text: he || (TV("txt_title") || a.title || "AI").replace(/[^A-Za-z]/g, "").slice(0, 2) }), el("div", {}, el("h1", { text: TV("txt_title") || a.title }), el("p", { text: TV("txt_tagline") || a.tagline }),
+      el("div", { class: "ex" }, exs.map((x) => el("button", { onclick: () => { $("#q").value = x; send(); } }, x))))));
   } else S.turns.forEach((t, i) => w.append(...turnView(t, S.turns[i - 1])));
   th.append(w); th.scrollTop = th.scrollHeight;
   $("#pills").replaceChildren(...(S.turns.length ? [el("button", { class: "pill", title: "Start a new conversation topic in this chat", onclick: () => { S.newTopic = true; S.topic = null; toast("Next question starts a new conversation"); } }, "New conversation")] : []));
@@ -227,7 +234,7 @@ async function send() {
     const u = el("div", { class: "toast", onclick: () => { u.remove(); $("#q").value = q; send(); } }, (err || "Something went wrong") + ". Click to retry");
     document.body.append(u); setTimeout(() => u.remove(), 7000);
   }
-  S.busy = false; $("#send").replaceChildren(svg("send")); $("#send").setAttribute("aria-label", "Send"); drawThread(); loadList(); $("#q").focus();
+  S.busy = false; applyIcons(); $("#send").setAttribute("aria-label", "Send"); drawThread(); loadList(); $("#q").focus();
 }
 async function uploadDialog() {
   const link = prompt("Paste a web page link to add it as a source, or press Cancel to choose files");
@@ -267,11 +274,11 @@ const autosize = () => { const q = $("#q"); q.style.height = "auto"; q.style.hei
 
 async function init() {
   S.cfg = await api("/api/config");
-  if (S.cfg.auth === "accounts") await accountGate();
+  if (S.cfg.auth === "accounts" && !PREVIEW) await accountGate();
   { const h = S.cfg.app.accent.replace("#", ""), v = [0, 2, 4].map((i) => parseInt(h.substr(i, 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
     const L = 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; document.documentElement.style.setProperty("--on-accent", L > 0.5 ? "#000" : "#fff"); }
   const a = S.cfg.app; document.title = a.title;
-  $("#brand").textContent = a.title; $("#sideTitle").textContent = "Conversations"; $("#noteName").textContent = a.title; $("#noteText").textContent = a.footer; $("#tempPill").addEventListener("click", () => $("#tempBtn").click()); $("#themeBtn").addEventListener("click", () => { const d = document.documentElement, dark = d.dataset.theme === "dark" || (d.dataset.theme === "auto" && matchMedia("(prefers-color-scheme:dark)").matches); d.dataset.theme = dark ? "light" : "dark"; localStorage.setItem("cc_theme", d.dataset.theme); }); if (localStorage.getItem("cc_theme")) document.documentElement.dataset.theme = localStorage.getItem("cc_theme");
+  $("#brand").textContent = a.title; $("#sideTitle").textContent = "Conversations"; $("#noteName").textContent = a.title; $("#noteText").textContent = a.footer; $("#tempPill").addEventListener("click", () => $("#tempBtn").click()); $("#themeBtn").addEventListener("click", () => { const dark = document.documentElement.dataset.theme === "dark"; localStorage.setItem("cc_mode", dark ? "light" : "dark"); CCTheme.apply(CCTheme.value); });
   $("#modelBadge").textContent = S.cfg.provider.type + (S.cfg.provider.model ? " · " + S.cfg.provider.model : "");
   S.cfg.styles.forEach((s) => $("#style").append(el("option", { value: s === "standard" ? s : s, ...(s === "standard" ? { selected: "" } : {}) }, s[0].toUpperCase() + s.slice(1))));
   if (S.cfg.sources.length > 1) {
@@ -299,6 +306,8 @@ async function init() {
   $("#prevQ").addEventListener("click", () => jumpQ(-1)); $("#nextQ").addEventListener("click", () => jumpQ(1));
   setupMic(); setupSimilar(); setupResizer();
   document.addEventListener("keydown", (e) => { const t = e.target.tagName; if (["INPUT", "TEXTAREA", "SELECT"].includes(t) || e.metaKey || e.ctrlKey || e.altKey) return; if (e.key === "j") jumpQ(1); else if (e.key === "k") jumpQ(-1); });
+  applyWording(); applyIcons();
+  if (PREVIEW) { previewMode(); return; }
   drawThread(); loadList(); tour();
 }
 init().catch((e) => { document.body.textContent = "Could not start: " + e.message; });
@@ -432,6 +441,29 @@ async function accountGate() {
   btn.addEventListener("click", (e) => { e.stopPropagation(); menu.hidden = !menu.hidden; });
   document.addEventListener("click", () => (menu.hidden = true));
   tb.insertBefore(el("div", { class: "acct" }, btn, menu), $("#themeBtn"));
+}
+function applyWording() {
+  const a = S.cfg.app;
+  $("#brand").textContent = TV("txt_title") || a.title; document.title = TV("txt_title") || a.title;
+  $("#noteName").textContent = TV("txt_title") || a.title; $("#noteText").textContent = TV("txt_footer") || a.footer;
+  $("#q").placeholder = TV("txt_placeholder") || "Ask a question"; $("#hint").textContent = TV("txt_hint") || "Answers cite their sources. Check important facts.";
+  const d = document.querySelector(".cmeta span:last-child"); if (d) d.textContent = TV("txt_disclaimer") || "Not a substitute for professional advice.";
+  $("#sideTitle").textContent = TV("txt_sidebar") || "Conversations";
+}
+function applyIcons() {
+  for (const [id, key, name] of [["#send", "emoji_send", "send"], ["#upload", "emoji_attach", "clip"], ["#tempBtn", "emoji_temp", "temp"]]) {
+    const b = $(id); if (!b) continue; const e = TV(key); if (id === "#send" && S.busy) continue; b.replaceChildren(e ? document.createTextNode(e) : svg(name));
+  }
+}
+function previewMode() {
+  document.documentElement.classList.add("preview");
+  S.turns = [
+    { id: "p1", chat: "p", question: "What does the refund policy say?", answer: "Refunds are available within 30 days of purchase [1]. After that, store credit is offered instead [2].", evidence: [{ n: 1, title: "Refund policy", text: "" }, { n: 2, title: "Store credit FAQ", text: "" }], ledger: [], seconds: 2 },
+    { id: "p2", chat: "p", question: "And for digital items?", answer: "Digital items can be refunded within 14 days if they were not downloaded [1].", evidence: [{ n: 1, title: "Refund policy", text: "" }], ledger: [], seconds: 1 },
+  ];
+  S.chat = "p"; drawThread(); $("#chatTitle").textContent = "Refund questions";
+  const list = $("#list"); list.replaceChildren(...["Refund questions", "Shipping times", "Warranty"].map((t, i) => el("div", { class: "item" + (i ? "" : " on") }, el("span", { text: t }))));
+  window.addEventListener("message", (e) => { if (e.origin === location.origin && e.data && e.data.ccTheme) { applyWording(); applyIcons(); drawThread(); $("#chatTitle").textContent = "Refund questions"; } });
 }
 function tour() {
   if (localStorage.getItem("cc_tour")) return;
