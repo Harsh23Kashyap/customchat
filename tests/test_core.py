@@ -798,6 +798,40 @@ test_open_sources()
 test_ollama_fit_and_pull_validation()
 
 
+class AnimalFlag(unittest.TestCase):
+    EV = [{"n": 1, "id": "x", "title": "Fasting in rats", "text": "Alternate-day fasting caused weight loss in low-fitness rats."}]
+
+    def test_unmarked_animal_study_is_flagged(self):
+        led = Engine.ledger("Alternate-day fasting caused weight loss in low-fitness groups. [1]", self.EV)
+        self.assertTrue(led[0]["animal_unmarked"]); self.assertFalse(led[0]["supported"])
+
+    def test_marked_animal_study_passes(self):
+        led = Engine.ledger("In rats, alternate-day fasting caused weight loss. [1]", self.EV)
+        self.assertFalse(led[0]["animal_unmarked"])
+
+
+class PubMedQuery(unittest.TestCase):
+    def test_keywords_drop_question_words(self):
+        from customchat.connectors.pubmed import keywords
+        self.assertEqual(keywords("Does intermittent fasting beat continuous calorie restriction for type 2 diabetes?"),
+                         "intermittent fasting continuous calorie restriction type 2 diabetes")
+
+    def test_relaxes_when_nothing_matches(self):
+        from customchat.connectors import pubmed
+        calls = []
+        def fake(path, **p):
+            if path == "esearch.fcgi":
+                calls.append(p["term"])
+                return b'{"esearchresult":{"idlist":[]}}'
+            return b"<x/>"
+        old = pubmed._get; pubmed._get = fake
+        try:
+            pubmed.PubMed({"id": "p", "label": "P"}).search("alpha beta gamma delta")
+        finally:
+            pubmed._get = old
+        self.assertEqual(calls, ["alpha beta gamma delta", "alpha beta gamma", "alpha beta"])
+
+
 class NumberCheck(unittest.TestCase):
     def test_numbers_must_be_in_cited_passage(self):
         from customchat.pipeline import Engine
