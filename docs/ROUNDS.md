@@ -304,3 +304,10 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - PubMed search: full questions returned 0 papers because PubMed ANDs every word ("does", "beat"). Now question words are dropped, and if nothing matches the last word is dropped (down to 2 words). After the change the type 2 diabetes question returns 4 papers (before: 0).
 - 34086376 read in full: it is a rat study. New ledger flag `animal_unmarked`: a sentence citing a passage about rats/mice that never says so is flagged, and the existing rewrite step is asked to say it. Tests: 2 (flagged, marked passes). In 6 live weight-loss runs the rat paper was no longer retrieved (keyword search changed the result set), so the live effect is untested.
 - Tests: PubMedQuery (2), AnimalFlag (2). Phone checks: pin/unpin state, rename vs delete taps, undo toast.
+
+## Pass 44
+- Phone drawer: New chat now closes it (it stayed open over the new chat). Tapping Undo no longer closes the drawer, so the restored row is visible. The delete toast lasts 6 seconds (code, setTimeout 6000; not timed in a browser).
+- Test with the real 34086376 passage text and a fake model reply: the unmarked sentence is flagged, the rewrite request says "rats or mice", a rewrite that still hides the animal is rejected.
+- Nutrition prompt (dietchat example config, not deployed): the opening sentence must match the evidence; "Yes" or "Probably" only if every cited source agrees, otherwise "Possibly" or "Mixed"; effects reported with weight loss say they may partly come from it. Insulin question, 5 runs each: before 2 Probably, 1 Yes, 2 "may"; after 3 Possibly, 1 Mixed, 1 Probably.
+- Cited claims for PMIDs 40533200, 32060194, 39458528, 39732588 checked against the passage text.
+- Known limit: a bare follow-up with no topic words ("And what about a monthly plan?") ranks the wrong document first when asked in a fresh chat. In a chat after a refund question it ranks refunds first. Not rewritten.
