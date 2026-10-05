@@ -4,7 +4,6 @@ app:
   id: minimal
   title: Docs Chat
   tagline: Ask questions about the files in ./docs
-  accent: "#0a84ff"
   examples:
     - What is CustomChat?
     - How does conversation memory work?
