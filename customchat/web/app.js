@@ -180,8 +180,9 @@ async function loadList() {
       const rows = await api("/api/chats?q=" + encodeURIComponent($("#search").value));
       if (!rows.length) list.append(el("div", { class: "empty", text: "No chats yet." }));
       let lastGroup = "";
+      const cnt = {}; rows.forEach((c) => { cnt[c.title] = (cnt[c.title] || 0) + 1; });
       rows.forEach((c) => { const g = c.pinned ? "Pinned" : dayLabel(c.created); if (g !== lastGroup) { list.append(el("div", { class: "group", text: g })); lastGroup = g; } list.append(el("div", { class: "item" + (c.id === S.chat ? " on" : ""), onclick: () => openChat(c.id) },
-        el("span", { class: "t", text: c.title }), c.pinned ? el("span", { class: "pinned", title: "Pinned" }, svg("pin")) : null,
+        el("span", { class: "t", text: c.title }), cnt[c.title] > 1 ? el("span", { class: "tm", text: new Date(c.created * 1000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) }) : null, c.pinned ? el("span", { class: "pinned", title: "Pinned" }, svg("pin")) : null,
         el("span", { class: "acts" },
           el("button", { title: c.pinned ? "Unpin" : "Pin", onclick: async (e) => { e.stopPropagation(); await api("/api/pin", { chat: c.id, pinned: !c.pinned }); loadList(); } }, svg("pin")),
           el("button", { title: "Rename", onclick: async (e) => { e.stopPropagation(); const t = prompt("Rename chat", c.title); if (t) { await api("/api/rename", { chat: c.id, title: t }); loadList(); } } }, svg("edit")),

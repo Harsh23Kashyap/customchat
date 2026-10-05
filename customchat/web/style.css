@@ -253,3 +253,5 @@ html[data-theme=dark] .meta .chip:not(.on){border-color:transparent;background:t
 .meta.fu .chip,.meta>.chip:first-child{padding-left:0}
 .thread .meta:not(.fu)>.chip:first-of-type,.thread .meta:not(.fu)>button:first-of-type{padding-left:0}
 .meta>.chip:first-child,.meta>.warn+.chip{padding-left:0}.meta>.warn[hidden]+.chip,.meta>.warn+.chip{padding-left:0}
+.item .tm{margin-left:auto;padding-left:8px;color:var(--mut);font-size:calc(11px*var(--fs,1));white-space:nowrap}.item:hover .tm,.item.on .tm{display:none}
+.bubble code,.ans code,.thread code{font-size:.9em;vertical-align:baseline;line-height:1}
