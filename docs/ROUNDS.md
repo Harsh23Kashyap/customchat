@@ -256,3 +256,10 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 ## Pass 34
 - Phone (390px), found from a real screenshot: brand title no longer cut to "Acm..." (model badge hidden under 480px; it is still in Configuration); source chip had an empty second line; Related arrow sat far right when a question wrapped. Related rows are now 44px tall with the arrow right after the text.
 - Keyboard focus ring on Related items has room around the text.
+
+## Pass 35
+- Phone: Related rows have thin dividers (no curved ends); the footer keeps "Not a substitute for professional advice" on phones; the "General research information, not medical advice." line is part of the answer.
+- Bug found while checking the number check: since pass 32 put a space before each citation ("sentence. [1] Next"), the claim splitter stopped splitting, so a whole answer was one "claim" and the support check was weak. Splitter fixed, test added.
+- Number check now also accepts a year from the source record (PubMed year) for the cited source.
+- Code replaces "the evidence provided / the passages" with "the cited sources" (verbs fixed: "do not show").
+- Rubric, 3 runs per question, 2 Nutrition questions, revise OFF vs ON: words small/short/lasting/relatively/"evidence provided": 12 vs 1; number flags 4 vs 1 (the flags were years and a mis-split claim, both fixed above). Small n, one model.
