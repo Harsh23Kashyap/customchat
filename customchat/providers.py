@@ -1,5 +1,7 @@
 """LLM providers. All use only the standard library.
 
+minimax, mimo, deepseek, groq, openrouter, mistral: hosted OpenAI-style services with built-in default address and key variable.
+
 mock               deterministic, no network (tests, demos, first run)
 ollama             local model via http://localhost:11434
 openai             OpenAI chat completions, key from an env var
@@ -10,20 +12,46 @@ openai_compatible  any OpenAI-style server (LM Studio, vLLM, llama.cpp) via base
 import json, os, re, urllib.request, urllib.error
 
 
+RETRY_CODES = {408, 409, 425, 429, 500, 502, 503, 504, 529}
+HUMAN = {400: "The provider rejected the request (check the model name)", 401: "The API key was refused (check the key)",
+         403: "The API key is not allowed to use this model", 404: "Model or address not found (check the model name and base URL)",
+         413: "The request was too large", 429: "The provider is rate limiting requests", 529: "The provider is overloaded"}
+
+
 class ProviderError(RuntimeError):
-    pass
+    def __init__(self, msg, code=None, retry_after=None):
+        super().__init__(msg)
+        if code is None:
+            m = re.search(r"HTTP (\d{3})", str(msg))
+            code = int(m.group(1)) if m else None
+        self.code, self.retry_after = code, retry_after
+
+    @property
+    def transient(self):
+        return self.code is None or self.code in RETRY_CODES
 
 
-def _post(url, payload, headers, timeout, retries=2):
-    import time
+def _http_error(e):
+    ra = None
+    try:
+        ra = float(e.headers.get("Retry-After", ""))
+    except (TypeError, ValueError, AttributeError):
+        pass
+    msg = HUMAN.get(e.code, "The provider returned an error")
+    return ProviderError("%s (HTTP %d)" % (msg, e.code), e.code, ra)
+
+
+def _post(url, payload, headers, timeout, retries=3):
+    """POST with exponential backoff and jitter. Retries only errors that can pass (timeouts, 429, 5xx)."""
+    import random, time
     for attempt in range(retries + 1):
         try:
             return _post_once(url, payload, headers, timeout)
         except ProviderError as e:
-            transient = any(c in str(e) for c in ("HTTP 429", "HTTP 500", "HTTP 502", "HTTP 503", "unreachable"))
-            if attempt == retries or not transient:
+            if attempt == retries or not e.transient:
                 raise
-            time.sleep(0.6 * (2 ** attempt))
+            wait = e.retry_after if e.retry_after is not None else 0.5 * (2 ** attempt)
+            time.sleep(min(wait, 8) + random.uniform(0, 0.25))
 
 
 def _post_once(url, payload, headers, timeout):
@@ -32,12 +60,30 @@ def _post_once(url, payload, headers, timeout):
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return json.loads(r.read().decode())
     except urllib.error.HTTPError as e:
-        raise ProviderError("Provider returned HTTP %d" % e.code) from None
+        raise _http_error(e) from None
     except (urllib.error.URLError, TimeoutError, OSError) as e:
         raise ProviderError("Provider unreachable: %s" % getattr(e, "reason", e)) from None
+    except ValueError:
+        raise ProviderError("The provider sent a reply that could not be read", 502) from None
 
 
-def _stream_lines(url, payload, headers, timeout):
+def _stream_lines(url, payload, headers, timeout, retries=2):
+    """Yield lines. Retries only before the first line arrives; once text flows, errors surface."""
+    import random, time
+    for attempt in range(retries + 1):
+        got = False
+        try:
+            for line in _stream_once(url, payload, headers, timeout):
+                got = True
+                yield line
+            return
+        except ProviderError as e:
+            if got or attempt == retries or not e.transient:
+                raise
+            time.sleep(min(e.retry_after if e.retry_after is not None else 0.5 * (2 ** attempt), 8) + random.uniform(0, 0.25))
+
+
+def _stream_once(url, payload, headers, timeout):
     req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers={"Content-Type": "application/json", **headers})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
@@ -46,9 +92,11 @@ def _stream_lines(url, payload, headers, timeout):
                 if line:
                     yield line
     except urllib.error.HTTPError as e:
-        raise ProviderError("Provider returned HTTP %d" % e.code) from None
+        raise _http_error(e) from None
     except (urllib.error.URLError, TimeoutError, OSError) as e:
         raise ProviderError("Provider unreachable: %s" % getattr(e, "reason", e)) from None
+    except ValueError:
+        raise ProviderError("The provider sent a reply that could not be read", 502) from None
 
 
 class Streams:
@@ -121,10 +169,12 @@ class OpenAICompatible(Streams):
                 yield piece
 
     def __init__(self, cfg):
+        from .schema import PRESET_PROVIDERS
         p = cfg["provider"]
-        self.base = (p["base_url"] or "https://api.openai.com/v1").rstrip("/")
+        dbase, denv = PRESET_PROVIDERS.get(p["type"], ("https://api.openai.com/v1", ""))
+        self.base = (p["base_url"] or dbase).rstrip("/")
         self.model, self.t, self.temp = p["model"], p["timeout"], p["temperature"]
-        self.key_env = p["api_key_env"]
+        self.key_env = p["api_key_env"] or denv
 
     def complete(self, messages):
         headers = {}
@@ -211,7 +261,10 @@ class WithFallback:
 
 def _one(cfg, block):
     c = {**cfg, "provider": {**cfg["provider"], **block, "fallback": None}}
-    return {"mock": Mock, "ollama": Ollama, "openai": OpenAICompatible, "openai_compatible": OpenAICompatible, "claude": Claude, "gemini": Gemini}[c["provider"]["type"]](c)
+    from .schema import PRESET_PROVIDERS
+    kinds = {"mock": Mock, "ollama": Ollama, "openai": OpenAICompatible, "openai_compatible": OpenAICompatible, "claude": Claude, "gemini": Gemini}
+    kinds.update({k: OpenAICompatible for k in PRESET_PROVIDERS})
+    return kinds[c["provider"]["type"]](c)
 
 
 def make(cfg):

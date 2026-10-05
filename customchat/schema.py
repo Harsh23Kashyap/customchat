@@ -43,7 +43,17 @@ DEFAULTS = {
     "server": {"host": "127.0.0.1", "port": 8080},
 }
 
-PROVIDERS = {"mock", "ollama", "openai", "openai_compatible", "claude", "gemini"}
+# Hosted services that speak the OpenAI chat format: (default base_url, default key env var).
+PRESET_PROVIDERS = {
+    "minimax": ("https://api.minimax.io/v1", "MINIMAX_API_KEY"),
+    "mimo": ("https://api.xiaomimimo.com/v1", "MIMO_API_KEY"),
+    "deepseek": ("https://api.deepseek.com", "DEEPSEEK_API_KEY"),
+    "groq": ("https://api.groq.com/openai/v1", "GROQ_API_KEY"),
+    "openrouter": ("https://openrouter.ai/api/v1", "OPENROUTER_API_KEY"),
+    "mistral": ("https://api.mistral.ai/v1", "MISTRAL_API_KEY"),
+}
+NEEDS_MODEL = {"ollama", "openai", "openai_compatible", "claude", "gemini"} | set(PRESET_PROVIDERS)
+PROVIDERS = {"mock", "ollama", "openai", "openai_compatible", "claude", "gemini"} | set(PRESET_PROVIDERS)
 CONNECTORS = {"local_files", "http_json", "pubmed", "arxiv", "python"}
 AUTH_MODES = {"none", "token", "accounts"}
 
@@ -98,7 +108,7 @@ def validate(raw):
     p = cfg["provider"]
     if p["type"] not in PROVIDERS:
         raise ConfigError("provider.type must be one of " + ", ".join(sorted(PROVIDERS)))
-    if p["type"] in ("ollama", "openai", "openai_compatible", "claude", "gemini") and not p["model"]:
+    if p["type"] in NEEDS_MODEL and not p["model"]:
         raise ConfigError("provider.model is required for provider " + p["type"])
     if p["type"] in ("openai", "openai_compatible") and not p["api_key_env"]:
         if p["type"] == "openai":
@@ -107,7 +117,7 @@ def validate(raw):
     if fb is not None:
         if not isinstance(fb, dict) or fb.get("type") not in PROVIDERS or "api_key" in fb:
             raise ConfigError("provider.fallback needs a valid type and no api_key")
-        if fb["type"] in ("ollama", "openai", "openai_compatible", "claude", "gemini") and not fb.get("model"):
+        if fb["type"] in NEEDS_MODEL and not fb.get("model"):
             raise ConfigError("provider.fallback.model is required")
     if "api_key" in p:
         raise ConfigError("Do not put keys in the app file. Use provider.api_key_env with an env var name.")
