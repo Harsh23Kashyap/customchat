@@ -192,7 +192,8 @@ def _key(env, kind=None, required=True):
     from . import secrets
     key = (secrets.saved(kind) if kind else "") or (os.environ.get(env, "") if env else "")
     if not key and required:
-        raise ProviderError("No API key yet. Add one in Configuration, Model, or set the %s environment variable" % env, 401)
+        env = env or {"openai": "OPENAI_API_KEY", "claude": "ANTHROPIC_API_KEY", "gemini": "GEMINI_API_KEY"}.get(kind or "", "")
+        raise ProviderError("No API key yet. Paste one under Model, Save key" + (", or set the %s environment variable." % env if env else "."), 401)
     return key
 
 
