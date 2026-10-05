@@ -51,7 +51,7 @@ DEFAULT = {
     "emoji_bot": "", "emoji_you": "", "emoji_hero": "", "emoji_send": "", "emoji_attach": "", "emoji_temp": "",
     "motion": "full", "entrance": "fade", "speed": 100, "hover_lift": True,
     "sidebar": "left", "sidebar_width": 250, "chat_width": "normal", "avatars": "hide", "bubble": "flat",
-    "txt_title": "", "txt_tagline": "", "txt_examples": "", "txt_placeholder": "", "txt_footer": "", "txt_disclaimer": "", "txt_hint": "", "txt_sidebar": "",
+    "logo": "", "txt_title": "", "txt_tagline": "", "txt_examples": "", "txt_placeholder": "", "txt_footer": "", "txt_disclaimer": "", "txt_hint": "", "txt_sidebar": "",
     "you_align": "right", "composer": "inline", "toolbar": "show", "sources_panel": True,
 }
 
@@ -99,6 +99,8 @@ def clean(raw):
     t["custom_font"] = cf if re.fullmatch(r"[A-Za-z0-9 \-]{2,40}", cf) else ""
     img = str(raw.get("bg_image") or "").strip()
     t["bg_image"] = img if re.match(r"^https://[^\s\"'()<>]{4,300}$", img) else ""
+    lg = str(raw.get("logo") or "")
+    t["logo"] = lg if re.fullmatch(r"data:image/png;base64,[A-Za-z0-9+/=]{20,300000}", lg) else ""
     for k in ("emoji_bot", "emoji_you", "emoji_hero", "emoji_send", "emoji_attach", "emoji_temp"):
         t[k] = _emoji(raw.get(k))
     limits = {"txt_title": 60, "txt_tagline": 160, "txt_examples": 600, "txt_placeholder": 80, "txt_footer": 200, "txt_disclaimer": 120, "txt_hint": 120, "txt_sidebar": 40}
