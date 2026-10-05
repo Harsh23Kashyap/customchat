@@ -87,3 +87,6 @@ Running total: about 62 features, 85 UI.
 ## Design passes 1 and 2 (no new feature count)
 UI: flat warm paper background by default (no glow circles), sidebar rebuilt (title, one primary New chat button, quiet Temporary), brand once, SVG icons everywhere (no glyphs), centered hero, quieter suggestion buttons, readable 12px disclaimer, answer row cut to sources, time, Copy, Helpful, Not helpful and a More menu, Configuration page moved to one blue accent with flat buttons, no template icon squares, active section in the left menu, larger help text, room for the save bar.
 Running total: about 62 features, about 100 UI (counting each fix above as a round).
+
+## Design pass 3
+UI: answer actions are quiet text buttons instead of outlined pills, dark and phone layouts checked in screenshots. Running total unchanged in features, about 105 UI.
