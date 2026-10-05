@@ -167,6 +167,30 @@ class Engine:
         return [{"role": "system", "content": self.prompts.text("answer", p["system"]) + " " + p["style"].get(style, p["style"]["standard"])},
                 {"role": "user", "content": "%sQuestion: %s\n\nEvidence:\n%s" % (mem, question, ev)}]
 
+    @staticmethod
+    def tidy(answer, evidence):
+        """Space before a citation that follows punctuation, keep only cited sources and number them 1, 2, 3 in order of use."""
+        def expand(m):
+            nums = []
+            for part in re.split(r"\s*,\s*", m.group(1)):
+                r = re.match(r"^(\d+)\s*[-\u2013]\s*(\d+)$", part)
+                nums += list(range(int(r.group(1)), int(r.group(2)) + 1)) if r and int(r.group(2)) - int(r.group(1)) < 10 else ([int(part)] if part.isdigit() else [])
+            return "".join("[%d]" % n for n in nums) if nums else m.group(0)
+        answer = re.sub(r"\[(\d+(?:\s*[,\-\u2013]\s*\d+)+)\]", expand, answer)
+        answer = re.sub(r"(?<=[.!?:;,])(?=\[\d+\])", " ", answer)
+        order = []
+        for m in re.findall(r"\[(\d+)\]", answer):
+            m = int(m)
+            if m not in order and any(e["n"] == m for e in evidence):
+                order.append(m)
+        mp = {o: i + 1 for i, o in enumerate(order)}
+        answer = re.sub(r"\[(\d+)\]", lambda m: "[%d]" % mp[int(m.group(1))] if int(m.group(1)) in mp else m.group(0), answer)
+        answer = re.sub(r"(\[\d+\])(?=\[\d+\])", r"\1 ", answer)
+        out = []
+        for o in order:
+            e = dict(next(x for x in evidence if x["n"] == o)); e["n"] = mp[o]; out.append(e)
+        return answer, out
+
     # (5) citations
     @staticmethod
     def support(claim, cites, evidence):
@@ -282,8 +306,8 @@ class Engine:
         ledger = self.ledger(answer, evidence) if evidence else []
         if evidence and self.cfg["provider"]["type"] != "mock":
             # show only the sources the answer cites; a refusal cites nothing, so it shows none
-            cited = {c for l in ledger for c in l["cites"]}
-            evidence = [e for e in evidence if e["n"] in cited]
+            answer, evidence = self.tidy(answer, evidence)
+            ledger = self.ledger(answer, evidence)
         if temporary:
             tid = None
         else:
@@ -318,8 +342,8 @@ class Engine:
             answer = self.provider.complete(self.prompt(standalone, evidence, style, history, summary))
             ledger = self.ledger(answer, evidence)
             if self.cfg["provider"]["type"] != "mock":
-                cited = {c for l in ledger for c in l["cites"]}
-                evidence = [e for e in evidence if e["n"] in cited]
+                answer, evidence = self.tidy(answer, evidence)
+                ledger = self.ledger(answer, evidence)
         tid = self.store.add_turn(chat, topic, q, standalone, answer, evidence, ledger, style)
         if mem_on:
             self._summarize(owner, topic)
