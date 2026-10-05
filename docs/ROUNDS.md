@@ -99,3 +99,6 @@ Darker action/chip text, user bubble contrast, one-column alignment, 8/12 rhythm
 
 ## Design pass 6
 Custom-styled dropdowns (keyboard and screen-reader friendly) on chat and config pages. Eight extra presets behind a Load more button. 220ms preset-switch animation. Save-bar clearance in config.
+
+## Backend pass 1: providers and failure handling
+Added MiniMax, Xiaomi MiMo, DeepSeek, Groq, OpenRouter, Mistral as one-line provider types (default address and key variable built in; MiniMax and MiMo addresses checked against their docs). Retry now uses exponential backoff with jitter, honors Retry-After, retries only timeouts, 408/425/429/5xx, and never retries 400/401/403/404. Streams retry before the first token. Plain-language error messages per HTTP code. Test file fixed: 37 tests after the old main block were never running; all 53 now run and pass.
