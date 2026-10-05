@@ -166,3 +166,7 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Checkbox no longer gets the blue input box on focus; keyboard focus shows a 2px ring.
 - Try it has a stronger outline and a visible hover state.
 - Phone header: the Standard select is narrower so more of the chat title shows.
+
+## Pass 19 (from B2's critique of 3e870eac8f)
+- Phone header: Standard select is no longer cut. It keeps a 92px minimum and the chat title takes the leftover room.
+- Save bar is opaque and as wide as the form column. It is a floating bar, so it can sit over content mid-page; it hides when nothing is unsaved.
