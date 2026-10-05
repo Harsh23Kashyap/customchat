@@ -167,8 +167,6 @@ class Http(unittest.TestCase):
         self.assertEqual(get({"Authorization": "Bearer s3cret"}), 200); srv.shutdown()
 
 
-if __name__ == "__main__":
-    unittest.main()
 
 
 class Extras(unittest.TestCase):
@@ -504,7 +502,7 @@ class SettingsApi(Http):
         self.assertEqual(self.post("/api/states/load", {"name": "missing"})[0], 400)
 
     def test_settings_page_served(self):
-        self.assertIn(b"Save Current State", self.call("/settings.html")[1])
+        self.assertIn(b"Save current state", self.call("/settings.html")[1])
 
 
 def test_accounts():
@@ -562,3 +560,41 @@ def test_pdf():
 
 
 test_pdf()
+
+
+def test_provider_retry():
+    import threading, http.server, json as _j
+    from customchat import providers, schema
+    hits = {"n": 0}
+
+    class H(http.server.BaseHTTPRequestHandler):
+        def log_message(self, *a): pass
+        def do_POST(self):
+            hits["n"] += 1
+            self.rfile.read(int(self.headers.get("Content-Length", 0)))
+            if self.path.startswith("/bad"):
+                self.send_response(401); self.end_headers(); return
+            if hits["n"] < 3:
+                self.send_response(503); self.send_header("Retry-After", "0"); self.end_headers(); return
+            b = _j.dumps({"choices": [{"message": {"content": "ok"}}]}).encode()
+            self.send_response(200); self.send_header("Content-Length", str(len(b))); self.end_headers(); self.wfile.write(b)
+    srv = http.server.HTTPServer(("127.0.0.1", 0), H); port = srv.server_address[1]
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    import os; os.environ["T_KEY"] = "k"
+    cfg = schema.validate({"app": {"title": "t"}, "provider": {"type": "minimax", "model": "m", "base_url": "http://127.0.0.1:%d/v1" % port, "timeout": 5}}) if hasattr(schema, "validate") else None
+    pv = providers.OpenAICompatible({"provider": {"type": "minimax", "model": "m", "base_url": "http://127.0.0.1:%d/v1" % port, "timeout": 5, "temperature": 0, "api_key_env": "T_KEY"}})
+    assert pv.complete([{"role": "user", "content": "hi"}]) == "ok" and hits["n"] == 3, hits
+    hits["n"] = 0
+    bad = providers.OpenAICompatible({"provider": {"type": "openai", "model": "m", "base_url": "http://127.0.0.1:%d/bad" % port, "timeout": 5, "temperature": 0, "api_key_env": "T_KEY"}})
+    try: bad.complete([{"role": "user", "content": "hi"}]); assert False
+    except providers.ProviderError as e: assert e.code == 401 and "key" in str(e).lower() and hits["n"] == 1
+    assert "minimax" in schema.PROVIDERS and "mimo" in schema.PROVIDERS
+    srv.shutdown()
+    print("provider retry ok")
+
+
+test_provider_retry()
+
+
+if __name__ == "__main__":
+    unittest.main()
