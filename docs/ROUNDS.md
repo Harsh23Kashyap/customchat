@@ -209,3 +209,11 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Related questions stack one per line, wrap, and align to the answer edge instead of running off the right side.
 - Citation markers [1] [2] have a small gap.
 - Three real agents run end to end on gpt-6-luna: Docs Chat (local files), Acme Support (help-center files with a support prompt), Nutrition Evidence (live PubMed). Results in the report to B2.
+
+## Pass 27
+- Copy / Helpful / More row text now starts at the same left edge as the Related questions (the first button lost its 9px inset).
+- Default answer prompt asks for each [n] right after the clause it supports. Real run (gpt-6-luna) now places [1] after the first paragraph's claims and [2] after the follow-up paragraph; per-clause placement is not guaranteed by the model.
+- Run logs with sources for three real apps were produced for review (no key in them).
+- Sources under an answer now list only what the answer cites (real models). A refusal cites nothing, so it shows no source chips. Found by reviewing run logs: "capital of France" used to show two unrelated chips.
+- Default prompt: a refusal is one plain sentence with no citations and no referral; one clear stance that matches the passages.
+- Checked by hand against the full PubMed abstracts: HOMA-IR down 0.31 (PMID 35371260), 14 adults and 3 weeks (PMID 35871650), 5 weeks and 6-hour window (PMID 29754952).
