@@ -31,6 +31,7 @@ async function api(path, body) {
   if (S.token) h.Authorization = "Bearer " + S.token;
   const r = await fetch(path, body === undefined ? { headers: h } : { method: "POST", headers: h, body: JSON.stringify(body) });
   const d = await r.json().catch(() => ({}));
+  if (r.status === 401 && S.cfg && S.cfg.auth === "accounts" && !path.startsWith("/api/account/")) { location.reload(); return new Promise(() => {}); }
   if (r.status === 401 && S.cfg && S.cfg.auth === "token") {
     const t = prompt("Access token"); if (t) { S.token = t; localStorage.setItem("cc_token", t); return api(path, body); }
   }
@@ -231,10 +232,18 @@ async function send() {
 async function uploadDialog() {
   const link = prompt("Paste a web page link to add it as a source, or press Cancel to choose files");
   if (link && link.trim()) { try { const r = await api("/api/load-url", { url: link.trim() }); toast("Added: " + r.name); } catch (e) { toast(e.message); } return; }
-  const inp = el("input", { type: "file", accept: ".txt,.md,.csv,.json", multiple: "" });
+  const inp = el("input", { type: "file", accept: ".txt,.md,.csv,.json,.pdf,application/pdf", multiple: "" });
   inp.addEventListener("change", async () => {
     let n = 0;
     for (const f of inp.files) {
+      if (/\.pdf$/i.test(f.name)) {
+        if (f.size > 8e6) { toast(f.name + " is over 8 MB"); continue; }
+        try {
+          const bytes = new Uint8Array(await f.arrayBuffer()); let bin = ""; for (let i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+          await api("/api/upload-pdf", { name: f.name, data: btoa(bin) }); n++;
+        } catch (e) { toast(f.name + ": " + e.message); }
+        continue;
+      }
       if (f.size > 150000) { toast(f.name + " is over 150 KB"); continue; }
       try { await api("/api/uploads", { name: f.name, text: await f.text() }); n++; } catch (e) { toast(e.message); }
     }
@@ -258,6 +267,7 @@ const autosize = () => { const q = $("#q"); q.style.height = "auto"; q.style.hei
 
 async function init() {
   S.cfg = await api("/api/config");
+  if (S.cfg.auth === "accounts") await accountGate();
   { const h = S.cfg.app.accent.replace("#", ""), v = [0, 2, 4].map((i) => parseInt(h.substr(i, 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
     const L = 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; document.documentElement.style.setProperty("--on-accent", L > 0.5 ? "#000" : "#fff"); }
   const a = S.cfg.app; document.title = a.title;
@@ -377,6 +387,51 @@ function setupResizer() {
     r.addEventListener("pointermove", move); r.addEventListener("pointerup", up);
   });
   r.addEventListener("dblclick", () => { document.documentElement.style.removeProperty("--side-w"); localStorage.removeItem("cc_side"); });
+}
+async function accountGate() {
+  const post = (p, b) => api("/api/account/" + p, b);
+  let me = await api("/api/account/me");
+  while (!me.user) {
+    me = await new Promise((resolve) => {
+      let mode = "in";
+      const back = el("div", { class: "modal-back" }), err = el("div", { class: "auth-err", role: "alert" });
+      const email = el("input", { type: "email", placeholder: "Email", autocomplete: "email", "aria-label": "Email" });
+      const name = el("input", { type: "text", placeholder: "Your name (optional)", autocomplete: "name", "aria-label": "Name" });
+      const pw = el("input", { type: "password", placeholder: "Password (8+ characters)", autocomplete: "current-password", "aria-label": "Password" });
+      const go = el("button", { class: "chip on" }, "Sign in"), sw = el("button", { class: "linkbtn", type: "button" });
+      const draw = () => {
+        name.hidden = mode === "in"; go.textContent = mode === "in" ? "Sign in" : "Create account";
+        sw.textContent = mode === "in" ? "New here? Create an account" : "Have an account? Sign in"; sw.hidden = mode === "in" && !me.signup;
+        pw.autocomplete = mode === "in" ? "current-password" : "new-password"; err.textContent = "";
+      };
+      const submit = async () => {
+        go.disabled = true;
+        try { resolve(await post(mode === "in" ? "login" : "signup", { email: email.value, name: name.value, password: pw.value }).then(() => post("me"))); back.remove(); }
+        catch (e) { err.textContent = e.message; go.disabled = false; }
+      };
+      go.addEventListener("click", submit); pw.addEventListener("keydown", (e) => e.key === "Enter" && submit());
+      sw.addEventListener("click", () => { mode = mode === "in" ? "up" : "in"; draw(); });
+      back.append(el("form", { class: "modal auth", onsubmit: (e) => e.preventDefault(), role: "dialog", "aria-modal": "true", "aria-label": "Sign in" },
+        el("h2", { text: S.cfg.app.title }), el("p", { class: "mut", text: "Sign in to keep your chats private to you." }), email, name, pw, err, el("div", { class: "modal-act" }, sw, go)));
+      document.body.append(back); draw(); email.focus();
+    });
+  }
+  S.user = me.user;
+  const tb = $(".toolbar"), menu = el("div", { class: "acct-menu", hidden: "" });
+  const btn = el("button", { class: "acct-btn", "aria-haspopup": "true", "aria-label": "Account" }, el("span", { class: "acct-dot", text: (me.user.name || "?")[0].toUpperCase() }), el("span", { text: me.user.name }));
+  const item = (t, f) => el("button", { class: "acct-item", onclick: () => { menu.hidden = true; f(); } }, t);
+  menu.append(el("div", { class: "acct-mail mut", text: me.user.email }),
+    item("Change password", () => {
+      const o = el("input", { type: "password", placeholder: "Current password", autocomplete: "current-password" }), n = el("input", { type: "password", placeholder: "New password (8+ characters)", autocomplete: "new-password" });
+      const e = el("div", { class: "auth-err", role: "alert" }), back = el("div", { class: "modal-back" });
+      const save = el("button", { class: "chip on", onclick: async () => { try { await post("password", { old: o.value, new: n.value }); back.remove(); toast("Password changed. Other devices were signed out."); } catch (x) { e.textContent = x.message; } } }, "Save");
+      back.append(el("div", { class: "modal auth", role: "dialog", "aria-modal": "true", "aria-label": "Change password" }, el("h2", { text: "Change password" }), o, n, e, el("div", { class: "modal-act" }, el("button", { class: "chip", onclick: () => back.remove() }, "Cancel"), save)));
+      document.body.append(back); o.focus();
+    }),
+    item("Sign out", async () => { await post("logout", {}); location.reload(); }));
+  btn.addEventListener("click", (e) => { e.stopPropagation(); menu.hidden = !menu.hidden; });
+  document.addEventListener("click", () => (menu.hidden = true));
+  tb.insertBefore(el("div", { class: "acct" }, btn, menu), $("#themeBtn"));
 }
 function tour() {
   if (localStorage.getItem("cc_tour")) return;
