@@ -63,3 +63,8 @@ Running total: about 37 features, 57 UI.
 Features (4): native Claude provider, native Gemini provider (key sent as a header, never in the URL), add a web page as a source by link (public addresses only, no private or loopback hosts, size and time limits), "Context" view showing how an answer was built.
 UI (2): Context dialog, link option in the add-source prompt.
 Running total: about 41 features, 59 UI.
+
+## Batch 11
+Features (4): settings API (provider, model, base URL, temperature, sources per answer, query rewrite; never keys), save / load / delete named settings states, edits limited to this computer or token holders, live provider swap without restart.
+UI (5): Configuration page in CustomNerd's look (pale blue page, big white card, icon tiles, gradient buttons, segmented provider switch), link from the toolbar, view-only mode, phone layout, validation messages.
+Running total: about 45 features, 64 UI.
