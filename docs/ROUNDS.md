@@ -149,3 +149,9 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Code editor shows a placeholder and is short until code exists. Write, Check and Copy stay on one row.
 - Config pages keep room under the sticky save bar when scrolled to the end.
 - Runtime checks, no paid calls: bad code is blocked before it runs; a valid-looking loop is stopped at 20s with a plain message; web search refuses to enable without a saved key; prompt test says plainly when there is no model; a 2500-character question is rejected.
+
+## Pass 16 (from B2's critique of 5e0f98f9f0)
+- Actions row has equal spacing (the More button lost its left padding by mistake). One focus ring on the composer, no halo. Disclaimer is 12px with more contrast. Related items underline on hover and have a 44px tap area on phones.
+- Code editor placeholder sits further from line 1. The gap between helper cards is 20px. Diagram text is larger. Save bar is narrower and sits under the left column, so it no longer covers the key rows.
+- Try it clears the old safety result first, and says "It ran for 20 seconds without finishing, so it was stopped." The web search toggle says to save a key first.
+- Phone check: viewport 390 CSS px at 2x gives a 780px image. The earlier 728px file came from a layout slightly wider than the screen; the new one has no sideways overflow.
