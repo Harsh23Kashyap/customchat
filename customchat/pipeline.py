@@ -175,20 +175,20 @@ class Engine:
 
     def correct(self, answer, evidence, ledger, asked=""):
         """When a sentence is flagged as vague about regain, rewrite once with the passages and the flagged sentences, then keep the rewrite only if the flag is gone."""
-        flagged = [l["claim"] for l in ledger if l.get("vague_regain")]
+        flagged = [l["claim"] for l in ledger if l.get("vague_regain") or l.get("animal_unmarked")]
         if not flagged or self.cfg["provider"]["type"] == "mock":
             return answer
         ev = "\n".join("[%d] %s. %s" % (e["n"], e["title"], e["text"][:3000]) for e in evidence)
         try:
             out = self.provider.complete([{"role": "system", "content": self.prompts.text("revise")},
-                                          {"role": "user", "content": "These sentences are too vague: %s\nSay exactly what the passage measured (for example fat mass regain, and which group had more).\n\nAnswer:\n%s\n\nEvidence:\n%s" % (" | ".join(flagged)[:800], answer, ev)}]).strip()
+                                          {"role": "user", "content": "These sentences are too vague: %s\nSay exactly what the passage measured (for example fat mass regain, and which group had more). If a sentence rests on an animal study, say plainly that it was in rats or mice.\n\nAnswer:\n%s\n\nEvidence:\n%s" % (" | ".join(flagged)[:800], answer, ev)}]).strip()
         except providers.ProviderError:
             return answer
         if len(out) < 0.4 * len(answer) or not re.search(r"\[\d+\]", out):
             return answer
         new, ev2 = self.tidy(out, evidence)
         led2 = self.ledger(new, ev2, asked)
-        if any(l.get("vague_regain") for l in led2) or any(l.get("bad_numbers") for l in led2):
+        if any(l.get("vague_regain") or l.get("animal_unmarked") for l in led2) or any(l.get("bad_numbers") for l in led2):
             return answer  # the rewrite must clear the flag and add no number the cited passages lack
         return out
 
@@ -275,8 +275,9 @@ class Engine:
                 bad = Engine.bad_numbers(claim, good, evidence, asked) if good else []
                 blob = " ".join(e.get("text", "").lower() for e in evidence if e.get("n") in good)
                 vague = "regain" in claim.lower() and "fat" not in claim.lower() and "fat mass regain" in blob
+                animal = bool(good) and re.search(r"\b(rats?|mice|mouse|murine|rodents?|mouse|monkeys?|zebrafish)\b", blob) is not None and re.search(r"\b(rats?|mice|mouse|murine|rodents?|animals?|preclinical|monkeys?|zebrafish)\b", claim.lower()) is None
                 out.append({"claim": claim, "overlap": Engine.support(claim, good, evidence), "cites": good, "bad_numbers": bad,
-                            "invalid": [c for c in cites if c not in valid], "supported": bool(cites) and all(c in valid for c in cites) and not bad and not vague, "vague_regain": vague})
+                            "invalid": [c for c in cites if c not in valid], "supported": bool(cites) and all(c in valid for c in cites) and not bad and not vague and not animal, "vague_regain": vague, "animal_unmarked": animal})
         return out
 
     # optional steps, each off by default and only used with a real model
