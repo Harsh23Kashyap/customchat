@@ -183,3 +183,9 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - "1 model found" grammar. Temperature and Sources values are dark text, not link blue.
 - Cloud model suggestions now link their sources (OpenAI and Google model pages, 5 Oct 2026); the "newest stable" wording is gone.
 - Memory advice is labelled a rough estimate.
+
+## Pass 22 (from B2's critique of a4f5ee5f7f)
+- Demo: the whole model row and label are hidden, so no gap before Test connection. Status reads "Built-in demo, no model needed".
+- Logo Original / After blending / In your app captions stay hidden until a picture is chosen or one is set.
+- Side menu hover is an underline, not a pill, so only the section you are in is highlighted.
+- Suggested model names checked on the vendors' pages on 6 Oct 2026: OpenAI lists GPT-6.1 Sol (gpt-6.1-sol) as "near-Astra performance for complex work at a lower cost"; Google lists Gemini 3.8 Flash (gemini-3.8-flash) as "our most intelligent Flash model". Descriptions now use their wording.
