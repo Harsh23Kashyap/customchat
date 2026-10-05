@@ -311,3 +311,9 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Nutrition prompt (dietchat example config, not deployed): the opening sentence must match the evidence; "Yes" or "Probably" only if every cited source agrees, otherwise "Possibly" or "Mixed"; effects reported with weight loss say they may partly come from it. Insulin question, 5 runs each: before 2 Probably, 1 Yes, 2 "may"; after 3 Possibly, 1 Mixed, 1 Probably.
 - Cited claims for PMIDs 40533200, 32060194, 39458528, 39732588 checked against the passage text.
 - Known limit: a bare follow-up with no topic words ("And what about a monthly plan?") ranks the wrong document first when asked in a fresh chat. In a chat after a refund question it ranks refunds first. Not rewritten.
+
+## Pass 45
+- Ledger: `weak_cites` lists, for a sentence with 2 or more cites, each cited passage that shares under 34 percent of the claim's content words (logged, not blocking; a coarse word check). `unhedged_lead`: a lead of Yes or Probably on evidence that mentions weight, with no other sentence mentioning weight, is flagged and goes through the same keep-only-if-clean rewrite. 4 tests.
+- Sentence splitter now splits after a bold lead ("...**" then a space).
+- Undo script on 4 uniquely titled chats, one pinned, a middle one deleted: same position, pinned state and API list (ids, titles, pinned) after undo; a second tap on the toast found it gone.
+- Insulin question, 5 runs: all 5 leads hedged (Possibly x4, Mixed x1). 35871650 was never retrieved. The code guard was not exercised live (the model hedged every time); it is covered by unit tests only.
