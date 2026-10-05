@@ -173,7 +173,7 @@ class Engine:
     def usable(e):
         return bool((e.get("text") or "").strip() and (e.get("title") or "").strip())
 
-    def correct(self, answer, evidence, ledger):
+    def correct(self, answer, evidence, ledger, asked=""):
         """When a sentence is flagged as vague about regain, rewrite once with the passages and the flagged sentences, then keep the rewrite only if the flag is gone."""
         flagged = [l["claim"] for l in ledger if l.get("vague_regain")]
         if not flagged or self.cfg["provider"]["type"] == "mock":
@@ -187,10 +187,13 @@ class Engine:
         if len(out) < 0.4 * len(answer) or not re.search(r"\[\d+\]", out):
             return answer
         new, ev2 = self.tidy(out, evidence)
-        return out if not any(l.get("vague_regain") for l in self.ledger(new, ev2)) else answer
+        led2 = self.ledger(new, ev2, asked)
+        if any(l.get("vague_regain") for l in led2) or any(l.get("bad_numbers") for l in led2):
+            return answer  # the rewrite must clear the flag and add no number the cited passages lack
+        return out
 
     def _fix(self, answer, evidence, ledger, asked):
-        fixed = self.correct(answer, evidence, ledger)
+        fixed = self.correct(answer, evidence, ledger, asked)
         if fixed == answer:
             return answer, evidence, ledger
         self.corrections = (getattr(self, "corrections", []) + [{"before": answer, "after": fixed}])[-20:]
