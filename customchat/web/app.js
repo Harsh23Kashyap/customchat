@@ -213,7 +213,7 @@ async function openTopic(id) {
   S.turns = await api("/api/topic-turns?topic=" + id);
   $("#chatTitle").textContent = "Conversation"; $("#app").classList.remove("menu-open"); drawThread();
 }
-function newChat() { setTemp(false); S.chat = null; S.topic = null; S.newTopic = false; S.turns = []; $("#chatTitle").textContent = "New chat"; $("#app").classList.remove("src"); drawThread(); $("#q").focus(); }
+function newChat() { setTemp(false); S.chat = null; S.topic = null; S.newTopic = false; S.turns = []; $("#chatTitle").textContent = "New chat"; $("#app").classList.remove("src", "menu-open"); drawThread(); $("#q").focus(); }
 
 let aborter = null;
 async function stream(body, onEvent) {
@@ -342,7 +342,7 @@ document.addEventListener("keydown", (e) => {
 });
 document.addEventListener("click", (e) => {
   const app = document.getElementById("app");
-  if (app && app.classList.contains("menu-open") && !e.target.closest(".side") && !e.target.closest("#menu")) app.classList.remove("menu-open");
+  if (app && app.classList.contains("menu-open") && !e.target.closest(".side") && !e.target.closest(".toast") && !e.target.closest("#menu")) app.classList.remove("menu-open");
 });
 
 // ---- temporary chat, profile, mic, similar questions, question navigation, resizer, tour ----
