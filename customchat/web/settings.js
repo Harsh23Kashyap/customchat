@@ -62,8 +62,14 @@ function buildChips(list) {
 }
 /* ---------- local model suggestions (Ollama) ---------- */
 let hwView = "simple";
+/* Cloud picks, checked against the providers' own model pages on 5 Oct 2026:
+   developers.openai.com/api/docs/models and ai.google.dev/gemini-api/docs/models */
+const CLOUD_PICKS = [
+  { p: "openai", id: "gpt-6.1-sol", name: "GPT-6.1 Sol", why: "OpenAI's balance of intelligence and cost for complex work." },
+  { p: "gemini", id: "gemini-3.8-flash", name: "Gemini 3.8 Flash", why: "Google's newest stable Flash model, strong at reasoning and long tasks." },
+]; const testLog = [];
 async function ollamaPanel() {
-  const box = $("#ollamabox"); box.hidden = cur.provider !== "ollama"; if (box.hidden) return;
+  const box = $("#ollamabox"); if (activeSec !== "model") return; box.hidden = false; box.dataset.loaded = "1";
   box.replaceChildren(el("div", { class: "h", text: "Looking at this computer..." }));
   let r; try { r = await api("/api/hardware?base_url=" + encodeURIComponent($("#base").value.trim())); } catch (e) { box.replaceChildren(el("div", { class: "h", text: e.message })); return; }
   const hw = r.hardware, rec = r.recommendation, det = hwView === "tech";
@@ -228,7 +234,7 @@ function pushPreview() {
   const w2 = $("#pv").contentWindow; if (w2 && w2.CCTheme) { /* same-origin: also apply the wording/emoji source */ w2.CCTheme.value = t; }
 }
 function changed() {
-  clearTimeout(sendTimer); sendTimer = setTimeout(pushPreview, 40);
+  clearTimeout(sendTimer); sendTimer = setTimeout(pushPreview, 40); pvExtra(); setTimeout(pvExtra, 350);
   const dirty = JSON.stringify(theme) !== JSON.stringify(saved);
   $("#dirty").textContent = dirty ? "Unsaved changes (the preview shows them)" : "No unsaved changes"; $("#dirty").className = dirty ? "dirty" : "";
 }
@@ -315,6 +321,23 @@ async function saveSection(s) {
 }
 /* the preview follows the section being edited */
 let activeSec = "presets";
+
+function lum(h) { const m = /^#?([0-9a-f]{6})$/i.exec(h || ""); if (!m) return null; const v = [0, 2, 4].map((i) => { const c = parseInt(m[1].substr(i, 2), 16) / 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; }
+function ratio(a, b) { const x = lum(a), y = lum(b); if (x == null || y == null) return null; const hi = Math.max(x, y), lo = Math.min(x, y); return (hi + 0.05) / (lo + 0.05); }
+function pvExtra() {
+  const host = $("#pvextra"); if (!host) return;
+  const sec = activeSec; host.hidden = !(sec === "colors" || sec === "fonts"); if (host.hidden) { return; }
+  if (sec === "colors") {
+    const c = (theme && theme[editMode]) || {};
+    const pairs = [["Text on page", c.ink, c.bg], ["Text on cards", c.ink, c.surface], ["Soft text on page", c.muted, c.bg], ["Your bubble", c.ink, c.you], ["Reply bubble", c.ink, c.bot], ["Title color on page", c.brand, c.bg]];
+    host.replaceChildren(el("b", { text: "Colors and readability" }), el("div", { class: "crgrid" }, ...pairs.map(([n, a, b]) => { const r = ratio(a, b), cls = r == null ? "" : r >= 4.5 ? "green" : r >= 3 ? "blue" : "red";
+      return el("div", { class: "cc", title: n + (cls === "green" ? ": easy to read" : cls === "blue" ? ": large text only" : ": too low") }, el("span", { class: "crs", style: "background:" + (b || "#fff") + ";color:" + (a || "#000") }, "Aa"), el("span", { text: n }), el("span", { class: "rt " + cls, text: r == null ? "n/a" : r.toFixed(1) })); })),
+      el("div", { class: "h", text: "Contrast ratio. 4.5 or more is easy to read (green), 3 to 4.5 only for large text (blue), below 3 is too low (red)." }));
+  } else {
+    let fam = {}; try { const d = $("#pv").contentDocument, h = d.querySelector(".hero h1, .hero b, h1") || d.body; fam = { body: getComputedStyle(d.body).fontFamily, head: getComputedStyle(h).fontFamily }; } catch (e) { fam = { body: "inherit", head: "inherit" }; }
+    host.replaceChildren(el("b", { text: "Font sample" }), el("div", { class: "fs-h", style: "font-family:" + fam.head, text: "How can I help today?" }), el("div", { class: "fs-b", style: "font-family:" + fam.body, text: "Refunds are available within 30 days of purchase. After that, store credit is offered instead. 0123456789" }), el("div", { class: "h", text: "Headline font above, answer font below." }));
+  }
+}
 function pvFollow() {
   const m = activeSec === "model", card = $("#pvmodel"), fr = $("#pv"), cap = $("#pvcap");
   const names = { presets: "Whole look", wording: "Wording", colors: "Colors", background: "Background", fonts: "Fonts", shape: "Shape and spacing", emoji: "Icons", motion: "Motion", layout: "Layout", model: "Model" };
@@ -329,7 +352,17 @@ function pvFollow() {
       el("div", { class: "pvm-row", text: keyTxt }),
       el("div", { class: "pvm-badge " + st, text: st === "ok" ? "Connected" : (st === "bad" ? "Not working" : "Not tested yet") }),
       el("div", { class: "pvm-row " + st, text: (r && r.textContent) || "Press Test connection to check the key and model." }));
+    if (r && r.textContent && !/^Press/.test(r.textContent) && !(testLog[0] && testLog[0].m === r.textContent + st)) { testLog.unshift({ m: r.textContent + st, t: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), p: NAMES[cur.provider] || cur.provider, ok: st === "ok" }); testLog.length = Math.min(testLog.length, 5); r.dataset.logged = "1"; }
   }
+  pvExtra();
+  { let cp = $("#pvcloud"); if (!cp) { cp = el("div", { id: "pvcloud", class: "pvcloud" }); card.after(cp); }
+    cp.hidden = !m;
+    if (m) cp.replaceChildren(el("b", { text: "Suggested cloud models" }), ...CLOUD_PICKS.map((c) => el("div", { class: "cpick" }, mark(c.p), el("div", { class: "cpt" }, el("b", { text: c.name }), el("span", { class: "h", text: c.why })),
+      cur.provider === c.p && chosenModel() === c.id ? el("span", { class: "okt", text: "In use" }) : el("button", { type: "button", class: "mini", disabled: canEdit ? undefined : "", onclick: () => { cur = { ...read(), provider: c.p, model: c.id }; draw(); const tr = $("#testres"); if (tr) { tr.textContent = ""; tr.className = ""; } loadModels(false).then(() => { const pk = $("#modelPick"); pk.value = [...pk.options].some((o) => o.value === c.id) ? c.id : OTHER; if (pk.value === OTHER) { $("#model").hidden = false; $("#model").value = c.id; } cur.model = c.id; pvFollow(); }); } }, "Use"))),
+      el("div", { class: "h", text: "Checked against the providers' model pages. Model names change; use Refresh list after adding a key." })); }
+  { const box = $("#ollamabox"); if (box) { const cpn = $("#pvcloud"); if (box.previousElementSibling !== cpn) cpn.after(box); box.hidden = !m; if (m && !box.dataset.loaded) ollamaPanel(); }
+    let hist = $("#pvhist"); if (!hist) { hist = el("div", { id: "pvhist", class: "pvhist" }); card.parentNode.append(hist); }
+    hist.hidden = !(m && testLog.length); hist.replaceChildren(el("b", { text: "Recent tests" }), ...testLog.map((x) => el("div", { class: "pvh-row" }, el("span", { class: "fitdot " + (x.ok ? "green" : "red") }), el("span", { text: x.p + (x.ok ? " worked" : " failed") }), el("span", { class: "h", text: x.t })))); }
 }
 function pvPop() { const f = document.getElementById("pv"); if (!f || matchMedia("(prefers-reduced-motion:reduce)").matches) return; f.animate([{ opacity: .55, transform: "scale(.985)" }, { opacity: 1, transform: "scale(1)" }], { duration: 220, easing: "ease-out" }); }
 function drawLook() {
