@@ -183,7 +183,7 @@ def make_handler(cfg, engine):
                 if not can_edit(self):
                     return self._send(403, {"error": "Only the admin can see this computer's details"})
                 return self._send(200, hardware.report(str(qs.get("base_url") or "http://localhost:11434")))
-            if path.startswith("/api/prompts") or path.startswith("/api/codegen"):
+            if path.startswith("/api/prompts") or path.startswith("/api/codegen") or path.startswith("/api/websearch"):
                 if not can_edit(self):
                     return self._send(403, {"error": "Only the admin can change prompts or generate code"})
                 try:
@@ -208,8 +208,20 @@ def make_handler(cfg, engine):
                         return self._send(200, {"ok": True, "output": (out or "")[:4000]})
                     if path == "/api/prompts/generate" and method == "POST":
                         return self._send(200, generators.generate_prompt(engine.provider, cfg, str(b.get("key") or ""), b.get("brief"), str(b.get("current") or ""), cfg["prompt"]["system"]))
+                    if path == "/api/websearch/source" and method == "POST":
+                        on = bool(b.get("on")); pid = str(b.get("provider") or "")
+                        if on and (pid not in websearch.PROVIDERS or not websearch.has_key(pid)):
+                            return self._send(400, {"error": "Save a key for that provider first"})
+                        engine.set_web(on, pid)
+                        try:
+                            wf = os.path.join(os.path.dirname(os.path.abspath(store.path)), "websource.json")
+                            with open(wf, "w") as f:
+                                json.dump({"on": on, "provider": pid}, f)
+                        except OSError:
+                            pass
+                        return self._send(200, engine.web_state())
                     if path == "/api/websearch/status":
-                        return self._send(200, {"providers": [{"id": k, "label": v["label"], "has_key": websearch.has_key(k)} for k, v in websearch.PROVIDERS.items()]})
+                        return self._send(200, {"source": engine.web_state(), "providers": [{"id": k, "label": v["label"], "has_key": websearch.has_key(k)} for k, v in websearch.PROVIDERS.items()]})
                     if path == "/api/websearch/key" and method == "POST":
                         pid = str(b.get("id") or "")
                         if pid not in websearch.PROVIDERS:
@@ -418,6 +430,15 @@ def serve(path, host=None, port=None):
     store = Store(os.path.join(cfg["_dir"], cfg["storage"]["path"]) if not os.path.isabs(cfg["storage"]["path"]) else cfg["storage"]["path"])
     secrets.STORE = secrets.SecretStore(os.path.dirname(os.path.abspath(store.path)) if store.path != ":memory:" else "/tmp")
     engine = Engine(cfg, store)
+    try:
+        wf = os.path.join(os.path.dirname(os.path.abspath(store.path)), "websource.json")
+        if store.path != ":memory:" and os.path.exists(wf):
+            ws = json.load(open(wf))
+            if ws.get("on") and ws.get("provider") in websearch.PROVIDERS:
+                secrets.STORE = secrets.STORE or secrets.SecretStore(os.path.dirname(os.path.abspath(store.path)))
+                engine.set_web(True, ws["provider"])
+    except (OSError, ValueError):
+        pass
     engine.prompts = promptmod.PromptStore(os.path.dirname(os.path.abspath(store.path)) if store.path != ":memory:" else "")
     host, port = host or cfg["server"]["host"], port or cfg["server"]["port"]
     srv = ThreadingHTTPServer((host, port), make_handler(cfg, engine))

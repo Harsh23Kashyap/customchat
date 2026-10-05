@@ -24,6 +24,22 @@ class Engine:
         self._cache = {}
         self.prompts = promptmod.PromptStore("")
 
+    # optional live web source, switched on from the Configuration page
+    WEB_ID = "web"
+
+    def web_state(self):
+        b = next((x for x in self.cfg["sources"] if x["id"] == self.WEB_ID), None)
+        return {"on": bool(b), "provider": (b or {}).get("provider", "")}
+
+    def set_web(self, on, provider=""):
+        self.cfg["sources"] = [x for x in self.cfg["sources"] if x["id"] != self.WEB_ID]
+        self.connectors.pop(self.WEB_ID, None)
+        if on:
+            blk = {"id": self.WEB_ID, "type": "web_search", "label": "Live web", "provider": provider, "weight": 0.8}
+            self.cfg["sources"].append(blk)
+            self.connectors[self.WEB_ID] = make_connector(blk, self.cfg.get("_dir", "."))
+        self._cache.clear()
+
     # (1) memory
     def standalone(self, question, history, summary=""):
         if not history or not FOLLOW_UP.search(question) or len(question.split()) > 14:
