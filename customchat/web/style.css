@@ -185,3 +185,20 @@ html.preview .toolbar a.tb-link{pointer-events:none}
 .meta .chip:hover,.meta details[open]>summary{background:var(--soft);color:var(--ink)}
 .meta .chip.on{background:var(--soft);color:var(--brand);font-weight:600;border-color:transparent}
 .meta{gap:2px 4px}
+/* Polish pass 4: one reading column, plain answers, quiet sources, one-line actions */
+.thread>*{max-width:var(--chat-max,720px);margin-left:auto;margin-right:auto}
+.thread>.row{margin-bottom:calc(14px*var(--dens,1))}
+.bubble{max-width:100%}.bubble.bb{padding:2px 0;background:transparent;border-radius:0;font-size:calc(15px*var(--fs,1));line-height:1.7}
+.row.u{justify-content:flex-start;flex-direction:row}.row.u .bubble.ub{margin-left:auto;max-width:85%;font-size:calc(15px*var(--fs,1))}
+.srcs{display:flex;flex-wrap:wrap;gap:6px;border:0;padding:0;margin:-4px auto 6px}
+.srcs button.s{display:inline-flex;gap:6px;width:auto;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:calc(12.5px*var(--fs,1));opacity:1;color:var(--mut)}
+.srcs button.s:hover{background:var(--soft);color:var(--ink);text-decoration:none}
+.meta{flex-wrap:nowrap;overflow:visible;margin-bottom:calc(22px*var(--dens,1))}
+.meta .chip{font-size:calc(13px*var(--fs,1));color:var(--mut);white-space:nowrap}
+.bar-r #prevQ,.bar-r #nextQ{display:none}
+.note{border-top:0;padding-top:0}
+.hero{margin-top:16vh}.ex button{font-size:calc(14px*var(--fs,1));padding:12px 16px}
+.cmeta{gap:0}.cmeta span:first-child::after{content:"\00a0\00b7\00a0"}
+.bar select{font-weight:500}
+@media(max-width:760px){.thread>.row,.thread>*{max-width:100%}.cmeta span:first-child::after{content:""}.hero{margin-top:10vh}}
+.srcs{margin:10px auto 4px}

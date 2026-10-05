@@ -58,7 +58,7 @@ function apply(t, root = document.documentElement) {
   set("--dens", { compact: 0.78, cozy: 1, roomy: 1.3 }[t.density]);
   set("--speed", 100 / t.speed);
   set("--side-w", t.sidebar_width + "px");
-  set("--chat-max", { narrow: "640px", normal: "800px", wide: "1020px", full: "100%" }[t.chat_width]);
+  set("--chat-max", { narrow: "640px", normal: "720px", wide: "1020px", full: "100%" }[t.chat_width]);
   // background and pattern
   const soft = c.bg;
   const layer = { soft, solid: c.bg, gradient: `linear-gradient(${t.bg_angle}deg,${c.bg},${t.bg_color2})`, image: t.bg_image ? `linear-gradient(${rgba(c.bg, 0.55)},${rgba(c.bg, 0.55)}),url("${t.bg_image}") center/cover fixed, ${c.bg}` : soft }[t.bg_style];

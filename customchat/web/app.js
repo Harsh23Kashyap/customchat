@@ -16,6 +16,8 @@ const ICON = {
   trash: "M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3",
   edit: "M4 20h4L19 9l-4-4L4 16z",
   down: "M12 4v12M6 12l6 6 6-6",
+  tray: "M12 3v11M7 10l5 5 5-5M5 20h14",
+  topic: "M12 5v14M5 12h14",
   send: "M12 19V5M5 12l7-7 7 7",
   stop: "M7 7h10v10H7z",
   mic: "M12 15a3 3 0 003-3V6a3 3 0 00-6 0v6a3 3 0 003 3zM6 11a6 6 0 0012 0M12 17v4",
@@ -50,12 +52,13 @@ function toast(msg) { const t = el("div", { class: "toast", role: "status", "ari
 
 function inline(parent, text, evidence) {
   // safe inline markdown: **bold**, `code`, and [n] citations. Everything is text nodes.
+  let afterCite = false;
   text.split(/(\*\*[^*]+\*\*|`[^`]+`|\[\d+\])/).forEach((p) => {
-    let m;
-    if ((m = p.match(/^\[(\d+)\]$/)) && evidence.some((e) => e.n === +m[1])) parent.append(el("button", { class: "cite", title: "Show source " + m[1], onclick: () => showSources(evidence, +m[1]) }, "[" + m[1] + "]"));
+    let m; const wasCite = afterCite; afterCite = false;
+    if ((m = p.match(/^\[(\d+)\]$/)) && evidence.some((e) => e.n === +m[1])) { parent.append(el("button", { class: "cite", title: "Show source " + m[1], onclick: () => showSources(evidence, +m[1]) }, "[" + m[1] + "]")); afterCite = true; }
     else if (/^\*\*[^*]+\*\*$/.test(p)) parent.append(el("strong", { text: p.slice(2, -2) }));
     else if (/^`[^`]+`$/.test(p)) parent.append(el("code", { text: p.slice(1, -1) }));
-    else if (p) parent.append(document.createTextNode(p));
+    else if (p) parent.append(document.createTextNode((wasCite && /^[.,;:!?)]/.test(p) ? "\u2060" : "") + p));
   });
 }
 function renderAnswer(text, evidence) {
@@ -105,13 +108,12 @@ function turnView(t, prev) {
   if (prev && prev.chat !== t.chat) nodes.push(el("div", { class: "divider", text: "Earlier chat" }));
   nodes.push(el("div", { class: "row u" }, avatar("you"), el("div", { class: "bubble ub", text: t.question })));
   const bub = el("div", { class: "bubble bb" }, renderAnswer(t.answer, t.evidence));
-  if (t.evidence.length) bub.append(el("div", { class: "srcs" }, el("b", { text: "Sources" }), t.evidence.slice(0, 5).map((e) => el("button", { class: "s", onclick: () => showSources(t.evidence, e.n) }, el("span", { class: "n", text: "[" + e.n + "]" }), e.title))));
+  const srcs = !t.evidence.length ? null : (el("div", { class: "srcs" }, t.evidence.slice(0, 5).map((e) => el("button", { class: "s", onclick: () => showSources(t.evidence, e.n) }, el("span", { class: "n", text: "[" + e.n + "]" }), e.title))));
   nodes.push(el("div", { class: "row" }, avatar("bot"), bub));
   const meta = el("div", { class: "meta" });
-  if (t.evidence.length) meta.append(el("button", { class: "chip", onclick: () => showSources(t.evidence) }, t.evidence.length + (t.evidence.length === 1 ? " source" : " sources")));
   const weak = (t.ledger || []).filter((l) => !l.supported || (l.overlap !== undefined && l.overlap < 0.35));
   if (t.evidence.length && weak.length) meta.append(el("button", { class: "chip warn", title: "Sentences without a valid citation or with little overlap with the cited text. Click to see them.", onclick: () => alert("Check these sentences:\n\n" + weak.map((l) => "- " + l.claim).join("\n")) }, weak.length + " to check"));
-  if (t.seconds !== undefined) meta.append(el("span", { class: "chip", title: "Time to answer" }, t.seconds < 1 ? "<1s" : t.seconds + "s"));
+  if (t.seconds !== undefined) meta.append(el("span", { "data-more": "1", class: "chip", title: "Time to answer" }, t.seconds < 1 ? "<1s" : t.seconds + "s"));
   if (t.standalone && t.standalone !== t.question) meta.append(el("span", { class: "chip", title: "Understood as" }, "Understood as: " + t.standalone));
   meta.append(el("button", { "data-more": "1", class: "chip", title: "How this answer was built", onclick: () => contextDialog(t) }, "Context"));
   if (t.evidence.length) {
@@ -121,6 +123,7 @@ function turnView(t, prev) {
     meta.append(el("button", { "data-more": "1", class: "chip", onclick: () => download("/api/pdf?turn=" + t.id, "answer.pdf") }, "PDF"));
     for (const s of ["quick", "deep"]) if (S.cfg.styles.includes(s)) meta.append(el("button", { "data-more": "1", class: "chip", onclick: () => regen(t.id, s) }, s === "quick" ? "Shorter" : "Deeper"));
   }
+  if (srcs) bub.append(srcs);
   bub.append(meta);
   if (t.followups && t.followups.length) {
     const f = el("div", { class: "meta fu" });
@@ -151,7 +154,7 @@ function drawThread() {
       el("div", { class: "ex" }, exs.map((x) => el("button", { onclick: () => { $("#q").value = x; send(); } }, x))))));
   } else S.turns.forEach((t, i) => w.append(...turnView(t, S.turns[i - 1])));
   th.append(w); th.scrollTop = th.scrollHeight;
-  $("#pills").replaceChildren(...(S.turns.length ? [el("button", { class: "pill", title: "Start a new conversation topic in this chat", onclick: () => { S.newTopic = true; S.topic = null; toast("Next question starts a new conversation"); } }, "New conversation")] : []));
+  $("#pills").replaceChildren();
 }
 
 function dayLabel(ts) {
@@ -302,7 +305,7 @@ async function init() {
   const th = $("#thread"), jump = $("#jump");
   th.addEventListener("scroll", () => jump.classList.toggle("show", th.scrollHeight - th.scrollTop - th.clientHeight > 240));
   jump.addEventListener("click", () => th.scrollTo({ top: th.scrollHeight, behavior: "smooth" }));
-  $("#menu").replaceChildren(svg("menu")); $("#upload").replaceChildren(svg("clip")); $("#exportChat").replaceChildren(svg("down")); $("#send").replaceChildren(svg("send")); $("#jump").replaceChildren(svg("down"));
+  $("#menu").replaceChildren(svg("menu")); $("#upload").replaceChildren(svg("clip")); $("#exportChat").replaceChildren(svg("tray")); $("#newTopic").replaceChildren(svg("topic")); $("#newTopic").onclick = () => { S.newTopic = true; S.topic = null; toast("Next question starts a new conversation"); }; $("#send").replaceChildren(svg("send")); $("#jump").replaceChildren(svg("down"));
   $("#upload").addEventListener("click", uploadDialog);
   document.addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "k") { e.preventDefault(); $("#search").focus(); } });
   $("#tempBtn").replaceChildren(svg("temp")); $("#profileBtn").replaceChildren(svg("user")); $("#prevQ").replaceChildren(svg("up")); $("#nextQ").replaceChildren(svg("down"));
