@@ -807,6 +807,13 @@ class NumberCheck(unittest.TestCase):
         self.assertEqual(led["bad_numbers"], ["40"])
         self.assertFalse(led["supported"])
 
+    def test_empty_records_are_not_usable(self):
+        from customchat.pipeline import Engine
+        self.assertFalse(Engine.usable({"title": "t", "text": "  "}))
+        self.assertFalse(Engine.usable({"title": "", "text": "abc"}))
+        self.assertFalse(Engine.usable({"title": None, "text": None}))
+        self.assertTrue(Engine.usable({"title": "t", "text": "abc"}))
+
     def test_regain_without_fat_mass_is_flagged(self):
         from customchat.pipeline import Engine
         ev = [{"n": 1, "title": "t", "text": "both groups regained weight, with more fat mass regain in the CRD group"}]
