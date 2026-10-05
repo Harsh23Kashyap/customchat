@@ -155,3 +155,8 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Code editor placeholder sits further from line 1. The gap between helper cards is 20px. Diagram text is larger. Save bar is narrower and sits under the left column, so it no longer covers the key rows.
 - Try it clears the old safety result first, and says "It ran for 20 seconds without finishing, so it was stopped." The web search toggle says to save a key first.
 - Phone check: viewport 390 CSS px at 2x gives a 780px image. The earlier 728px file came from a layout slightly wider than the screen; the new one has no sideways overflow.
+
+## Pass 17 (from B2's critique of a28a6583d2)
+- Empty code editor has no highlight band across line 1. Try it keeps a white button on hover with a darker border (no pale fill that looks disabled).
+- Save bar text is darker (contrast 7.5:1 on white). Footer disclaimer measures 6.2:1.
+- Related items end with an arrow. Phone tap targets measured 44px high.
