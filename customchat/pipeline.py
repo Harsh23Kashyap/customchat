@@ -41,6 +41,23 @@ class Engine:
             self.connectors[self.WEB_ID] = make_connector(blk, self.cfg.get("_dir", "."))
         self._cache.clear()
 
+    CATALOG = {"pubmed": "PubMed", "arxiv": "arXiv", "wikipedia": "Wikipedia", "crossref": "Crossref", "openalex": "OpenAlex"}
+
+    def catalog_state(self):
+        return [x["type"] for x in self.cfg["sources"] if x["id"].startswith("cat-")]
+
+    def set_catalog(self, types):
+        types = [t for t in dict.fromkeys(types or []) if t in self.CATALOG]
+        for x in [x for x in self.cfg["sources"] if x["id"].startswith("cat-")]:
+            self.connectors.pop(x["id"], None)
+        self.cfg["sources"] = [x for x in self.cfg["sources"] if not x["id"].startswith("cat-")]
+        for t in types:
+            blk = {"id": "cat-" + t, "type": t, "label": self.CATALOG[t], "weight": 0.9}
+            self.cfg["sources"].append(blk)
+            self.connectors[blk["id"]] = make_connector(blk, self.cfg.get("_dir", "."))
+        self._cache.clear()
+        return types
+
     # (1) memory
     def standalone(self, question, history, summary=""):
         if not history or not FOLLOW_UP.search(question) or len(question.split()) > 14:
