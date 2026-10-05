@@ -18,9 +18,13 @@ const ICON = {
   down: "M12 4v12M6 12l6 6 6-6",
   send: "M12 19V5M5 12l7-7 7 7",
   stop: "M7 7h10v10H7z",
+  mic: "M12 15a3 3 0 003-3V6a3 3 0 00-6 0v6a3 3 0 003 3zM6 11a6 6 0 0012 0M12 17v4",
+  temp: "M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v5l3 2",
+  user: "M12 12a4 4 0 100-8 4 4 0 000 8zM4 21a8 8 0 0116 0",
+  up: "M12 20V8M6 12l6-6 6 6",
 };
 const svg = (n) => { const e = document.createElementNS("http://www.w3.org/2000/svg", "svg"); e.setAttribute("viewBox", "0 0 24 24"); e.setAttribute("width", "18"); e.setAttribute("height", "18"); e.setAttribute("fill", "none"); e.setAttribute("stroke", "currentColor"); e.setAttribute("stroke-width", "2"); e.setAttribute("stroke-linecap", "round"); e.setAttribute("stroke-linejoin", "round"); const p = document.createElementNS("http://www.w3.org/2000/svg", "path"); p.setAttribute("d", ICON[n]); e.append(p); return e; };
-const S = { cfg: null, chat: null, topic: null, newTopic: false, tab: "chats", sources: new Set(), turns: [], ratings: {}, busy: false, token: localStorage.getItem("cc_token") || "" };
+const S = { cfg: null, chat: null, topic: null, newTopic: false, tab: "chats", sources: new Set(), turns: [], ratings: {}, temp: false, useProfile: localStorage.getItem("cc_profile_on") === "1", busy: false, token: localStorage.getItem("cc_token") || "" };
 
 async function api(path, body) {
   const h = { "Content-Type": "application/json" };
@@ -90,8 +94,10 @@ function showSources(evidence, hl) {
 function turnView(t, prev) {
   const nodes = [];
   if (prev && prev.chat !== t.chat) nodes.push(el("div", { class: "divider", text: "Earlier chat" }));
-  nodes.push(el("div", { class: "q", text: t.question }));
-  nodes.push(renderAnswer(t.answer, t.evidence));
+  nodes.push(el("div", { class: "row u" }, el("div", { class: "av you", text: "You" }), el("div", { class: "bubble ub", text: t.question })));
+  const bub = el("div", { class: "bubble bb" }, renderAnswer(t.answer, t.evidence));
+  if (t.evidence.length) bub.append(el("div", { class: "srcs" }, el("b", { text: "Sources" }), t.evidence.slice(0, 5).map((e) => el("button", { class: "s", onclick: () => showSources(t.evidence, e.n) }, el("span", { class: "n", text: "[" + e.n + "]" }), e.title))));
+  nodes.push(el("div", { class: "row" }, el("div", { class: "av bot", text: (S.cfg.app.title || "AI").replace(/[^A-Za-z]/g, "").slice(0, 2) }), bub));
   const meta = el("div", { class: "meta" });
   if (t.evidence.length) meta.append(el("button", { class: "chip", onclick: () => showSources(t.evidence) }, t.evidence.length + " sources"));
   const weak = (t.ledger || []).filter((l) => !l.supported || (l.overlap !== undefined && l.overlap < 0.35));
@@ -105,13 +111,13 @@ function turnView(t, prev) {
     meta.append(el("button", { class: "chip", onclick: () => download("/api/pdf?turn=" + t.id, "answer.pdf") }, "PDF"));
     for (const s of ["quick", "deep"]) if (S.cfg.styles.includes(s)) meta.append(el("button", { class: "chip", onclick: () => regen(t.id, s) }, s === "quick" ? "Shorter" : "Deeper"));
   }
-  nodes.push(meta);
+  bub.append(meta);
   if (t.followups && t.followups.length) {
     const f = el("div", { class: "meta fu" });
     t.followups.forEach((x) => f.append(el("button", { class: "chip", onclick: () => { $("#q").value = x; send(); } }, x)));
     nodes.push(el("div", { class: "fu-label", text: "Related" }), f);
   }
-  nodes.push(el("button", { class: "chip del", title: "Delete this answer", onclick: async () => {
+  meta.append(el("button", { class: "chip del", title: "Delete this answer", onclick: async () => {
     await api("/api/delete-turn", { turn: t.id }); S.turns = S.turns.filter((x) => x.id !== t.id); drawThread();
     const u = el("div", { class: "toast", onclick: async () => { await api("/api/restore-turn", { turn: t.id }); S.turns = await api("/api/turns?chat=" + S.chat); drawThread(); u.remove(); } }, "Answer deleted. Click to undo");
     document.body.append(u); setTimeout(() => u.remove(), 6000); } }, "Delete"));
@@ -128,8 +134,8 @@ function drawThread() {
   const w = el("div", { class: "wrap" });
   if (!S.turns.length) {
     const a = S.cfg.app;
-    w.append(el("div", { class: "hero" }, el("h1", { text: a.title }), el("p", { text: a.tagline }),
-      el("div", { class: "ex" }, a.examples.map((x) => el("button", { onclick: () => { $("#q").value = x; send(); } }, x)))));
+    w.append(el("div", { class: "hero" }, el("div", { class: "av bot", text: (a.title || "AI").replace(/[^A-Za-z]/g, "").slice(0, 2) }), el("div", {}, el("h1", { text: a.title }), el("p", { text: a.tagline }),
+      el("div", { class: "ex" }, a.examples.map((x) => el("button", { onclick: () => { $("#q").value = x; send(); } }, x))))));
   } else S.turns.forEach((t, i) => w.append(...turnView(t, S.turns[i - 1])));
   th.append(w); th.scrollTop = th.scrollHeight;
   $("#pills").replaceChildren(...(S.turns.length ? [el("button", { class: "pill", title: "Start a new conversation topic in this chat", onclick: () => { S.newTopic = true; S.topic = null; toast("Next question starts a new conversation"); } }, "New conversation")] : []));
@@ -163,6 +169,7 @@ async function loadList() {
 }
 
 async function openChat(id) {
+  setTemp(false);
   S.chat = id; S.newTopic = false;
   S.turns = await api("/api/turns?chat=" + id);
   try { S.ratings = await api("/api/ratings?chat=" + id); } catch (e) { S.ratings = {}; }
@@ -177,7 +184,7 @@ async function openTopic(id) {
   S.turns = await api("/api/topic-turns?topic=" + id);
   $("#chatTitle").textContent = "Conversation"; $("#app").classList.remove("menu-open"); drawThread();
 }
-function newChat() { S.chat = null; S.topic = null; S.newTopic = false; S.turns = []; $("#chatTitle").textContent = "New chat"; $("#app").classList.remove("src"); drawThread(); $("#q").focus(); }
+function newChat() { setTemp(false); S.chat = null; S.topic = null; S.newTopic = false; S.turns = []; $("#chatTitle").textContent = "New chat"; $("#app").classList.remove("src"); drawThread(); $("#q").focus(); }
 
 let aborter = null;
 async function stream(body, onEvent) {
@@ -203,16 +210,17 @@ async function send() {
   const th = $("#thread"); th.scrollTop = th.scrollHeight;
   let text = "", result = null, err = null;
   try {
-    await stream({ chat: S.chat, question: q, style: $("#style").value, topic: S.topic, new_topic: S.newTopic, sources: S.sources.size ? [...S.sources] : null }, (ev) => {
+    await stream({ chat: S.temp ? null : S.chat, question: q, style: $("#style").value, topic: S.topic, new_topic: S.newTopic, sources: S.sources.size ? [...S.sources] : null, temporary: S.temp, history: S.temp ? S.turns.slice(-6).map((t) => ({ question: t.question, answer: t.answer })) : undefined, use_profile: S.useProfile && !S.temp }, (ev) => {
       if (ev.type === "token") { $("#think")?.remove(); text += ev.data; live.textContent = text; th.scrollTop = th.scrollHeight; }
       else if (ev.type === "done") result = ev.data;
       else if (ev.type === "error") err = ev.data;
     });
   } catch (e) { err = e.name === "AbortError" ? "Stopped" : e.message; }
   if (result) {
-    S.chat = result.chat; S.topic = result.topic; S.newTopic = false; S.turns.push(result);
+    if (!S.temp) { S.chat = result.chat; S.topic = result.topic; S.newTopic = false; }
+    S.turns.push(result);
     if (Object.keys(result.source_errors || {}).length) toast("Some sources were unavailable: " + Object.keys(result.source_errors).join(", "));
-    if (S.turns.length === 1) $("#chatTitle").textContent = q.slice(0, 60);
+    if (S.turns.length === 1 && !S.temp) $("#chatTitle").textContent = q.slice(0, 60);
   } else {
     const u = el("div", { class: "toast", onclick: () => { u.remove(); $("#q").value = q; send(); } }, (err || "Something went wrong") + ". Click to retry");
     document.body.append(u); setTimeout(() => u.remove(), 7000);
@@ -241,7 +249,7 @@ async function init() {
   { const h = S.cfg.app.accent.replace("#", ""), v = [0, 2, 4].map((i) => parseInt(h.substr(i, 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
     const L = 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; document.documentElement.style.setProperty("--on-accent", L > 0.5 ? "#000" : "#fff"); }
   const a = S.cfg.app; document.title = a.title;
-  $("#brand").textContent = a.title; $("#foot").textContent = a.footer;
+  $("#brand").textContent = a.title; $("#sideTitle").textContent = "Conversations"; $("#noteName").textContent = a.title; $("#noteText").textContent = a.footer; $("#tempPill").addEventListener("click", () => $("#tempBtn").click()); $("#themeBtn").addEventListener("click", () => { const d = document.documentElement, dark = d.dataset.theme === "dark" || (d.dataset.theme === "auto" && matchMedia("(prefers-color-scheme:dark)").matches); d.dataset.theme = dark ? "light" : "dark"; localStorage.setItem("cc_theme", d.dataset.theme); }); if (localStorage.getItem("cc_theme")) document.documentElement.dataset.theme = localStorage.getItem("cc_theme");
   $("#modelBadge").textContent = S.cfg.provider.type + (S.cfg.provider.model ? " · " + S.cfg.provider.model : "");
   S.cfg.styles.forEach((s) => $("#style").append(el("option", { value: s === "standard" ? s : s, ...(s === "standard" ? { selected: "" } : {}) }, s[0].toUpperCase() + s.slice(1))));
   if (S.cfg.sources.length > 1) {
@@ -264,10 +272,14 @@ async function init() {
   $("#upload").replaceChildren(svg("clip")); $("#exportChat").replaceChildren(svg("down")); $("#send").replaceChildren(svg("send")); $("#jump").replaceChildren(svg("down"));
   $("#upload").addEventListener("click", uploadDialog);
   document.addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "k") { e.preventDefault(); $("#search").focus(); } });
-  drawThread(); loadList();
+  $("#tempBtn").replaceChildren(svg("temp")); $("#profileBtn").replaceChildren(svg("user")); $("#prevQ").replaceChildren(svg("up")); $("#nextQ").replaceChildren(svg("down"));
+  $("#tempBtn").addEventListener("click", toggleTemp); $("#profileBtn").addEventListener("click", profileDialog);
+  $("#prevQ").addEventListener("click", () => jumpQ(-1)); $("#nextQ").addEventListener("click", () => jumpQ(1));
+  setupMic(); setupSimilar(); setupResizer();
+  document.addEventListener("keydown", (e) => { const t = e.target.tagName; if (["INPUT", "TEXTAREA", "SELECT"].includes(t) || e.metaKey || e.ctrlKey || e.altKey) return; if (e.key === "j") jumpQ(1); else if (e.key === "k") jumpQ(-1); });
+  drawThread(); loadList(); tour();
 }
 init().catch((e) => { document.body.textContent = "Could not start: " + e.message; });
-})();
 
 document.addEventListener("keydown", (e) => {
   const t = e.target.tagName;
@@ -280,3 +292,92 @@ document.addEventListener("click", (e) => {
   const app = document.getElementById("app");
   if (app && app.classList.contains("menu-open") && !e.target.closest(".side") && !e.target.closest("#menu")) app.classList.remove("menu-open");
 });
+
+// ---- temporary chat, profile, mic, similar questions, question navigation, resizer, tour ----
+function setTemp(on) {
+  S.temp = on; document.body.classList.toggle("temp", on);
+  const b = $("#tempBtn"); if (b) b.setAttribute("aria-pressed", String(on)); $("#tempPill").setAttribute("aria-pressed", String(on));
+}
+function toggleTemp() {
+  if (S.temp) { newChat(); return; }
+  S.chat = null; S.topic = null; S.turns = []; setTemp(true);
+  $("#chatTitle").textContent = "Temporary chat"; drawThread();
+  const t = $("#thread .hero"); if (t) { t.querySelector("h1").textContent = "Temporary chat"; t.querySelector("p").textContent = "Nothing here is saved, and your profile and uploads are not used. Closing the chat clears it."; }
+  $("#q").focus();
+}
+async function profileDialog() {
+  let cur = ""; try { cur = (await api("/api/profile")).text; } catch (e) { /* ignore */ }
+  const ta = el("textarea", { rows: "6", placeholder: "Optional background the answers can take into account, for example your goals or constraints. Kept on this server, never treated as evidence.", maxlength: "3000" }); ta.value = cur;
+  const on = el("input", { type: "checkbox", id: "useProfile" }); on.checked = S.useProfile;
+  const close = () => back.remove();
+  const save = async () => { try { await api("/api/profile", { text: ta.value }); S.useProfile = on.checked && !!ta.value.trim(); localStorage.setItem("cc_profile_on", S.useProfile ? "1" : "0"); toast("Profile saved"); close(); drawThread(); } catch (e) { toast(e.message); } };
+  const back = el("div", { class: "modal-back", onclick: (e) => e.target === back && close() },
+    el("div", { class: "modal", role: "dialog", "aria-modal": "true", "aria-label": "My profile" },
+      el("h2", { text: "My profile" }), ta,
+      el("label", { class: "chk" }, on, " Use my profile in saved chats (not in temporary chats)"),
+      el("div", { class: "modal-act" }, el("button", { class: "chip", onclick: close }, "Cancel"), el("button", { class: "chip on", onclick: save }, "Save"))));
+  document.body.append(back); ta.focus();
+}
+function setupMic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition; const m = $("#mic");
+  if (!SR || !m) return;
+  m.hidden = false; m.replaceChildren(svg("mic"));
+  let rec = null;
+  m.addEventListener("click", () => {
+    if (rec) { rec.stop(); return; }
+    rec = new SR(); rec.lang = (S.cfg.app.language || "en"); rec.interimResults = true; rec.continuous = false;
+    const base = $("#q").value; m.classList.add("rec"); m.setAttribute("aria-label", "Stop dictation");
+    rec.onresult = (e) => { let t = ""; for (const r of e.results) t += r[0].transcript; $("#q").value = (base ? base + " " : "") + t; autosize(); };
+    rec.onerror = (e) => { if (e.error !== "aborted") toast("Dictation: " + e.error); };
+    rec.onend = () => { rec = null; m.classList.remove("rec"); m.setAttribute("aria-label", "Dictate"); $("#q").focus(); };
+    try { rec.start(); } catch (e) { rec = null; m.classList.remove("rec"); }
+  });
+}
+let simTimer = null;
+function setupSimilar() {
+  $("#q").addEventListener("input", () => {
+    clearTimeout(simTimer);
+    const q = $("#q").value.trim(), box = $("#similar");
+    if (S.temp || q.split(/\s+/).length < 3) { box.replaceChildren(); return; }
+    simTimer = setTimeout(async () => {
+      try {
+        const r = await api("/api/similar?q=" + encodeURIComponent(q));
+        box.replaceChildren(...r.map((x) => el("button", { class: "pill", title: "Open the chat where you asked this", onclick: () => { box.replaceChildren(); openChat(x.chat); } }, "Asked before: " + x.question.slice(0, 60))));
+      } catch (e) { /* ignore */ }
+    }, 500);
+  });
+}
+function jumpQ(dir) {
+  const qs = [...document.querySelectorAll("#thread .q")]; if (!qs.length) return;
+  const th = $("#thread"), top = th.getBoundingClientRect().top + 8;
+  const idx = qs.findIndex((n) => n.getBoundingClientRect().top > top + 4);
+  let target = dir > 0 ? qs[idx === -1 ? qs.length - 1 : idx] : qs[(idx === -1 ? qs.length : idx) - 2] || qs[0];
+  if (dir < 0 && idx === -1) target = qs[Math.max(0, qs.length - 2)];
+  target.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function setupResizer() {
+  const r = $("#resizer"), app = $("#app"); if (!r) return;
+  const saved = parseInt(localStorage.getItem("cc_side") || "0", 10); if (saved) document.documentElement.style.setProperty("--side-w", saved + "px");
+  r.addEventListener("pointerdown", (e) => {
+    e.preventDefault(); r.setPointerCapture(e.pointerId);
+    const move = (ev) => { const w = Math.min(460, Math.max(220, ev.clientX)); document.documentElement.style.setProperty("--side-w", w + "px"); localStorage.setItem("cc_side", String(w)); };
+    const up = () => { r.removeEventListener("pointermove", move); r.removeEventListener("pointerup", up); };
+    r.addEventListener("pointermove", move); r.addEventListener("pointerup", up);
+  });
+  r.addEventListener("dblclick", () => { document.documentElement.style.removeProperty("--side-w"); localStorage.removeItem("cc_side"); });
+}
+function tour() {
+  if (localStorage.getItem("cc_tour")) return;
+  const steps = [["Ask anything", "Answers are written from your sources and every claim links to the evidence."], ["Follow-ups just work", "Ask 'what about its cost?' and it remembers what you were discussing."], ["Temporary chat and profile", "Use the clock button for a chat that saves nothing. The person button holds optional background for your saved chats."]];
+  let i = 0;
+  const back = el("div", { class: "modal-back" });
+  const draw = () => {
+    const [h, p] = steps[i];
+    back.replaceChildren(el("div", { class: "modal", role: "dialog", "aria-modal": "true", "aria-label": "Quick tour" },
+      el("div", { class: "mut", text: (i + 1) + " of " + steps.length }), el("h2", { text: h }), el("p", { text: p }),
+      el("div", { class: "modal-act" }, el("button", { class: "chip", onclick: done }, "Skip"), el("button", { class: "chip on", onclick: () => (++i < steps.length ? draw() : done()) }, i + 1 < steps.length ? "Next" : "Done"))));
+  };
+  const done = () => { localStorage.setItem("cc_tour", "1"); back.remove(); $("#q").focus(); };
+  document.body.append(back); draw();
+}
+})();
