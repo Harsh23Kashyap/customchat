@@ -242,3 +242,4 @@ button.chip{cursor:pointer}.meta.fu .chip:hover{background:var(--soft);color:var
 .note span{color:#5e6159;font-size:calc(12px*var(--fs,1))}:root[data-theme=dark] .note span{color:#b6c4bc}
 .meta.fu .chip:hover,.meta.fu .chip:focus-visible{text-decoration:underline;text-underline-offset:3px;background:transparent}
 @media(max-width:760px){.meta.fu .chip{min-height:44px;display:inline-flex;align-items:center}.bar #style{max-width:72px}.bar .title{flex:1 1 90px}}
+.meta.fu .chip::after{content:"\2192";margin-left:6px;color:var(--mut)}

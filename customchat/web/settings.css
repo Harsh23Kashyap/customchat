@@ -251,3 +251,7 @@ body{padding-bottom:96px}
 .cmhost:not(.filled)::after{content:attr(data-ph);position:absolute;left:58px;top:12px;color:#8795a8;font-size:13px;pointer-events:none}
 .sub .keyrow.tight{flex-wrap:nowrap;gap:8px}.sub .keyrow.tight .go{padding:10px 14px;font-size:13px;letter-spacing:.02em;white-space:nowrap}
 .savebar{width:min(540px,100%);margin-left:0}
+.go.ghost:hover{background:#fff!important;border-color:var(--cfg-accent)!important}.go.ghost:disabled{opacity:.55}
+.savebar span{color:#4a5568}.savebar span.dirty{color:#92400e}
+.cmhost:not(.filled) .cm-activeLine,.cmhost:not(.filled) .cm-activeLineGutter{background:transparent!important}
+.cmhost:not(.filled) .cm-gutters{background:transparent;border-right:0}
