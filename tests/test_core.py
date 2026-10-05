@@ -810,6 +810,28 @@ class AnimalFlag(unittest.TestCase):
         self.assertFalse(led[0]["animal_unmarked"])
 
 
+class LeadAndAttribution(unittest.TestCase):
+    EV = [{"n": 1, "title": "t1", "text": "Fasting lowered HOMA-IR and body weight fell too."},
+          {"n": 2, "title": "t2", "text": "Longer trials are needed to confirm durability of fasting benefits."},
+          {"n": 3, "title": "t3", "text": "Meal timing and circadian rhythm in mice."}]
+
+    def test_confident_lead_without_weight_caveat_is_flagged(self):
+        led = Engine.ledger("**Probably, fasting improves insulin sensitivity.** HOMA-IR fell. [1]", self.EV)
+        self.assertTrue(led[0]["unhedged_lead"]); self.assertFalse(led[0]["supported"])
+
+    def test_confident_lead_with_weight_caveat_passes(self):
+        led = Engine.ledger("**Probably, fasting improves insulin sensitivity.** The effect may partly come from the weight loss. [1]", self.EV)
+        self.assertFalse(led[0]["unhedged_lead"])
+
+    def test_hedged_lead_passes(self):
+        led = Engine.ledger("**Possibly, fasting improves insulin sensitivity.** HOMA-IR fell. [1]", self.EV)
+        self.assertFalse(led[0]["unhedged_lead"])
+
+    def test_multi_cite_weak_source_is_listed(self):
+        led = Engine.ledger("Longer trials are needed to confirm durability of fasting benefits. [1] [2] [3]", self.EV)
+        self.assertEqual(led[0]["weak_cites"], [1, 3])  # only source 2 says it
+
+
 class PubMedQuery(unittest.TestCase):
     def test_keywords_drop_question_words(self):
         from customchat.connectors.pubmed import keywords
