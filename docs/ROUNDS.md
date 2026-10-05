@@ -189,3 +189,8 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Logo Original / After blending / In your app captions stay hidden until a picture is chosen or one is set.
 - Side menu hover is an underline, not a pill, so only the section you are in is highlighted.
 - Suggested model names checked on the vendors' pages on 6 Oct 2026: OpenAI lists GPT-6.1 Sol (gpt-6.1-sol) as "near-Astra performance for complex work at a lower cost"; Google lists Gemini 3.8 Flash (gemini-3.8-flash) as "our most intelligent Flash model". Descriptions now use their wording.
+
+## Pass 23 (from B2's critique of 941c8f524c)
+- Vendor blurbs follow the official wording: GPT-6.1 Sol "near-Astra performance at a lower cost, for complex coding, computer use and professional work" (developers.openai.com/api/docs/models/gpt-6.1-sol); Gemini 3.8 Flash "our most intelligent Flash model" (ai.google.dev/gemini-api/docs/models/gemini-3.8-flash).
+- Dark mode: the user's message bubble had almost no contrast (dark grey text on dark grey). Fixed. Answer action buttons lost their pill borders in dark to match light.
+- Disabled logo options now have a muted label.
