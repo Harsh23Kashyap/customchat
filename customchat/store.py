@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS chats(id TEXT PRIMARY KEY, owner TEXT, title TEXT, pi
 CREATE TABLE IF NOT EXISTS topics(id TEXT PRIMARY KEY, owner TEXT, title TEXT, summary TEXT DEFAULT '', created REAL);
 CREATE TABLE IF NOT EXISTS turns(id TEXT PRIMARY KEY, chat TEXT, topic TEXT, question TEXT, standalone TEXT, answer TEXT, evidence TEXT, ledger TEXT, style TEXT, created REAL);
 CREATE TABLE IF NOT EXISTS feedback(turn TEXT PRIMARY KEY, owner TEXT, rating INTEGER, created REAL);
+CREATE TABLE IF NOT EXISTS states(owner TEXT, name TEXT, payload TEXT, updated REAL, PRIMARY KEY(owner,name));
 CREATE TABLE IF NOT EXISTS profile(owner TEXT PRIMARY KEY, text TEXT, updated REAL);
 CREATE TABLE IF NOT EXISTS evidence_cache(key TEXT PRIMARY KEY, payload TEXT, created REAL);
 CREATE TABLE IF NOT EXISTS uploads(id TEXT PRIMARY KEY, owner TEXT, name TEXT, text TEXT, created REAL);
@@ -182,6 +183,25 @@ class Store:
     def get_profile(self, owner):
         r = self.q("SELECT text FROM profile WHERE owner=?", (owner,), one=True)
         return r["text"] if r else ""
+
+    def states(self, owner):
+        return [r["name"] for r in self.q("SELECT name FROM states WHERE owner=? ORDER BY updated DESC", (owner,))]
+
+    def save_state(self, owner, name, payload):
+        name = (name or "").strip()[:60]
+        if not name:
+            raise ValueError("Give the state a name")
+        self.q("INSERT OR REPLACE INTO states VALUES(?,?,?,?)", (owner, name, json.dumps(payload), time.time()), write=True)
+        return name
+
+    def get_state(self, owner, name):
+        r = self.q("SELECT payload FROM states WHERE owner=? AND name=?", (owner, name), one=True)
+        if not r:
+            raise ValueError("No saved state with that name")
+        return json.loads(r["payload"])
+
+    def delete_state(self, owner, name):
+        self.q("DELETE FROM states WHERE owner=? AND name=?", (owner, name), write=True)
 
     def set_profile(self, owner, text):
         text = (text or "").strip()[:3000]

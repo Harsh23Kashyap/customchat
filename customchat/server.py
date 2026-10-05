@@ -16,6 +16,31 @@ def make_handler(cfg, engine):
     token_env = cfg["auth"]["token_env"]
     hits = collections.defaultdict(list)
 
+    def settings_view():
+        p, r = cfg["provider"], cfg["retrieval"]
+        return {"provider": p["type"], "model": p["model"], "base_url": p["base_url"], "temperature": p["temperature"],
+                "top_k": r["top_k"], "query_rewrite": bool(r.get("query_rewrite"))}
+
+    def can_edit(h):
+        return cfg["auth"]["mode"] != "none" or h.client_address[0] in ("127.0.0.1", "::1")
+
+    def apply_settings(v):
+        import copy
+        new = copy.deepcopy(cfg)
+        if "provider" in v: new["provider"]["type"] = str(v["provider"])
+        if "model" in v: new["provider"]["model"] = str(v["model"])[:120]
+        if "base_url" in v: new["provider"]["base_url"] = str(v["base_url"])[:300]
+        if "temperature" in v: new["provider"]["temperature"] = max(0.0, min(2.0, float(v["temperature"])))
+        if "top_k" in v: new["retrieval"]["top_k"] = max(1, min(20, int(v["top_k"])))
+        if "query_rewrite" in v: new["retrieval"]["query_rewrite"] = bool(v["query_rewrite"])
+        try:
+            schema.validate({k: v for k, v in new.items() if k != "_dir"})
+        except schema.ConfigError as e:
+            raise ValueError(str(e)) from None
+        cfg["provider"], cfg["retrieval"] = new["provider"], new["retrieval"]
+        engine.provider = providers.make(cfg)
+        engine._cache.clear()
+
     class H(BaseHTTPRequestHandler):
         server_version = "CustomChat"
 
@@ -67,6 +92,24 @@ def make_handler(cfg, engine):
                 return self._send(200, schema.public_view(cfg))
             o = self._owner()
             b = self._body() if method == "POST" else {}
+            if path == "/api/settings" and method == "GET":
+                return self._send(200, {"settings": settings_view(), "can_edit": can_edit(self), "providers": sorted(schema.PROVIDERS)})
+            if path == "/api/settings" and method == "POST":
+                if not can_edit(self):
+                    return self._send(403, {"error": "Settings can only be changed from this computer or with the access token"})
+                apply_settings(b.get("settings") or {})
+                return self._send(200, {"settings": settings_view()})
+            if path == "/api/states" and method == "GET":
+                return self._send(200, {"states": store.states(o)})
+            if path == "/api/states/save" and method == "POST":
+                return self._send(200, {"name": store.save_state(o, b.get("name"), settings_view())})
+            if path == "/api/states/load" and method == "POST":
+                if not can_edit(self):
+                    return self._send(403, {"error": "Settings can only be changed from this computer or with the access token"})
+                apply_settings(store.get_state(o, str(b.get("name", ""))))
+                return self._send(200, {"settings": settings_view()})
+            if path == "/api/states/delete" and method == "POST":
+                store.delete_state(o, str(b.get("name", ""))); return self._send(200, {"ok": True})
             if path == "/api/chats" and method == "GET":
                 return self._send(200, store.chats(o, qs.get("q", "")))
             if path == "/api/chats" and method == "POST":
