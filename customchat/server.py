@@ -5,6 +5,7 @@ from urllib.parse import urlparse, parse_qs
 from . import schema, providers, fetch
 from .pipeline import Engine
 from .store import Store
+from .accounts import Accounts
 from .exports import bibtex, pdf_bytes, chat_markdown
 import time, collections
 
@@ -15,6 +16,7 @@ def make_handler(cfg, engine):
     store = engine.store
     token_env = cfg["auth"]["token_env"]
     hits = collections.defaultdict(list)
+    acc = Accounts(store, bool(cfg["auth"].get("signup", True))) if cfg["auth"]["mode"] == "accounts" else None
 
     def settings_view():
         p, r = cfg["provider"], cfg["retrieval"]
@@ -22,7 +24,13 @@ def make_handler(cfg, engine):
                 "top_k": r["top_k"], "query_rewrite": bool(r.get("query_rewrite"))}
 
     def can_edit(h):
-        return cfg["auth"]["mode"] != "none" or h.client_address[0] in ("127.0.0.1", "::1")
+        if cfg["auth"]["mode"] == "token":
+            return True
+        if acc:  # the first account created is the admin
+            u = acc.user_for(h._cookie())
+            first = store.q("SELECT id FROM users ORDER BY created LIMIT 1", one=True)
+            return bool(u and first and first["id"] == u["id"])
+        return h.client_address[0] in ("127.0.0.1", "::1")
 
     def apply_settings(v):
         import copy
@@ -60,9 +68,24 @@ def make_handler(cfg, engine):
             self.end_headers()
             self.wfile.write(data)
 
+        def _cookie(self):
+            for part in self.headers.get("Cookie", "").split(";"):
+                k, _, v = part.strip().partition("=")
+                if k == "cc_session":
+                    return v
+            return ""
+
+        def _set_cookie(self, token, max_age=30 * 86400):
+            return {"Set-Cookie": "cc_session=%s; Path=/; HttpOnly; SameSite=Strict; Max-Age=%d" % (token, max_age)}
+
         def _owner(self):
             if cfg["auth"]["mode"] == "none":
                 return "local"
+            if acc:
+                u = acc.user_for(self._cookie())
+                if not u:
+                    raise PermissionError("Sign in required")
+                return u["id"]
             want = os.environ.get(token_env, "")
             got = self.headers.get("Authorization", "").removeprefix("Bearer ").strip()
             if not want or not hmac.compare_digest(want, got):
@@ -90,6 +113,31 @@ def make_handler(cfg, engine):
                 return self._send(200, {"ok": True})
             if path == "/api/config":
                 return self._send(200, schema.public_view(cfg))
+            if acc and path.startswith("/api/account/"):
+                b = self._body() if method == "POST" else {}
+                ck = self._cookie()
+                if path == "/api/account/me":
+                    return self._send(200, {"user": acc.user_for(ck), "signup": acc.allow_signup})
+                if path == "/api/account/signup" and method == "POST":
+                    acc.signup(b.get("email"), b.get("name"), b.get("password"))
+                    uid, tok = acc.login(b.get("email"), b.get("password"))
+                    return self._send(200, {"user": acc.user_for(tok)}, extra=self._set_cookie(tok))
+                if path == "/api/account/login" and method == "POST":
+                    uid, tok = acc.login(b.get("email"), b.get("password"))
+                    return self._send(200, {"user": acc.user_for(tok)}, extra=self._set_cookie(tok))
+                if path == "/api/account/logout" and method == "POST":
+                    acc.logout(ck)
+                    return self._send(200, {"ok": True}, extra=self._set_cookie("", 0))
+                u = acc.user_for(ck)
+                if not u:
+                    raise PermissionError("Sign in required")
+                if path == "/api/account/password" and method == "POST":
+                    acc.change_password(u["id"], b.get("old"), b.get("new"), ck)
+                    return self._send(200, {"ok": True})
+                if path == "/api/account/delete" and method == "POST":
+                    acc.delete_account(u["id"], b.get("password"))
+                    return self._send(200, {"ok": True}, extra=self._set_cookie("", 0))
+                return self._send(404, {"error": "Not found"})
             o = self._owner()
             b = self._body() if method == "POST" else {}
             if path == "/api/settings" and method == "GET":

@@ -38,14 +38,14 @@ DEFAULTS = {
     },
     "memory": {"enabled": True, "recent_turns": 4, "summary_every": 6},
     "citations": {"required": True, "ledger": True},
-    "auth": {"mode": "none", "token_env": ""},   # none | token
+    "auth": {"mode": "none", "token_env": "", "signup": True},   # none | token | accounts
     "storage": {"path": "data/customchat.db"},
     "server": {"host": "127.0.0.1", "port": 8080},
 }
 
 PROVIDERS = {"mock", "ollama", "openai", "openai_compatible", "claude", "gemini"}
 CONNECTORS = {"local_files", "http_json", "pubmed", "arxiv", "python"}
-AUTH_MODES = {"none", "token"}
+AUTH_MODES = {"none", "token", "accounts"}
 
 
 class ConfigError(ValueError):
@@ -127,7 +127,7 @@ def validate(raw):
     if cfg["app"]["theme"] not in ("auto", "light", "dark"):
         raise ConfigError("app.theme must be auto, light or dark")
     if cfg["auth"]["mode"] not in AUTH_MODES:
-        raise ConfigError("auth.mode must be none or token")
+        raise ConfigError("auth.mode must be none, token or accounts")
     if cfg["retrieval"]["top_k"] < 1 or cfg["retrieval"]["top_k"] > 50:
         raise ConfigError("retrieval.top_k must be 1-50")
     return cfg
