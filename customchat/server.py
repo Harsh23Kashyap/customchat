@@ -183,6 +183,16 @@ def make_handler(cfg, engine):
                 if not can_edit(self):
                     return self._send(403, {"error": "Only the admin can see this computer's details"})
                 return self._send(200, hardware.report(str(qs.get("base_url") or "http://localhost:11434")))
+            if path == "/api/ollama/pull":
+                if not can_edit(self):
+                    return self._send(403, {"error": "Only the admin can download models"})
+                if method == "POST":
+                    try:
+                        return self._send(200, {"id": hardware.start_pull(str(b.get("base_url") or ""), str(b.get("model") or ""))})
+                    except ValueError as e:
+                        return self._send(400, {"error": str(e)})
+                st = hardware.pull_status(qs.get("id", ""))
+                return self._send(200, st) if st else self._send(404, {"error": "Unknown download"})
             if path == "/api/states" and method == "GET":
                 return self._send(200, {"states": store.states(o)})
             if path == "/api/states/save" and method == "POST":

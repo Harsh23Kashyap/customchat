@@ -137,11 +137,81 @@ def recommend(hw, have=None):
         out["picks"].append({
             "tag": m[0], "name": m[1], "label": label, "why": desc, "note": m[4], "params_b": m[2], "download_gb": m[3],
             "needs_gb": round(need, 1), "uses_pct": round(100 * need / b) if b else 0, "speed": _speed(mode, m[3], hw),
+            "fit": fit_of(need, b)[0], "fit_why": fit_of(need, b)[1],
             "installed": bool(have) and any(h == m[0] or h.split(":")[0] + ":latest" == m[0] for h in have), "pull": "ollama pull " + m[0]})
+    return out
+
+
+def fit_of(need, budget_gb):
+    """('green'|'blue'|'red', one plain sentence)"""
+    if budget_gb <= 0 or need > budget_gb * FIT:
+        return "red", "Too big for this computer's memory"
+    if need <= budget_gb * 0.60:
+        return "green", "Runs comfortably"
+    return "blue", "Fits, but leaves little room for long chats"
+
+
+def others(hw, picked):
+    b = budget(hw)[0]
+    out = []
+    for m in CATALOG:
+        if m[0] in picked: continue
+        f, why = fit_of(m[3] + OVERHEAD_GB, b)
+        out.append({"tag": m[0], "name": m[1], "fit": f, "why": why})
     return out
 
 
 def report(base="http://localhost:11434"):
     hw = detect(); have = installed(base)
     r = recommend(hw, have)
+    r["others"] = others(hw, {p["tag"] for p in r["picks"]})
     return {"hardware": hw, "installed": have, "recommendation": r, "ollama_running": have is not None}
+
+
+# ---------- download a model through the local Ollama API ----------
+import threading, uuid
+PULLS = {}
+_plock = threading.Lock()
+TAG_OK = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,79}$")
+
+
+def start_pull(base, model):
+    base = (base or "http://localhost:11434").rstrip("/")
+    if not TAG_OK.match(model or "") or not re.match(r"^https?://[^\s]+$", base):
+        raise ValueError("That model name or address is not valid")
+    pid = uuid.uuid4().hex[:12]
+    st = {"model": model, "status": "starting", "pct": 0, "done": False, "error": ""}
+    with _plock:
+        for k in [k for k, v in PULLS.items() if v["done"]][:-8]:
+            PULLS.pop(k, None)
+        PULLS[pid] = st
+
+    def run():
+        try:
+            req = urllib.request.Request(base + "/api/pull", data=json.dumps({"model": model, "stream": True}).encode(), headers={"Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=60) as r:
+                for raw in r:
+                    try:
+                        d = json.loads(raw.decode("utf-8", "replace"))
+                    except ValueError:
+                        continue
+                    if d.get("error"):
+                        st["error"] = "Ollama said: " + str(d["error"])[:160]; break
+                    st["status"] = str(d.get("status", ""))[:60]
+                    if d.get("total"):
+                        st["pct"] = max(st["pct"], min(99, int(100 * d.get("completed", 0) / d["total"])))
+                    if d.get("status") == "success":
+                        st["pct"] = 100
+            if not st["error"] and st["pct"] < 100:
+                st["pct"] = 100
+        except urllib.error.HTTPError as e:
+            st["error"] = "Ollama refused the download (HTTP %d). Check the model name." % e.code
+        except Exception:
+            st["error"] = "Could not reach Ollama. Is it running at the Base URL?"
+        st["done"] = True
+    threading.Thread(target=run, daemon=True).start()
+    return pid
+
+
+def pull_status(pid):
+    return PULLS.get(pid)
