@@ -108,3 +108,6 @@ Local secret store (secrets.json, mode 0600, never returned by any API, never in
 
 ## Backend pass 3 and config pass 8: provider marks, local model advisor
 Provider chips: five up front (OpenAI, Claude, Gemini, DeepSeek, Ollama) and Load more for the rest, each with its own monogram and brand-ish color (original marks, not logos). New hardware.py reads RAM, CPU, NVIDIA VRAM, Apple Silicon; computes a memory budget (VRAM, 65% of RAM on Apple Silicon, or 60% of RAM minus 4 GB on CPU), requires file size plus 1.5 GB to fit in 85% of it, and picks Best quality, Balanced and Fast and light from a catalog of Ollama tags (tags checked on ollama.com). Simple and Technical views, installed detection, pull command. Tests added.
+
+## Config pass 9: logo, progressive disclosure, font-bundled presets
+Logo upload with in-browser plain-background removal and feathered edges (shrunk to 256px PNG, validated on the server as a PNG data URL, shown in the top bar and the welcome screen). Every tab shows only essentials; the rest sits under a collapsed More section. Presets show their font pairing and always set both fonts, so one click gives colors and type.
