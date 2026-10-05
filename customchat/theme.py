@@ -50,7 +50,7 @@ DEFAULT = {
     "radius": 100, "density": "cozy", "shadow": "soft",
     "emoji_bot": "", "emoji_you": "", "emoji_hero": "", "emoji_send": "", "emoji_attach": "", "emoji_temp": "",
     "motion": "full", "entrance": "fade", "speed": 100, "hover_lift": True,
-    "sidebar": "left", "sidebar_width": 250, "chat_width": "normal", "avatars": "show", "bubble": "soft",
+    "sidebar": "left", "sidebar_width": 250, "chat_width": "normal", "avatars": "hide", "bubble": "flat",
     "txt_title": "", "txt_tagline": "", "txt_examples": "", "txt_placeholder": "", "txt_footer": "", "txt_disclaimer": "", "txt_hint": "", "txt_sidebar": "",
     "you_align": "right", "composer": "inline", "toolbar": "show", "sources_panel": True,
 }
