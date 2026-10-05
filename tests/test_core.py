@@ -807,6 +807,12 @@ class NumberCheck(unittest.TestCase):
         self.assertEqual(led["bad_numbers"], ["40"])
         self.assertFalse(led["supported"])
 
+    def test_regain_without_fat_mass_is_flagged(self):
+        from customchat.pipeline import Engine
+        ev = [{"n": 1, "title": "t", "text": "both groups regained weight, with more fat mass regain in the CRD group"}]
+        self.assertTrue(Engine.ledger("The IF group had less regain. [1]", ev)[0]["vague_regain"])
+        self.assertFalse(Engine.ledger("The IF group had less fat-mass regain. [1]", ev)[0]["vague_regain"])
+
     def test_sentences_split_when_citations_follow_the_period(self):
         from customchat.pipeline import Engine
         ev = [{"n": 1, "title": "t", "text": "alpha beta"}, {"n": 2, "title": "t", "text": "gamma 96"}]
