@@ -54,7 +54,7 @@ PRESET_PROVIDERS = {
 }
 NEEDS_MODEL = {"ollama", "openai", "openai_compatible", "claude", "gemini"} | set(PRESET_PROVIDERS)
 PROVIDERS = {"mock", "ollama", "openai", "openai_compatible", "claude", "gemini"} | set(PRESET_PROVIDERS)
-CONNECTORS = {"local_files", "http_json", "pubmed", "arxiv", "python", "web_search"}
+CONNECTORS = {"local_files", "http_json", "pubmed", "arxiv", "python", "web_search", "wikipedia", "crossref", "openalex"}
 AUTH_MODES = {"none", "token", "accounts"}
 
 
