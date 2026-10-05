@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 const $ = (s) => document.querySelector(s);
-const NAMES = { mock: "Demo", ollama: "Ollama", openai: "OpenAI", claude: "Claude", gemini: "Gemini", openai_compatible: "Other" };
+const NAMES = { mock: "Demo", ollama: "Ollama", openai: "OpenAI", claude: "Claude", gemini: "Gemini", openai_compatible: "Other", minimax: "MiniMax", mimo: "Xiaomi MiMo", deepseek: "DeepSeek", groq: "Groq", openrouter: "OpenRouter", mistral: "Mistral" };
 let cur = {}, canEdit = false, theme = null, saved = null, meta = null, editMode = "light";
 const token = localStorage.getItem("cc_token") || "";
 async function api(path, body) {
