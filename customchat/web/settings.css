@@ -100,3 +100,7 @@ body{padding-bottom:140px}
 .toolbar a:focus-visible{outline:2px solid var(--cfg-accent,#1d5fd1)}
 .preset,.presets button,[data-p]{font-family:"DM Sans",sans-serif;font-weight:600}
 .sub{margin-bottom:56px}
+.preset.more{background:transparent;border:1px dashed var(--cfg-accent,#1d5fd1);color:var(--cfg-accent,#1d5fd1);font-weight:600}
+.pvwrap,.preview,#pv{margin-bottom:90px}
+.cs-btn{border-radius:12px}
+.nav a,.nav button,#nav a,#nav button{white-space:nowrap}

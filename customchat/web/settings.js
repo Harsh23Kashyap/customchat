@@ -50,7 +50,7 @@ const SECTIONS = [
     C("bot", "Assistant message", "Background of the answers."),
     C("you", "Your avatar", "Background behind your initial."),
     C("danger", "Warning color", "Errors and delete.") ] },
-  { id: "background", icon: "\u25A6", tone: "purple", title: "Background and patterns", sub: "The page behind the chat", help: "Pick a style, then optionally lay a pattern over it.", fields: [
+  { id: "background", icon: "\u25A6", tone: "purple", title: "Background", sub: "The page behind the chat", help: "Pick a style, then optionally lay a pattern over it.", fields: [
     { key: "bg_style", label: "Background style", help: "Plain color is the default. Image needs an https link.", type: "select" },
     { key: "bg_color2", label: "Gradient second color", help: "Used by the gradient style.", type: "color" },
     { key: "bg_angle", label: "Gradient angle", help: "Direction of the gradient in degrees.", type: "range", unit: "\u00B0" },
@@ -107,6 +107,16 @@ const PRESETS = {
   Midnight: { mode: "dark", dark: { brand: "#b8a6ff", accent: "#ff8fd8", bg: "#0b0b17", surface: "#12122a", ink: "#ececff", muted: "#9a9ac4", line: "#27274a", sidebar: "#0f0f22", bot: "#181838", you: "#2a2a58" }, font: "space-grotesk", heading_font: "space-grotesk", bg_style: "gradient", bg_color2: "#1a1040", radius: 130, shadow: "strong", pattern: "dots", pattern_opacity: 14 },
   Paper: { light: { brand: "#3b2f23", accent: "#e0c48a", bg: "#f6efe0", surface: "#fbf7ec", ink: "#2a2118", muted: "#7d6e5c", line: "#e2d6bd", sidebar: "#eee3cc", bot: "#f1e8d3", you: "#e4d5b4" }, font: "lora", heading_font: "playfair", bg_style: "solid", radius: 40, bubble: "flat", shadow: "soft", pattern: "lines", pattern_size: 28, pattern_opacity: 8 },
 };
+const MORE_PRESETS = {
+  Lavender: { light: { brand: "#4b3f8f", accent: "#cbbcff", bg: "#f6f3fc", surface: "#fdfcff", ink: "#221c3a", muted: "#6f688f", line: "#e2dcf2", sidebar: "#ece7f8", bot: "#f1edfa", you: "#ddd4f3" }, font: "nunito", heading_font: "fraunces", bg_style: "solid", radius: 60, bubble: "flat", shadow: "soft" },
+  Slate: { light: { brand: "#2f3e4e", accent: "#9fb6c9", bg: "#f2f4f6", surface: "#ffffff", ink: "#182430", muted: "#66737f", line: "#d9dfe5", sidebar: "#e7ebef", bot: "#eef1f4", you: "#d5dde5" }, font: "inter", heading_font: "inter", bg_style: "solid", radius: 30, bubble: "flat", shadow: "none" },
+  Terracotta: { light: { brand: "#9c4a2f", accent: "#e8b79a", bg: "#faf1ea", surface: "#fffaf6", ink: "#33201a", muted: "#8a6c60", line: "#ecd6c8", sidebar: "#f3e0d3", bot: "#f7e9de", you: "#ecc9b3" }, font: "lora", heading_font: "fraunces", bg_style: "solid", radius: 50, bubble: "flat", shadow: "soft" },
+  Matcha: { light: { brand: "#4a5d23", accent: "#c9dc8a", bg: "#f4f6ea", surface: "#fbfcf5", ink: "#222a12", muted: "#6c7656", line: "#dde3c6", sidebar: "#e9eed6", bot: "#eff2df", you: "#d8e2b5" }, font: "dm-sans", heading_font: "playfair", bg_style: "solid", radius: 70, bubble: "flat", shadow: "soft" },
+  Rose: { light: { brand: "#8a2f4d", accent: "#f2b5c8", bg: "#fcf2f5", surface: "#fffafb", ink: "#33161f", muted: "#8d6874", line: "#f0d6de", sidebar: "#f8e4ea", bot: "#f9e9ee", you: "#f0c9d5" }, font: "poppins", heading_font: "playfair", bg_style: "solid", radius: 80, bubble: "flat", shadow: "soft" },
+  Nord: { mode: "dark", dark: { brand: "#88c0d0", accent: "#a3be8c", bg: "#20262f", surface: "#2a313c", ink: "#e5e9f0", muted: "#9aa5b8", line: "#3b4252", sidebar: "#252b35", bot: "#303846", you: "#3b4658" }, font: "inter", heading_font: "inter", bg_style: "solid", radius: 40, bubble: "flat", shadow: "none" },
+  Ink: { mode: "dark", dark: { brand: "#f2f2f2", accent: "#d4af37", bg: "#0c0c0c", surface: "#151515", ink: "#f2f2f2", muted: "#a0a0a0", line: "#2a2a2a", sidebar: "#111111", bot: "#1b1b1b", you: "#2a2a2a" }, font: "lora", heading_font: "playfair", bg_style: "solid", radius: 20, bubble: "flat", shadow: "none" },
+  Sand: { light: { brand: "#6b5a3e", accent: "#d9c7a0", bg: "#f7f3ea", surface: "#fdfbf6", ink: "#2b2619", muted: "#847a66", line: "#e6dfcc", sidebar: "#efe9d9", bot: "#f3eee0", you: "#e3d9bd" }, font: "georgia", heading_font: "georgia", bg_style: "solid", radius: 30, bubble: "flat", shadow: "none" }
+};
 const clone = (o) => JSON.parse(JSON.stringify(o));
 const get = (f) => (f.colors ? theme[editMode][f.key] : theme[f.key]);
 const setv = (f, v) => { if (f.colors) theme[editMode][f.key] = v; else theme[f.key] = v; changed(); };
@@ -148,6 +158,7 @@ function control(f) {
   if (!canEdit && input.tagName === "SELECT") input.disabled = true;
   return el("div", { class: "field" }, el("label", { for: id, class: "flabel" }, f.label), el("span", { class: "h", text: f.help }), input);
 }
+function pvPop() { const f = document.getElementById("pv"); if (!f || matchMedia("(prefers-reduced-motion:reduce)").matches) return; f.animate([{ opacity: .55, transform: "scale(.985)" }, { opacity: 1, transform: "scale(1)" }], { duration: 220, easing: "ease-out" }); }
 function drawLook() {
   const root = $("#look"); root.replaceChildren();
   for (const s of SECTIONS) {
@@ -175,13 +186,20 @@ function buildMenu() {
 }
 function buildPresets() {
   const box = $("#presets"); box.replaceChildren();
-  for (const [name, p] of Object.entries(PRESETS)) {
+  let showMore = false;
+  const draw = () => { box.replaceChildren();
+  const all = showMore ? Object.assign({}, PRESETS, MORE_PRESETS) : PRESETS;
+  for (const [name, p] of Object.entries(all)) {
     const t = Object.assign(clone(meta.default), clone(p)); t.light = Object.assign(clone(meta.default.light), p.light || {}); t.dark = Object.assign(clone(meta.default.dark), p.dark || {});
     const c = t.mode === "dark" ? t.dark : t.light;
     const b = el("button", { type: "button", class: "preset", title: "Apply the " + name + " look", disabled: canEdit ? undefined : "" }, el("span", { class: "sw", style: `background:linear-gradient(135deg,${c.bg} 0 50%,${c.brand} 50% 75%,${c.accent} 75%)` }), name);
-    b.addEventListener("click", () => { const keep = ["txt_title", "txt_tagline", "txt_examples", "txt_placeholder", "txt_hint", "txt_disclaimer", "txt_sidebar", "txt_footer"]; for (const k of keep) t[k] = theme[k]; theme = t; editMode = theme.mode === "dark" ? "dark" : "light"; setPvMode(editMode); drawLook(); changed(); say("Preset \u201c" + name + "\u201d applied to the preview. Press Save look to keep it."); });
+    b.addEventListener("click", () => { const keep = ["txt_title", "txt_tagline", "txt_examples", "txt_placeholder", "txt_hint", "txt_disclaimer", "txt_sidebar", "txt_footer"]; for (const k of keep) t[k] = theme[k]; theme = t; editMode = theme.mode === "dark" ? "dark" : "light"; setPvMode(editMode); drawLook(); pvPop(); changed(); say("Preset \u201c" + name + "\u201d applied to the preview. Press Save look to keep it."); });
     box.append(b);
   }
+  const more = el("button", { type: "button", class: "preset more", "aria-expanded": showMore ? "true" : "false" }, showMore ? "Show fewer" : "Load more");
+  more.addEventListener("click", () => { showMore = !showMore; draw(); });
+  box.append(more); };
+  draw();
 }
 async function init() {
   const c = await api("/api/config"); $("#h").textContent = c.app.title + " configuration"; document.title = c.app.title + " configuration";

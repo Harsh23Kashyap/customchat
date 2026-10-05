@@ -220,3 +220,6 @@ html[data-bubble=flat] .bubble.ub{background:var(--you);color:#1f2a24}
 @media(max-width:760px){.meta .chip,.bar .icon,.send,.srcs button.s{min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center}.meta{gap:0}.bar #style{max-width:96px}.bar .title,.bar h2,.bar #title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto}}
 @media(min-width:761px){.bar #newTopic{display:none}}
 @media(max-width:760px){.bar{gap:2px;padding-left:6px;padding-right:6px}.bar .icon{min-width:40px;min-height:44px;padding:0}.bar #style{max-width:80px;padding:0 4px}.bar #exportChat,.bar #profileBtn{display:none}.bar .title{min-width:56px;flex:1 1 56px}}
+/* quick design-switch transition */
+body,.app,aside,.main,.bar,.bubble,.srcs button.s,.send,.composer,.chip,.icon,.cs-btn{transition:background-color .22s ease,color .22s ease,border-color .22s ease}
+@media(prefers-reduced-motion:reduce){body,.app,aside,.main,.bar,.bubble,.srcs button.s,.send,.composer,.chip,.icon{transition:none}}
