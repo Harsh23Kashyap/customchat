@@ -278,3 +278,8 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Records with no text or no title are dropped before the prompt and chips (guard in retrieval). The "None/None/None" PMID:34086376 line in an earlier log came from my own script printing a record it had not retrieved in that run; it was a real 2021 record in the run that cited it. The guard is a safeguard, not a fix for a seen defect.
 - New check, no model: a sentence that says "regain" without "fat" while its cited passage says "fat mass regain" is flagged "to check" (field vague_regain). Both no-revise runs after the pass 37 prompt trip it.
 - Note: the old 1200-character limit cut the endings of several passages (about 3 of 4 abstracts in one run), including conclusions such as "both IF and CRD are effective short-term weight loss strategies". This affected every answer, not only one question.
+
+## Pass 39
+- A sentence flagged as vague about regain is now corrected: one rewrite using the revise prompt plus the flagged sentence, kept only if the flag is gone (else the original stays). Real before/after from a run without the revise step: "participants in both groups regained some weight" became "both groups regained weight, but the CRD group regained more fat mass; the study reported that IF may better prevent weight regain".
+- Base prompt: no causal "therefore" the passages do not make; "in some settings or groups" instead of "for some people" unless a passage names who.
+- Tests added for the empty-record guard (Engine.usable) and for the regain check.
