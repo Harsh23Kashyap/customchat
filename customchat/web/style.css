@@ -244,3 +244,6 @@ button.chip{cursor:pointer}.meta.fu .chip:hover{background:var(--soft);color:var
 @media(max-width:760px){.meta.fu .chip{min-height:44px;display:inline-flex;align-items:center}.bar #style{max-width:none}.bar .title{flex:1 1 90px}}
 .meta.fu .chip::after{content:"\2192";margin-left:6px;color:var(--mut)}
 @media(max-width:760px){.bar .cs-btn,.bar #style{max-width:none;min-width:92px;width:auto;padding-left:8px;padding-right:8px;text-overflow:clip}.bar .cs-btn svg,.bar .cs-btn .caret,.bar .cs-btn::after{display:none}}
+
+html[data-theme=dark][data-bubble=flat] .bubble.ub,html[data-theme=dark] .bubble.ub{color:#e8efe9}
+html[data-theme=dark] .meta .chip:not(.on){border-color:transparent;background:transparent}

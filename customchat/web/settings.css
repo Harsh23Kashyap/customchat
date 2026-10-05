@@ -271,3 +271,5 @@ body{padding-bottom:104px!important}
 
 .menu a:hover{background:transparent;box-shadow:none;color:#1a202c;text-decoration:underline;text-underline-offset:4px}
 .menu a.on:hover{background:#e8f0fc;text-decoration:none}
+
+label.check:has(input:disabled){color:#8a95a5}

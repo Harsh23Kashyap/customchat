@@ -65,8 +65,8 @@ let hwView = "simple";
 /* Cloud picks, checked against the providers' own model pages on 5 Oct 2026:
    developers.openai.com/api/docs/models and ai.google.dev/gemini-api/docs/models */
 const CLOUD_PICKS = [
-  { p: "openai", id: "gpt-6.1-sol", name: "GPT-6.1 Sol", why: "Near-flagship performance for complex work at a lower cost." },
-  { p: "gemini", id: "gemini-3.8-flash", name: "Gemini 3.8 Flash", why: "Google's most intelligent Flash model, for software engineering, agents and complex workflows." },
+  { p: "openai", id: "gpt-6.1-sol", name: "GPT-6.1 Sol", why: "Near-Astra performance at a lower cost, for complex coding, computer use and professional work." },
+  { p: "gemini", id: "gemini-3.8-flash", name: "Gemini 3.8 Flash", why: "Google's most intelligent Flash model." },
 ]; const testLog = [];
 async function ollamaPanel() {
   const box = $("#ollamabox"); if (activeSec !== "model") return; box.hidden = false; box.dataset.loaded = "1";
