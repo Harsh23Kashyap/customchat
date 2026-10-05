@@ -104,6 +104,7 @@ function turnView(t, prev) {
   if (t.evidence.length && weak.length) meta.append(el("button", { class: "chip warn", title: "Sentences without a valid citation or with little overlap with the cited text. Click to see them.", onclick: () => alert("Check these sentences:\n\n" + weak.map((l) => "- " + l.claim).join("\n")) }, weak.length + " to check"));
   if (t.seconds !== undefined) meta.append(el("span", { class: "chip", title: "Time to answer" }, t.seconds < 1 ? "<1s" : t.seconds + "s"));
   if (t.standalone && t.standalone !== t.question) meta.append(el("span", { class: "chip", title: "Understood as" }, "Understood as: " + t.standalone));
+  meta.append(el("button", { class: "chip", title: "How this answer was built", onclick: () => contextDialog(t) }, "Context"));
   if (t.evidence.length) {
     meta.append(el("button", { class: "chip", onclick: () => navigator.clipboard.writeText(t.answer).then(() => toast("Copied")) }, "Copy"));
     for (const v of [1, -1]) meta.append(el("button", { class: "chip" + (S.ratings[t.id] === v ? " on" : ""), "aria-pressed": String(S.ratings[t.id] === v), onclick: async () => { const r = S.ratings[t.id] === v ? 0 : v; try { await api("/api/rate", { turn: t.id, rating: r }); if (r) S.ratings[t.id] = r; else delete S.ratings[t.id]; drawThread(); } catch (e) { toast(e.message); } } }, v > 0 ? "Helpful" : "Not helpful"));
@@ -228,6 +229,8 @@ async function send() {
   S.busy = false; $("#send").replaceChildren(svg("send")); $("#send").setAttribute("aria-label", "Send"); drawThread(); loadList(); $("#q").focus();
 }
 async function uploadDialog() {
+  const link = prompt("Paste a web page link to add it as a source, or press Cancel to choose files");
+  if (link && link.trim()) { try { const r = await api("/api/load-url", { url: link.trim() }); toast("Added: " + r.name); } catch (e) { toast(e.message); } return; }
   const inp = el("input", { type: "file", accept: ".txt,.md,.csv,.json", multiple: "" });
   inp.addEventListener("change", async () => {
     let n = 0;
@@ -238,6 +241,15 @@ async function uploadDialog() {
     if (n) toast(n + " file" + (n > 1 ? "s" : "") + " added. Questions can now use them.");
   });
   inp.click();
+}
+function contextDialog(t) {
+  const m = el("div", { class: "modal-back", onclick: (e) => e.target === m && m.remove() }, el("div", { class: "modal", role: "dialog", "aria-label": "Answer context" },
+    el("h2", { text: "How this answer was built" }),
+    el("p", { text: "You asked: " + t.question }),
+    el("p", { text: "Understood as: " + (t.standalone || t.question) }),
+    el("p", { text: (t.evidence || []).length + " source" + ((t.evidence || []).length === 1 ? "" : "s") + " used" + (t.seconds !== undefined ? ", answered in " + (t.seconds < 1 ? "under 1s" : t.seconds + "s") : "") + "." }),
+    el("div", { class: "modal-act" }, el("button", { class: "btn-out", onclick: () => m.remove() }, "Close"))));
+  document.body.append(m);
 }
 async function regen(turn, style) {
   try { const r = await api("/api/regenerate", { turn, style }); S.turns.push(r); drawThread(); } catch (e) { toast(e.message); }
