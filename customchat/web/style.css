@@ -255,3 +255,4 @@ html[data-theme=dark] .meta .chip:not(.on){border-color:transparent;background:t
 .meta>.chip:first-child,.meta>.warn+.chip{padding-left:0}.meta>.warn[hidden]+.chip,.meta>.warn+.chip{padding-left:0}
 .item .tm{margin-left:auto;padding-left:8px;color:var(--mut);font-size:calc(11px*var(--fs,1));white-space:nowrap}.item:hover .tm,.item.on .tm{display:none}
 .bubble code,.ans code,.thread code{font-size:.9em;vertical-align:baseline;line-height:1}
+.srcs button.s{align-items:center;max-width:100%}.srcs button.s .n{flex:none;white-space:nowrap}.srcs button.s .st{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:min(340px,60vw)}
