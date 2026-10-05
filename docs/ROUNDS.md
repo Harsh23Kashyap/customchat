@@ -247,3 +247,8 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Source chips show up to two lines of title (rounded 16px), so a counter-result title like "...but does not improve insulin sensitivity" stays readable.
 - Citation spacing: one space before a marker, none between a marker and the punctuation after it.
 - Prompt: no "lasting" or "durable" unless a passage says so; do not describe the reader's own situation.
+
+## Pass 33
+- New optional step "Revise against the sources" (prompt.revise: true, or the Prompts tab; off by default). One more model call rewrites the answer so every statement and descriptive word (small, short, lasting) is in the cited passages, and it must mention weight loss or a better-performing comparison group when a passage says so. On the Nutrition app the closing line now reads "lasted three and five weeks and involved specific groups" instead of "relatively small or short".
+- New deterministic check, no model: every number in a sentence (digits or number words such as "fourteen") must appear in a passage that sentence cites, or in the question. Otherwise the sentence is flagged "to check". Unit test added. Found no false flags on the Docs, Acme and Nutrition runs except the question's own "45 days", which is now allowed.
+- Relevance and faithfulness layers compared on Acme and Nutrition: no measurable gain, so they stay optional and off.
