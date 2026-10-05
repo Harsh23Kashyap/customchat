@@ -139,3 +139,6 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Wikipedia, Crossref and OpenAlex connectors join PubMed and arXiv. No key needed; tick them in the Code panel.
 - Response shapes checked live. OpenAlex search is paid per its docs and reads `OPENALEX_API_KEY` from the environment.
 - Tested with mocked responses. Each source fails safe.
+
+## Pass 14: waiting indicator
+- The waiting dots now show elapsed time ("1.6s"), an idea from the Loading State on beautifului.dev (MIT, Shane Levine). No code was copied; it is our own plain-JS version.
