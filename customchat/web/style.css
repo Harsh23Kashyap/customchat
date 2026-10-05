@@ -247,3 +247,8 @@ button.chip{cursor:pointer}.meta.fu .chip:hover{background:var(--soft);color:var
 
 html[data-theme=dark][data-bubble=flat] .bubble.ub,html[data-theme=dark] .bubble.ub{color:#e8efe9}
 html[data-theme=dark] .meta .chip:not(.on){border-color:transparent;background:transparent}
+.meta.fu{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.meta.fu .chip{white-space:normal;text-align:left;max-width:100%}
+.cite+.cite{margin-left:3px}
+.meta.fu .chip,.meta>.chip:first-child{padding-left:0}
+.thread .meta:not(.fu)>.chip:first-of-type,.thread .meta:not(.fu)>button:first-of-type{padding-left:0}
