@@ -160,3 +160,9 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Empty code editor has no highlight band across line 1. Try it keeps a white button on hover with a darker border (no pale fill that looks disabled).
 - Save bar text is darker (contrast 7.5:1 on white). Footer disclaimer measures 6.2:1.
 - Related items end with an arrow. Phone tap targets measured 44px high.
+
+## Pass 18 (from B2's critique of ded5c7bcd0)
+- Save bar slides away when there are no unsaved changes, so it never covers content. It comes back, one line, when something changes.
+- Checkbox no longer gets the blue input box on focus; keyboard focus shows a 2px ring.
+- Try it has a stronger outline and a visible hover state.
+- Phone header: the Standard select is narrower so more of the chat title shows.
