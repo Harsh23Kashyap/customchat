@@ -214,7 +214,7 @@ def make_handler(cfg, engine):
                         if on:
                             pids = [x for x in dict.fromkeys(pids) if x in websearch.PROVIDERS]
                             if not pids:
-                                return self._send(400, {"error": "Choose at least one provider"})
+                                return self._send(400, {"error": "Save a key for a provider below first, then tick it"})
                             missing = [websearch.PROVIDERS[x]["label"] for x in pids if not websearch.has_key(x)]
                             if missing:
                                 return self._send(400, {"error": "Save a key first for " + ", ".join(missing)})

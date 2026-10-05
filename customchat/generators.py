@@ -301,7 +301,7 @@ def test_code(kind, code, query):
                 except ValueError:
                     err = "It returned something that is not plain data."
             else:
-                err = (p.stderr or "It stopped without a result.").strip().splitlines()[-1][:300] if (p.stderr or "").strip() else "It stopped without a result."
+                err = (p.stderr or "It stopped without a result.").strip().splitlines()[-1][:300] if (p.stderr or "").strip() else ("It ran for 20 seconds without finishing, so it was stopped." if _t.time() - t0 >= 18 else "It stopped without a result.")
         except subprocess.TimeoutExpired:
             err = "It took longer than 60 seconds and was stopped."
     shape = check_shape(kind, result) if result is not None else []
