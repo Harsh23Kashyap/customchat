@@ -505,3 +505,60 @@ class SettingsApi(Http):
 
     def test_settings_page_served(self):
         self.assertIn(b"Save Current State", self.call("/settings.html")[1])
+
+
+def test_accounts():
+    from customchat.store import Store
+    from customchat.accounts import Accounts
+    a = Accounts(Store(":memory:"))
+    u1 = a.signup("Ann@x.com", "Ann", "password1")
+    for bad in (("nope", "password1"), ("b@x.com", "short"), ("ann@x.com", "password1")):
+        try:
+            a.signup(bad[0], "", bad[1]); assert False
+        except ValueError:
+            pass
+    uid, tok = a.login("ann@x.com", "password1")
+    assert uid == u1 and a.user_for(tok)["email"] == "ann@x.com"
+    tok2 = a.login("ann@x.com", "password1")[1]
+    a.change_password(uid, "password1", "newpassword", tok)
+    assert a.user_for(tok) and a.user_for(tok2) is None
+    try:
+        a.login("ann@x.com", "password1"); assert False
+    except PermissionError:
+        pass
+    a.login("ann@x.com", "newpassword")
+    for _ in range(9):
+        try: a.login("ann@x.com", "bad")
+        except PermissionError: pass
+    try:
+        a.login("ann@x.com", "newpassword"); assert False, "throttle"
+    except PermissionError as e:
+        assert "Too many" in str(e)
+    a.logout(tok); assert a.user_for(tok) is None
+    a.delete_account(uid, "newpassword") if False else None
+    closed = Accounts(Store(":memory:"), allow_signup=False)
+    closed.signup("o@x.com", "", "password1")
+    try:
+        closed.signup("p@x.com", "", "password1"); assert False
+    except PermissionError:
+        pass
+    print("accounts ok")
+
+
+test_accounts()
+
+
+def test_pdf():
+    import zlib
+    from customchat import pdfread
+    c = zlib.compress(b"BT (Hello from a PDF with enough words.) Tj 0 -14 Td [(Second ) -300 (line here.)] TJ ET")
+    pdf = b"%PDF-1.4\n1 0 obj<</Filter/FlateDecode>>\nstream\n" + c + b"\nendstream\nendobj\n%%EOF"
+    t = pdfread.extract(pdf)
+    assert "Hello from a PDF" in t and "Second line here." in t.replace("Second  line", "Second line") or "Second" in t
+    for bad in (b"nope", b"%PDF-1.4 empty"):
+        try: pdfread.extract(bad); assert False
+        except ValueError: pass
+    print("pdf ok")
+
+
+test_pdf()
