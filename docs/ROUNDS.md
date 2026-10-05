@@ -93,3 +93,6 @@ UI: answer actions are quiet text buttons instead of outlined pills, dark and ph
 
 ## Design pass 4 (from strict review)
 Single 720px reading column, no avatars, flat bubbles. Sources are a chip row under the answer. Stray period after citations fixed. New-conversation moved to header. Actions on one line, 13px. Suggestions 14px.
+
+## Design pass 5 (second strict review)
+Darker action/chip text, user bubble contrast, one-column alignment, 8/12 rhythm, send button uses the brand color (no lime), focus rings, 44px touch targets on phone, header title ellipsis. Config: DM Sans, sentence-case buttons, segmented Chat/Configuration control, bottom room above the save bar, no em dash in the title.
