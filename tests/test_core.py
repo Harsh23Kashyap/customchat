@@ -797,5 +797,15 @@ test_open_sources()
 
 test_ollama_fit_and_pull_validation()
 
+
+class NumberCheck(unittest.TestCase):
+    def test_numbers_must_be_in_cited_passage(self):
+        from customchat.pipeline import Engine
+        ev = [{"n": 1, "title": "t", "text": "Fourteen adults did a 3 week trial; HOMA-IR fell 0.31"}]
+        self.assertEqual(Engine.ledger("14 adults, three weeks [1].", ev)[0]["bad_numbers"], [])
+        led = Engine.ledger("HOMA-IR fell 0.31 in 40 adults [1].", ev)[0]
+        self.assertEqual(led["bad_numbers"], ["40"])
+        self.assertFalse(led["supported"])
+
 if __name__ == "__main__":
     unittest.main()
