@@ -134,6 +134,8 @@ class Engine:
                 for e in f.result(timeout=60)[1]:
                     e["score"] *= weights.get(sid, 1.0)
                     sig = e["url"] or re.sub(r"\W+", "", e["title"].lower())[:80] or e["id"]
+                    if not (e.get("text") or "").strip() or not (e.get("title") or "").strip():
+                        continue  # a record with no text or no title cannot be cited
                     if sig not in seen and e["score"] >= self.cfg["retrieval"]["min_score"]:
                         seen.add(sig); found.append(e)
             except Exception as ex:  # one failing source must not sink the answer
@@ -240,8 +242,10 @@ class Engine:
                 claim = re.sub(r"\s*\[\d+\]", "", sent).strip()
                 good = [c for c in cites if c in valid]
                 bad = Engine.bad_numbers(claim, good, evidence, asked) if good else []
+                blob = " ".join(e.get("text", "").lower() for e in evidence if e.get("n") in good)
+                vague = "regain" in claim.lower() and "fat" not in claim.lower() and "fat mass regain" in blob
                 out.append({"claim": claim, "overlap": Engine.support(claim, good, evidence), "cites": good, "bad_numbers": bad,
-                            "invalid": [c for c in cites if c not in valid], "supported": bool(cites) and all(c in valid for c in cites) and not bad})
+                            "invalid": [c for c in cites if c not in valid], "supported": bool(cites) and all(c in valid for c in cites) and not bad and not vague, "vague_regain": vague})
         return out
 
     # optional steps, each off by default and only used with a real model
