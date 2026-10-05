@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Configuration</title>
 <link rel="stylesheet" href="/settings.css">
-</head>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap"></head>
 <body>
 <nav class="toolbar"><a href="/">Chat</a><a href="/settings.html" class="on">Configuration</a></nav>
 <main class="card">
@@ -18,8 +18,8 @@
         <div class="help">A preset changes colors, fonts, background and shape in one click. You can still adjust anything afterwards. Nothing is kept until you press <b>Save look</b>.</div>
         <div class="presets" id="presets"></div>
         <div class="two">
-          <div class="sub"><b>Save current state</b><small>Stores the model settings under a name</small><input id="sname" placeholder="Enter state name" aria-label="State name"><button class="go green" id="save">SAVE</button></div>
-          <div class="sub"><b>Load saved state</b><small>Brings back a model setup you saved</small><select id="states" aria-label="Saved states"></select><div class="row2"><button class="go blue" id="load">LOAD</button><button class="go ghost" id="del">DELETE</button></div></div>
+          <div class="sub"><b>Save current state</b><small>Stores the model settings under a name</small><input id="sname" placeholder="Enter state name" aria-label="State name"><button class="go green" id="save">Save state</button></div>
+          <div class="sub"><b>Load saved state</b><small>Brings back a model setup you saved</small><select id="states" aria-label="Saved states"></select><div class="row2"><button class="go blue" id="load">Load</button><button class="go ghost" id="del">Delete</button></div></div>
         </div>
         <div class="row2"><button class="go ghost" id="exp">Export look (file)</button><label class="go ghost filebtn" for="imp">Import look<input id="imp" type="file" accept="application/json,.json" hidden></label></div>
       </section>

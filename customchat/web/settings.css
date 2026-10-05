@@ -86,3 +86,17 @@ input.emoji{font-size:22px!important;width:100px!important;text-align:center}
 .savebar{box-shadow:0 -1px 0 #e1e8f2,0 8px 24px rgba(0,40,90,.08)}
 .layout{padding-bottom:96px}
 .preview select,#pv+*{min-width:0}
+/* Pass 5: config uses chat typography, sentence case, bottom room */
+body{font-family:"DM Sans",-apple-system,"Segoe UI",sans-serif}
+button,.go,.seg button,h1,h2,h3{font-family:inherit;text-transform:none!important;letter-spacing:0!important}
+.wrapcfg,.main,body>div{padding-bottom:40px}
+.savebar{margin-top:40px}
+body{padding-bottom:140px}
+.savebar .go{padding:10px 22px;font-size:14px}
+.savebar button:not(.go){font-size:14px}
+.toolbar{gap:0;padding:3px;background:#e6eef8;border-radius:12px;align-self:flex-end}
+.toolbar a{border:0;box-shadow:none;background:transparent;border-radius:9px;padding:8px 18px;transform:none!important;color:#4a5568}
+.toolbar a.on{background:#fff;color:var(--cfg-accent,#1d5fd1);box-shadow:0 1px 3px rgba(0,40,90,.15)!important}
+.toolbar a:focus-visible{outline:2px solid var(--cfg-accent,#1d5fd1)}
+.preset,.presets button,[data-p]{font-family:"DM Sans",sans-serif;font-weight:600}
+.sub{margin-bottom:56px}

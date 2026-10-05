@@ -202,3 +202,21 @@ html.preview .toolbar a.tb-link{pointer-events:none}
 .bar select{font-weight:500}
 @media(max-width:760px){.thread>.row,.thread>*{max-width:100%}.cmeta span:first-child::after{content:""}.hero{margin-top:10vh}}
 .srcs{margin:10px auto 4px}
+/* Pass 5: contrast, alignment, rhythm, touch targets */
+:root{--you:#e9dfc9}
+html[data-bubble=flat] .bubble.ub{background:var(--you);color:#1f2a24}
+.row.u .bubble.ub{margin-left:auto;margin-right:0}
+.row.u,.row.b{width:100%}
+.meta .chip{color:#55574f}
+.srcs button.s{color:#55574f;border-color:#d8d3c3}
+.srcs{margin:8px auto 4px}.meta{margin-top:0}
+.send{background:var(--brand);color:var(--on-brand);box-shadow:none}.send:hover{background:color-mix(in srgb,var(--brand) 85%,#000);transform:none}
+.meta .chip,.bar .icon,.send,.srcs button.s{min-height:32px}
+:root[data-theme=dark] .meta .chip,:root[data-theme=dark] .srcs button.s{color:#b6c4bc;border-color:#34463f}
+:root[data-theme=dark]{--you:#2a3a33}
+:root[data-theme=dark] html[data-bubble=flat] .bubble.ub{color:#e8efe9}
+.bar .icon:focus-visible,.meta .chip:focus-visible,.send:focus-visible,.srcs button.s:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.icon:hover{background:var(--soft)}
+@media(max-width:760px){.meta .chip,.bar .icon,.send,.srcs button.s{min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center}.meta{gap:0}.bar #style{max-width:96px}.bar .title,.bar h2,.bar #title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto}}
+@media(min-width:761px){.bar #newTopic{display:none}}
+@media(max-width:760px){.bar{gap:2px;padding-left:6px;padding-right:6px}.bar .icon{min-width:40px;min-height:44px;padding:0}.bar #style{max-width:80px;padding:0 4px}.bar #exportChat,.bar #profileBtn{display:none}.bar .title{min-width:56px;flex:1 1 56px}}

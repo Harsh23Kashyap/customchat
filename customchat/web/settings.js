@@ -184,7 +184,7 @@ function buildPresets() {
   }
 }
 async function init() {
-  const c = await api("/api/config"); $("#h").textContent = "Configuration \u2014 " + c.app.title; document.title = "Configuration \u2014 " + c.app.title;
+  const c = await api("/api/config"); $("#h").textContent = c.app.title + " configuration"; document.title = c.app.title + " configuration";
   const d = await api("/api/settings"); cur = d.settings; canEdit = d.can_edit;
   const th = await api("/api/theme"); theme = th.theme; meta = th.meta; saved = clone(theme); canEdit = canEdit && th.can_edit !== false;
   const seg = $("#seg");
