@@ -416,3 +416,64 @@ class Round19(unittest.TestCase):
         e.store.add_turn(c, None, "Totally unrelated pizza topic", "q", "a", [], [], "standard")
         r = e.similar("o", "explain conversation memory")
         self.assertEqual(len(r), 1); self.assertIn("memory", r[0]["question"])
+
+
+class Round20(unittest.TestCase):
+    def _cfg(self, t):
+        return schema.load({"app": {"title": "T"}, "provider": {"type": t, "model": "m"}}) if hasattr(schema, "load") else None
+
+    def test_claude_request_shape(self):
+        from customchat import providers
+        seen = {}
+        def fake(url, payload, headers, timeout, retries=2):
+            seen.update(url=url, payload=payload, headers=headers)
+            return {"content": [{"type": "text", "text": " hi [1] "}]}
+        old = providers._post; providers._post = fake
+        os.environ["ANTHROPIC_API_KEY"] = "k"
+        try:
+            c = providers.Claude({"provider": {"base_url": "", "model": "claude-x", "timeout": 5, "temperature": 0.1, "api_key_env": ""}})
+            out = c.complete([{"role": "system", "content": "sys"}, {"role": "user", "content": "q"}])
+        finally:
+            providers._post = old; del os.environ["ANTHROPIC_API_KEY"]
+        self.assertEqual(out, "hi [1]")
+        self.assertTrue(seen["url"].endswith("/v1/messages"))
+        self.assertEqual(seen["payload"]["system"], "sys")
+        self.assertEqual(seen["payload"]["messages"], [{"role": "user", "content": "q"}])
+        self.assertIn("x-api-key", seen["headers"])
+
+    def test_gemini_request_shape(self):
+        from customchat import providers
+        seen = {}
+        def fake(url, payload, headers, timeout, retries=2):
+            seen.update(url=url, payload=payload, headers=headers)
+            return {"candidates": [{"content": {"parts": [{"text": "ok"}]}}]}
+        old = providers._post; providers._post = fake
+        os.environ["GEMINI_API_KEY"] = "k"
+        try:
+            g = providers.Gemini({"provider": {"base_url": "", "model": "gem", "timeout": 5, "temperature": 0.1, "api_key_env": ""}})
+            out = g.complete([{"role": "system", "content": "sys"}, {"role": "user", "content": "q"}, {"role": "assistant", "content": "a"}])
+        finally:
+            providers._post = old; del os.environ["GEMINI_API_KEY"]
+        self.assertEqual(out, "ok")
+        self.assertNotIn("k", seen["url"].split("?")[-1] if "?" in seen["url"] else "")
+        self.assertEqual(seen["payload"]["contents"][1]["role"], "model")
+        self.assertIn("x-goog-api-key", seen["headers"])
+
+    def test_missing_key_is_a_clear_error(self):
+        from customchat import providers
+        os.environ.pop("ANTHROPIC_API_KEY", None)
+        c = providers.Claude({"provider": {"base_url": "", "model": "m", "timeout": 5, "temperature": 0, "api_key_env": ""}})
+        with self.assertRaises(providers.ProviderError):
+            c.complete([{"role": "user", "content": "q"}])
+
+    def test_url_loader_blocks_private_hosts(self):
+        from customchat import fetch
+        for u in ("http://127.0.0.1:8000/x", "http://localhost/x", "http://10.0.0.5/", "ftp://example.com/a", "file:///etc/passwd", "http://169.254.169.254/latest"):
+            with self.assertRaises(ValueError, msg=u):
+                fetch.load(u)
+
+    def test_html_to_text(self):
+        from customchat import fetch
+        p = fetch._Text(); p.feed("<html><title>Doc</title><script>bad()</script><p>Hello</p><p>World</p></html>")
+        self.assertEqual(p.title, "Doc")
+        self.assertIn("Hello", "".join(p.out)); self.assertNotIn("bad", "".join(p.out))
