@@ -596,5 +596,25 @@ def test_provider_retry():
 test_provider_retry()
 
 
+def test_secret_store():
+    import tempfile, os, stat
+    from customchat import secrets, providers
+    d = tempfile.mkdtemp(); st = secrets.SecretStore(d); secrets.STORE = st
+    st.set("claude", "sk-abc123")
+    assert st.get("claude") == "sk-abc123" and st.has("claude") and not st.has("gemini")
+    assert stat.S_IMODE(os.stat(st.path).st_mode) == 0o600
+    assert providers.has_key("claude")["source"] == "saved"
+    for bad in ("", "has space", "a\nb", "x" * 5000):
+        try: st.set("claude", bad); assert False
+        except ValueError: pass
+    assert providers._key("ANTHROPIC_API_KEY", "claude") == "sk-abc123"
+    st.delete("claude"); assert not st.has("claude")
+    secrets.STORE = None
+    print("secret store ok")
+
+
+test_secret_store()
+
+
 if __name__ == "__main__":
     unittest.main()
