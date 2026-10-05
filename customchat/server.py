@@ -209,14 +209,20 @@ def make_handler(cfg, engine):
                     if path == "/api/prompts/generate" and method == "POST":
                         return self._send(200, generators.generate_prompt(engine.provider, cfg, str(b.get("key") or ""), b.get("brief"), str(b.get("current") or ""), cfg["prompt"]["system"]))
                     if path == "/api/websearch/source" and method == "POST":
-                        on = bool(b.get("on")); pid = str(b.get("provider") or "")
-                        if on and (pid not in websearch.PROVIDERS or not websearch.has_key(pid)):
-                            return self._send(400, {"error": "Save a key for that provider first"})
-                        engine.set_web(on, pid)
+                        on = bool(b.get("on")); raw = b.get("providers")
+                        pids = [str(x) for x in (raw if isinstance(raw, list) else [b.get("provider")] if b.get("provider") else [])][:6]
+                        if on:
+                            pids = [x for x in dict.fromkeys(pids) if x in websearch.PROVIDERS]
+                            if not pids:
+                                return self._send(400, {"error": "Choose at least one provider"})
+                            missing = [websearch.PROVIDERS[x]["label"] for x in pids if not websearch.has_key(x)]
+                            if missing:
+                                return self._send(400, {"error": "Save a key first for " + ", ".join(missing)})
+                        engine.set_web(on, pids)
                         try:
                             wf = os.path.join(os.path.dirname(os.path.abspath(store.path)), "websource.json")
                             with open(wf, "w") as f:
-                                json.dump({"on": on, "provider": pid}, f)
+                                json.dump({"on": on, "providers": pids}, f)
                         except OSError:
                             pass
                         return self._send(200, engine.web_state())
@@ -434,9 +440,9 @@ def serve(path, host=None, port=None):
         wf = os.path.join(os.path.dirname(os.path.abspath(store.path)), "websource.json")
         if store.path != ":memory:" and os.path.exists(wf):
             ws = json.load(open(wf))
-            if ws.get("on") and ws.get("provider") in websearch.PROVIDERS:
-                secrets.STORE = secrets.STORE or secrets.SecretStore(os.path.dirname(os.path.abspath(store.path)))
-                engine.set_web(True, ws["provider"])
+            pl = [x for x in (ws.get("providers") or [ws.get("provider")]) if x in websearch.PROVIDERS]
+            if ws.get("on") and pl:
+                engine.set_web(True, pl)
     except (OSError, ValueError):
         pass
     engine.prompts = promptmod.PromptStore(os.path.dirname(os.path.abspath(store.path)) if store.path != ":memory:" else "")

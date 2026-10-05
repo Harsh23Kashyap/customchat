@@ -29,13 +29,14 @@ class Engine:
 
     def web_state(self):
         b = next((x for x in self.cfg["sources"] if x["id"] == self.WEB_ID), None)
-        return {"on": bool(b), "provider": (b or {}).get("provider", "")}
+        return {"on": bool(b), "providers": list((b or {}).get("providers", []))}
 
-    def set_web(self, on, provider=""):
+    def set_web(self, on, providers=()):
+        providers = [providers] if isinstance(providers, str) else list(providers or [])
         self.cfg["sources"] = [x for x in self.cfg["sources"] if x["id"] != self.WEB_ID]
         self.connectors.pop(self.WEB_ID, None)
-        if on:
-            blk = {"id": self.WEB_ID, "type": "web_search", "label": "Live web", "provider": provider, "weight": 0.8}
+        if on and providers:
+            blk = {"id": self.WEB_ID, "type": "web_search", "label": "Live web", "providers": providers, "weight": 0.8}
             self.cfg["sources"].append(blk)
             self.connectors[self.WEB_ID] = make_connector(blk, self.cfg.get("_dir", "."))
         self._cache.clear()
