@@ -634,5 +634,18 @@ def test_hardware_logic():
 test_hardware_logic()
 
 
+def test_logo_validation():
+    from customchat import theme
+    ok = "data:image/png;base64," + "A" * 100
+    assert theme.clean({"logo": ok})["logo"] == ok
+    for bad in ("http://x/y.png", "data:image/svg+xml;base64,AAAA" + "A" * 30, "data:image/png;base64,<script>", "data:image/png;base64," + "A" * 400000):
+        assert theme.clean({"logo": bad})["logo"] == ""
+    assert theme.clean({})["logo"] == ""
+    print("logo ok")
+
+
+test_logo_validation()
+
+
 if __name__ == "__main__":
     unittest.main()
