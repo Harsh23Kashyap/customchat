@@ -292,3 +292,10 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 ## Pass 41
 - Touch screens: row actions (pin, rename, delete) always visible, buttons 36px (were 22px), rows 48px, no duplicate pin icon on pinned rows, time label hidden.
 - Desktop hover shot checked: actions show on the hovered row and the active row.
+
+## Pass 42
+- Pinned rows show a filled pin; the pin button has "Pin/Unpin <title>" labels and aria-pressed. Rename and Delete have labels too.
+- Rows have a title attribute (full title on hover). Delete toast now reads "Chat deleted. Undo".
+- Phone drawer has a close button; backdrop tap closes it (both tested by script).
+- Touch targets measured by DOM box: row actions 44x44, rows 60 tall, close 44x44.
+- Refund ranking log: 8 phrasings, refunds.md#0 top-1 in 8 of 8 (refund_rank2.txt, scores). Only one passage returned per question, so there is no top-3 to log.
