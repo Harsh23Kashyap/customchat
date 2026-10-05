@@ -20,6 +20,9 @@ def make_connector(block, base_dir="."):
     if t == "arxiv":
         from .arxiv import Arxiv
         return Arxiv(block)
+    if t == "web_search":
+        from .web_search import WebSearch
+        return WebSearch(block)
     if t == "python":
         # plugin: module:function, function(query, k) -> list of Evidence dicts
         mod, _, fn = block["entry"].partition(":")
