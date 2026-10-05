@@ -3,7 +3,7 @@ import uuid, hmac, json, mimetypes, os, re, sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 import base64
-from . import schema, providers, fetch, pdfread, secrets, hardware, theme as themes
+from . import schema, providers, fetch, pdfread, secrets, hardware, theme as themes, generators, prompts as promptmod
 from .pipeline import Engine
 from .store import Store
 from .accounts import Accounts
@@ -183,6 +183,30 @@ def make_handler(cfg, engine):
                 if not can_edit(self):
                     return self._send(403, {"error": "Only the admin can see this computer's details"})
                 return self._send(200, hardware.report(str(qs.get("base_url") or "http://localhost:11434")))
+            if path.startswith("/api/prompts") or path.startswith("/api/codegen"):
+                if not can_edit(self):
+                    return self._send(403, {"error": "Only the admin can change prompts or generate code"})
+                try:
+                    if path == "/api/prompts" and method == "GET":
+                        return self._send(200, {"stages": engine.prompts.view(cfg["prompt"]["system"]), "real_model": cfg["provider"]["type"] != "mock"})
+                    if path == "/api/prompts/save" and method == "POST":
+                        engine.prompts.save(str(b.get("key") or ""), b.get("text"), b.get("on")); engine._cache.clear()
+                        return self._send(200, {"stages": engine.prompts.view(cfg["prompt"]["system"])})
+                    if path == "/api/prompts/reset" and method == "POST":
+                        engine.prompts.reset(str(b.get("key") or "")); engine._cache.clear()
+                        return self._send(200, {"stages": engine.prompts.view(cfg["prompt"]["system"])})
+                    if path == "/api/prompts/generate" and method == "POST":
+                        return self._send(200, generators.generate_prompt(engine.provider, cfg, str(b.get("key") or ""), b.get("brief"), str(b.get("current") or ""), cfg["prompt"]["system"]))
+                    if path == "/api/codegen" and method == "POST":
+                        return self._send(200, generators.generate_code(engine.provider, cfg, str(b.get("kind") or ""), b.get("brief")))
+                    if path == "/api/codegen/review" and method == "POST":
+                        kind = str(b.get("kind") or "")
+                        if kind not in generators.KINDS:
+                            return self._send(400, {"error": "Unknown code type"})
+                        ok, probs = generators.review_code(kind, str(b.get("code") or ""))
+                        return self._send(200, {"ok": ok, "problems": probs})
+                except ValueError as e:
+                    return self._send(400, {"error": str(e)})
             if path == "/api/ollama/pull":
                 if not can_edit(self):
                     return self._send(403, {"error": "Only the admin can download models"})
@@ -352,6 +376,7 @@ def serve(path, host=None, port=None):
     store = Store(os.path.join(cfg["_dir"], cfg["storage"]["path"]) if not os.path.isabs(cfg["storage"]["path"]) else cfg["storage"]["path"])
     secrets.STORE = secrets.SecretStore(os.path.dirname(os.path.abspath(store.path)) if store.path != ":memory:" else "/tmp")
     engine = Engine(cfg, store)
+    engine.prompts = promptmod.PromptStore(os.path.dirname(os.path.abspath(store.path)) if store.path != ":memory:" else "")
     host, port = host or cfg["server"]["host"], port or cfg["server"]["port"]
     srv = ThreadingHTTPServer((host, port), make_handler(cfg, engine))
     print("%s running at http://%s:%d  (provider: %s)" % (cfg["app"]["title"], host, port, cfg["provider"]["type"]))

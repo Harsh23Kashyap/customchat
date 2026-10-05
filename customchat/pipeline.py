@@ -9,7 +9,7 @@ question -> (1) resolve follow-up into a standalone question using memory
 """
 import collections, math, re, time, json, hashlib
 from concurrent.futures import ThreadPoolExecutor
-from . import providers
+from . import providers, prompts as promptmod
 from .connectors import make_connector
 
 FOLLOW_UP = re.compile(r"\b(it|its|this|that|they|them|those|these|he|she|there|the same|above|previous|earlier)\b", re.I)
@@ -22,14 +22,14 @@ class Engine:
         base = cfg.get("_dir", ".")
         self.connectors = connectors if connectors is not None else {s["id"]: make_connector(s, base) for s in cfg["sources"]}
         self._cache = {}
+        self.prompts = promptmod.PromptStore("")
 
     # (1) memory
     def standalone(self, question, history, summary=""):
         if not history or not FOLLOW_UP.search(question) or len(question.split()) > 14:
             return question
         recent = "\n".join("Q: %s\nA: %s" % (h["question"], h["answer"][:300]) for h in history[-2:])
-        prompt = [{"role": "system", "content": "Rewrite the last question so it can be understood alone. "
-                   "Return only the rewritten question."},
+        prompt = [{"role": "system", "content": self.prompts.text("standalone")},
                   {"role": "user", "content": "%s\nConversation so far: %s\nLast question: %s" % (recent, summary, question)}]
         try:
             out = self.provider.complete(prompt).strip().splitlines()[0]
@@ -42,7 +42,7 @@ class Engine:
         keyword queries (the CustomNerd idea). Otherwise the question itself is used."""
         if self.cfg["retrieval"].get("query_rewrite") and self.cfg["provider"]["type"] != "mock":
             try:
-                out = self.provider.complete([{"role": "system", "content": "Write up to 3 short keyword search queries for the question. One per line, no numbering."},
+                out = self.provider.complete([{"role": "system", "content": self.prompts.text("queries")},
                                               {"role": "user", "content": question}])
                 qs = [re.sub(r"^[-*\d.)\s]+", "", l).strip() for l in out.splitlines() if l.strip()][:3]
                 if qs:
@@ -130,7 +130,7 @@ class Engine:
         ev = "\n".join("[%d] %s (%s). %s" % (e["n"], e["title"], e["year"] or "n.d.", e["text"][:1200]) for e in evidence)
         mem = ("About the reader (self-reported background, not evidence): %s\n" % profile[:1500] if profile else "") + ("Conversation summary: %s\n" % summary if summary else "") + "".join(
             "Earlier Q: %s\nEarlier A: %s\n" % (h["question"], h["answer"][:240]) for h in history[-self.cfg["memory"]["recent_turns"]:])
-        return [{"role": "system", "content": p["system"] + " " + p["style"].get(style, p["style"]["standard"])},
+        return [{"role": "system", "content": self.prompts.text("answer", p["system"]) + " " + p["style"].get(style, p["style"]["standard"])},
                 {"role": "user", "content": "%sQuestion: %s\n\nEvidence:\n%s" % (mem, question, ev)}]
 
     # (5) citations
@@ -155,6 +155,50 @@ class Engine:
                             "invalid": [c for c in cites if c not in valid], "supported": bool(cites) and all(c in valid for c in cites)})
         return out
 
+    # optional steps, each off by default and only used with a real model
+    def _llm_on(self, key):
+        return self.prompts.enabled(key) and self.cfg["provider"]["type"] != "mock"
+
+    def check_question(self, question):
+        """Empty string when the question is fine; otherwise a short reason to show instead of an answer."""
+        if not self._llm_on("question_check"):
+            return ""
+        try:
+            out = self.provider.complete([{"role": "system", "content": self.prompts.text("question_check")}, {"role": "user", "content": question}]).strip()
+        except providers.ProviderError:
+            return ""
+        if out.upper().startswith("INVALID"):
+            why = out.split(":", 1)[1].strip() if ":" in out else ""
+            return why[:300] or "That question is outside what this assistant can answer."
+        return ""
+
+    def filter_relevant(self, question, evidence):
+        if not evidence or not self._llm_on("relevance"):
+            return evidence
+        listing = "\n".join("[%d] %s. %s" % (e["n"], e["title"], e["text"][:400]) for e in evidence)
+        try:
+            out = self.provider.complete([{"role": "system", "content": self.prompts.text("relevance")}, {"role": "user", "content": "Question: %s\n\nPassages:\n%s" % (question, listing)}]).strip()
+        except providers.ProviderError:
+            return evidence
+        if out.upper().startswith("NONE"):
+            return []
+        keep = {int(x) for x in re.findall(r"\d+", out)}
+        kept = [e for e in evidence if e["n"] in keep]
+        return kept or evidence
+
+    def check_support(self, answer, evidence):
+        if not evidence or not answer or not self._llm_on("faithfulness"):
+            return ""
+        ev = "\n".join("[%d] %s" % (e["n"], e["text"][:600]) for e in evidence)
+        try:
+            out = self.provider.complete([{"role": "system", "content": self.prompts.text("faithfulness")}, {"role": "user", "content": "Answer:\n%s\n\nEvidence:\n%s" % (answer, ev)}]).strip()
+        except providers.ProviderError:
+            return ""
+        if out.upper().startswith("UNSUPPORTED"):
+            what = out.split(":", 1)[1].strip() if ":" in out else ""
+            return "Note: the sources may not fully support this: %s" % what[:300] if what else "Note: some statements here may not be fully supported by the sources."
+        return ""
+
     def ask_stream(self, owner, chat, question, sources=None, style="standard", topic=None, new_topic=False, use_cache=True, temporary=False, temp_history=None, use_profile=False):
         """Yield ('meta', {...}), ('token', str)..., ('done', result). Same behaviour as ask()."""
         t0 = time.time()
@@ -170,7 +214,8 @@ class Engine:
                        for h in (temp_history or [])[-6:] if isinstance(h, dict)] if mem_on else []
             summary = ""
             standalone = self.standalone(q, history, summary)
-            evidence, errors = self.retrieve(standalone, sources, None)
+            blocked = self.check_question(standalone)
+            evidence, errors = ([], []) if blocked else self.retrieve(standalone, sources, None)
         else:
             self.store.chat(owner, chat)
             if topic:
@@ -183,10 +228,12 @@ class Engine:
             summary = self.store.topic(owner, topic)["summary"] if mem_on else ""
             profile = self.store.get_profile(owner) if use_profile else ""
             standalone = self.standalone(q, history, summary)
-            evidence, errors = self.retrieve(standalone, sources, owner) if use_cache else self._fresh(standalone, sources, owner)
+            blocked = self.check_question(standalone)
+            evidence, errors = ([], []) if blocked else (self.retrieve(standalone, sources, owner) if use_cache else self._fresh(standalone, sources, owner))
+        evidence = self.filter_relevant(standalone, evidence)
         yield "meta", {"standalone": standalone, "evidence": evidence, "source_errors": errors}
         if not evidence:
-            answer = self.cfg["prompt"]["no_evidence"]
+            answer = blocked or self.cfg["prompt"]["no_evidence"]
             yield "token", answer
         else:
             parts = []
@@ -194,6 +241,10 @@ class Engine:
                 parts.append(piece)
                 yield "token", piece
             answer = "".join(parts).strip()
+            note = self.check_support(answer, evidence)
+            if note:
+                answer += "\n\n" + note
+                yield "token", "\n\n" + note
         ledger = self.ledger(answer, evidence) if evidence else []
         if temporary:
             tid = None
@@ -266,7 +317,7 @@ class Engine:
         """Up to three short follow-up questions. Model-written when a model is configured, else from evidence titles."""
         if self.cfg["provider"]["type"] != "mock" and evidence:
             try:
-                out = self.provider.complete([{"role": "system", "content": "Suggest 3 short follow-up questions a curious reader might ask next. One per line, no numbering."},
+                out = self.provider.complete([{"role": "system", "content": self.prompts.text("followups")},
                                               {"role": "user", "content": "Question: %s\nAnswer: %s" % (question, answer[:800])}])
                 qs = [re.sub(r"^[-*\d.)\s]+", "", l).strip() for l in out.splitlines() if "?" in l]
                 if qs:
@@ -286,7 +337,7 @@ class Engine:
             self.store.set_summary(topic, "Topics so far: " + text[:500])
             return
         try:
-            s = self.provider.complete([{"role": "system", "content": "Summarise the conversation topics in 2 sentences."},
+            s = self.provider.complete([{"role": "system", "content": self.prompts.text("summary")},
                                         {"role": "user", "content": text}])
             self.store.set_summary(topic, s[:600])
         except providers.ProviderError:
