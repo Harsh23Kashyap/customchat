@@ -151,3 +151,32 @@ html[data-motion=subtle] *{transition-duration:.08s!important}html[data-motion=s
 html[data-motion=none] *,html[data-motion=none] *::before,html[data-motion=none] *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
 .av.emo{font-size:calc(18px*var(--fs,1));font-weight:400}
 html.preview .toolbar a.tb-link{pointer-events:none}
+
+/* Polish pass 1: flat paper, one accent, calmer sidebar, readable small text */
+.note .strong,.note strong{display:none}.note{border-top:1px solid var(--line);padding-top:12px}.note span{font-size:calc(12px*var(--fs,1));color:var(--mut)}
+.side{padding:18px 16px;gap:14px}.side-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.side-title{font-family:var(--serif);font-weight:600;font-size:calc(17px*var(--fs,1));color:var(--ink);margin-right:auto}
+.btn-dark{height:36px;padding:0 16px;border-radius:calc(10px*var(--rs,1));border:0;background:var(--brand);color:var(--on-brand);font-weight:600;font-size:calc(13px*var(--fs,1))}
+#tempPill{height:30px;font-size:calc(12px*var(--fs,1));font-weight:500;color:var(--mut);border-color:var(--line);background:transparent;order:3}
+.tab{font-weight:500}.tab.on{font-weight:600}
+.cmeta{justify-content:center;color:var(--mut);font-size:calc(12px*var(--fs,1));text-align:center;gap:16px}
+.pill,.ex button{border-color:var(--line);font-weight:500;color:var(--ink);background:transparent}
+.ex button:hover,.pill:hover{background:var(--soft)}
+.box .icon{background:transparent;color:var(--mut)}.box .icon:hover{background:var(--soft);color:var(--ink)}
+.icon svg{display:block;margin:auto}
+.bar .icon,.bar-r .icon{color:var(--mut)}
+/* Polish pass 2 */
+.btn-dark{width:auto;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
+.side-title{flex:1 0 100%;margin:0 0 2px}.side-head #newChat{flex:1}.side-head #tempPill{flex:none}
+.app{border-color:var(--line);box-shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(23,35,31,.06)}
+.hero{flex-direction:column;align-items:center;text-align:center;margin:14vh auto 0}.hero .av{display:none}.hero h1{font-size:clamp(28px,3.2vw,38px)}
+.ex{justify-content:center}.ex button{text-align:center}
+.bar{padding:0 20px}.bar .title{font-weight:600}
+.toolbar{border-bottom-color:var(--line)}
+.send{box-shadow:none}
+
+.more{position:relative;display:inline-block}.more summary{list-style:none;cursor:pointer}.more summary::-webkit-details-marker{display:none}
+.more-box{position:absolute;left:0;bottom:calc(100% + 6px);z-index:5;min-width:150px;background:var(--paper);border:1px solid var(--line);border-radius:calc(10px*var(--rs,1));box-shadow:0 8px 24px rgba(0,0,0,.12);padding:4px;display:flex;flex-direction:column}
+.more-box .chip{border:0;background:transparent;text-align:left;border-radius:calc(7px*var(--rs,1));padding:8px 10px}.more-box .chip:hover{background:var(--soft)}.more-box .chip.del{color:var(--danger)}
+.chip.del{border-color:var(--line)}
+.bar select{min-width:128px;padding-right:30px;text-overflow:ellipsis}.bar .title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.a sup,.cite{white-space:nowrap}

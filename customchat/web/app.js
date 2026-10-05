@@ -22,6 +22,8 @@ const ICON = {
   temp: "M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v5l3 2",
   user: "M12 12a4 4 0 100-8 4 4 0 000 8zM4 21a8 8 0 0116 0",
   up: "M12 20V8M6 12l6-6 6 6",
+  menu: "M4 7h16M4 12h16M4 17h16",
+  close: "M6 6l12 12M18 6L6 18",
 };
 const svg = (n) => { const e = document.createElementNS("http://www.w3.org/2000/svg", "svg"); e.setAttribute("viewBox", "0 0 24 24"); e.setAttribute("width", "18"); e.setAttribute("height", "18"); e.setAttribute("fill", "none"); e.setAttribute("stroke", "currentColor"); e.setAttribute("stroke-width", "2"); e.setAttribute("stroke-linecap", "round"); e.setAttribute("stroke-linejoin", "round"); const p = document.createElementNS("http://www.w3.org/2000/svg", "path"); p.setAttribute("d", ICON[n]); e.append(p); return e; };
 const S = { cfg: null, chat: null, topic: null, newTopic: false, tab: "chats", sources: new Set(), turns: [], ratings: {}, temp: false, useProfile: localStorage.getItem("cc_profile_on") === "1", busy: false, token: localStorage.getItem("cc_token") || "" };
@@ -92,7 +94,7 @@ function showSources(evidence, hl) {
   if (types.length > 1) types.forEach((t) => filters.append(el("button", { class: "chip", onclick: (ev) => {
     const on = ev.target.classList.toggle("on"); filters.querySelectorAll(".chip").forEach((c) => c !== ev.target && c.classList.remove("on")); draw(on ? t : null);
   } }, (S.cfg.sources.find((s) => s.id === t) || {}).label || t)));
-  pane.append(el("button", { class: "icon", style: "float:right", "aria-label": "Close", onclick: () => $("#app").classList.remove("src") }, "✕"),
+  pane.append(el("button", { class: "icon", style: "float:right", "aria-label": "Close", onclick: () => $("#app").classList.remove("src") }, svg("close")),
     el("h3", { text: "Sources" }), el("div", { class: "sub", text: evidence.length + " used for this answer" }), filters, list);
   draw(null);
   if (hl) setTimeout(() => list.querySelector(".hl")?.scrollIntoView({ block: "center" }), 50);
@@ -106,18 +108,18 @@ function turnView(t, prev) {
   if (t.evidence.length) bub.append(el("div", { class: "srcs" }, el("b", { text: "Sources" }), t.evidence.slice(0, 5).map((e) => el("button", { class: "s", onclick: () => showSources(t.evidence, e.n) }, el("span", { class: "n", text: "[" + e.n + "]" }), e.title))));
   nodes.push(el("div", { class: "row" }, avatar("bot"), bub));
   const meta = el("div", { class: "meta" });
-  if (t.evidence.length) meta.append(el("button", { class: "chip", onclick: () => showSources(t.evidence) }, t.evidence.length + " sources"));
+  if (t.evidence.length) meta.append(el("button", { class: "chip", onclick: () => showSources(t.evidence) }, t.evidence.length + (t.evidence.length === 1 ? " source" : " sources")));
   const weak = (t.ledger || []).filter((l) => !l.supported || (l.overlap !== undefined && l.overlap < 0.35));
   if (t.evidence.length && weak.length) meta.append(el("button", { class: "chip warn", title: "Sentences without a valid citation or with little overlap with the cited text. Click to see them.", onclick: () => alert("Check these sentences:\n\n" + weak.map((l) => "- " + l.claim).join("\n")) }, weak.length + " to check"));
   if (t.seconds !== undefined) meta.append(el("span", { class: "chip", title: "Time to answer" }, t.seconds < 1 ? "<1s" : t.seconds + "s"));
   if (t.standalone && t.standalone !== t.question) meta.append(el("span", { class: "chip", title: "Understood as" }, "Understood as: " + t.standalone));
-  meta.append(el("button", { class: "chip", title: "How this answer was built", onclick: () => contextDialog(t) }, "Context"));
+  meta.append(el("button", { "data-more": "1", class: "chip", title: "How this answer was built", onclick: () => contextDialog(t) }, "Context"));
   if (t.evidence.length) {
     meta.append(el("button", { class: "chip", onclick: () => navigator.clipboard.writeText(t.answer).then(() => toast("Copied")) }, "Copy"));
     for (const v of [1, -1]) meta.append(el("button", { class: "chip" + (S.ratings[t.id] === v ? " on" : ""), "aria-pressed": String(S.ratings[t.id] === v), onclick: async () => { const r = S.ratings[t.id] === v ? 0 : v; try { await api("/api/rate", { turn: t.id, rating: r }); if (r) S.ratings[t.id] = r; else delete S.ratings[t.id]; drawThread(); } catch (e) { toast(e.message); } } }, v > 0 ? "Helpful" : "Not helpful"));
-    meta.append(el("button", { class: "chip", onclick: () => download("/api/bibtex?turn=" + t.id, "references.bib") }, "BibTeX"));
-    meta.append(el("button", { class: "chip", onclick: () => download("/api/pdf?turn=" + t.id, "answer.pdf") }, "PDF"));
-    for (const s of ["quick", "deep"]) if (S.cfg.styles.includes(s)) meta.append(el("button", { class: "chip", onclick: () => regen(t.id, s) }, s === "quick" ? "Shorter" : "Deeper"));
+    meta.append(el("button", { "data-more": "1", class: "chip", onclick: () => download("/api/bibtex?turn=" + t.id, "references.bib") }, "BibTeX"));
+    meta.append(el("button", { "data-more": "1", class: "chip", onclick: () => download("/api/pdf?turn=" + t.id, "answer.pdf") }, "PDF"));
+    for (const s of ["quick", "deep"]) if (S.cfg.styles.includes(s)) meta.append(el("button", { "data-more": "1", class: "chip", onclick: () => regen(t.id, s) }, s === "quick" ? "Shorter" : "Deeper"));
   }
   bub.append(meta);
   if (t.followups && t.followups.length) {
@@ -125,10 +127,12 @@ function turnView(t, prev) {
     t.followups.forEach((x) => f.append(el("button", { class: "chip", onclick: () => { $("#q").value = x; send(); } }, x)));
     nodes.push(el("div", { class: "fu-label", text: "Related" }), f);
   }
-  meta.append(el("button", { class: "chip del", title: "Delete this answer", onclick: async () => {
+  meta.append(el("button", { "data-more": "1", class: "chip del", title: "Delete this answer", onclick: async () => {
     await api("/api/delete-turn", { turn: t.id }); S.turns = S.turns.filter((x) => x.id !== t.id); drawThread();
     const u = el("div", { class: "toast", onclick: async () => { await api("/api/restore-turn", { turn: t.id }); S.turns = await api("/api/turns?chat=" + S.chat); drawThread(); u.remove(); } }, "Answer deleted. Click to undo");
     document.body.append(u); setTimeout(() => u.remove(), 6000); } }, "Delete"));
+  const more = [...meta.querySelectorAll("[data-more]")];
+  if (more.length) { const d = el("details", { class: "more" }, el("summary", { class: "chip", title: "More actions" }, "More")); const box = el("div", { class: "more-box" }); more.forEach((b) => box.append(b)); d.append(box); meta.append(d); }
   return nodes;
 }
 async function download(path, name) {
@@ -298,7 +302,7 @@ async function init() {
   const th = $("#thread"), jump = $("#jump");
   th.addEventListener("scroll", () => jump.classList.toggle("show", th.scrollHeight - th.scrollTop - th.clientHeight > 240));
   jump.addEventListener("click", () => th.scrollTo({ top: th.scrollHeight, behavior: "smooth" }));
-  $("#upload").replaceChildren(svg("clip")); $("#exportChat").replaceChildren(svg("down")); $("#send").replaceChildren(svg("send")); $("#jump").replaceChildren(svg("down"));
+  $("#menu").replaceChildren(svg("menu")); $("#upload").replaceChildren(svg("clip")); $("#exportChat").replaceChildren(svg("down")); $("#send").replaceChildren(svg("send")); $("#jump").replaceChildren(svg("down"));
   $("#upload").addEventListener("click", uploadDialog);
   document.addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "k") { e.preventDefault(); $("#search").focus(); } });
   $("#tempBtn").replaceChildren(svg("temp")); $("#profileBtn").replaceChildren(svg("user")); $("#prevQ").replaceChildren(svg("up")); $("#nextQ").replaceChildren(svg("down"));
@@ -448,7 +452,7 @@ function applyWording() {
   $("#noteName").textContent = TV("txt_title") || a.title; $("#noteText").textContent = TV("txt_footer") || a.footer;
   $("#q").placeholder = TV("txt_placeholder") || "Ask a question"; $("#hint").textContent = TV("txt_hint") || "Answers cite their sources. Check important facts.";
   const d = document.querySelector(".cmeta span:last-child"); if (d) d.textContent = TV("txt_disclaimer") || "Not a substitute for professional advice.";
-  $("#sideTitle").textContent = TV("txt_sidebar") || "Conversations";
+  $("#sideTitle").textContent = TV("txt_sidebar") || "Chats";
 }
 function applyIcons() {
   for (const [id, key, name] of [["#send", "emoji_send", "send"], ["#upload", "emoji_attach", "clip"], ["#tempBtn", "emoji_temp", "temp"]]) {

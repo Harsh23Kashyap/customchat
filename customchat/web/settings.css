@@ -72,3 +72,17 @@ input.emoji{font-size:22px!important;width:100px!important;text-align:center}
 .savebar .go{padding:11px 28px}
 @media(max-width:1180px){.layout{grid-template-columns:minmax(0,1fr) 380px}.menu{display:none}}
 @media(max-width:860px){.layout{grid-template-columns:1fr}.preview{position:static;order:-1}#pv{height:420px}.fields{grid-template-columns:1fr}}
+/* Polish pass: one accent, flat controls, no template icon squares, readable text */
+:root{--cfg-accent:#1d5fd1;--cfg-accent-d:#174fb0}
+.ic{display:none!important}.head{gap:0}
+.go,.go.green,.go.blue,.seg button[aria-checked=true],.seg.mini button[aria-checked=true],.seg button[data-p][aria-checked=true]{background:var(--cfg-accent)!important;color:#fff!important;box-shadow:none!important;text-transform:none;letter-spacing:0;font-weight:600}
+.go:hover{background:var(--cfg-accent-d)!important;transform:none}
+.go.ghost{background:#fff!important;color:var(--cfg-accent)!important;border:1px solid #c9d6ea}
+.go.ghost:hover{background:#f2f6fc!important}
+.tile{background:#fff;box-shadow:0 1px 2px rgba(0,40,90,.06);border:1px solid #e1e8f2;border-radius:16px}
+.tile .tile,.field,.preset{box-shadow:none}.col .tile{border-radius:16px}
+.help,.sub,.h,.lead{font-size:15px;color:#4a5a70;line-height:1.5}
+.menu{position:sticky;top:16px;align-self:start}.menu a{border-radius:8px;padding:9px 12px;color:#3a4a60}.menu a.on,.menu a[aria-current=true]{background:#e8f0fc;color:var(--cfg-accent);font-weight:600}
+.savebar{box-shadow:0 -1px 0 #e1e8f2,0 8px 24px rgba(0,40,90,.08)}
+.layout{padding-bottom:96px}
+.preview select,#pv+*{min-width:0}

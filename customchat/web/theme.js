@@ -60,7 +60,7 @@ function apply(t, root = document.documentElement) {
   set("--side-w", t.sidebar_width + "px");
   set("--chat-max", { narrow: "640px", normal: "800px", wide: "1020px", full: "100%" }[t.chat_width]);
   // background and pattern
-  const soft = `radial-gradient(circle at 8% 5%,color-mix(in srgb,${c.accent} 30%,transparent),transparent 30%),radial-gradient(circle at 95% 35%,rgba(243,170,97,.14),transparent 26%),${c.bg}`;
+  const soft = c.bg;
   const layer = { soft, solid: c.bg, gradient: `linear-gradient(${t.bg_angle}deg,${c.bg},${t.bg_color2})`, image: t.bg_image ? `linear-gradient(${rgba(c.bg, 0.55)},${rgba(c.bg, 0.55)}),url("${t.bg_image}") center/cover fixed, ${c.bg}` : soft }[t.bg_style];
   set("--bg-layer", layer);
   const pc = t.pattern_color || c.ink, ps = t.pattern_size;

@@ -18,31 +18,31 @@
   <aside class="side" id="side">
     <div class="side-head">
       <div class="side-title" id="sideTitle"></div>
-      <button class="btn-dark" id="newChat" title="New chat" aria-label="New chat">+</button>
+      <button class="btn-dark" id="newChat" title="New chat" aria-label="New chat">New chat</button>
       <button class="btn-out" id="tempPill" title="Temporary chat: nothing is saved">Temporary</button>
     </div>
     <input class="search" id="search" type="search" placeholder="Search chats" aria-label="Search chats">
-    <div class="tabs" role="tablist"><button class="tab on" data-tab="chats">Chats</button><button class="tab" data-tab="topics">Conversations</button></div>
+    <div class="tabs" role="tablist"><button class="tab on" data-tab="chats">Chats</button><button class="tab" data-tab="topics">Topics</button></div>
     <nav class="list" id="list" aria-label="History"></nav>
     <div class="resizer" id="resizer" role="separator" aria-orientation="vertical" aria-label="Resize sidebar"></div>
     <div class="note"><strong id="noteName"></strong><span id="noteText"></span></div>
   </aside>
   <main class="main">
     <header class="bar">
-      <button class="icon menu" id="menu" aria-label="Menu">☰</button>
+      <button class="icon menu" id="menu" aria-label="Menu"></button>
       <span class="status"></span><div class="title" id="chatTitle">New chat</div>
-      <div class="bar-r"><select id="style" aria-label="Answer depth"></select><button class="icon" id="prevQ" title="Previous question (k)" aria-label="Previous question">↑</button><button class="icon" id="nextQ" title="Next question (j)" aria-label="Next question">↓</button><button class="icon" id="tempBtn" hidden title="Temporary chat: nothing is saved" aria-label="Temporary chat" aria-pressed="false">◔</button><button class="icon" id="profileBtn" title="My profile" aria-label="My profile">☺</button><button class="icon" id="exportChat" title="Export chat as Markdown" aria-label="Export chat">⤓</button></div>
+      <div class="bar-r"><select id="style" aria-label="Answer depth"></select><button class="icon" id="prevQ" title="Previous question (k)" aria-label="Previous question"></button><button class="icon" id="nextQ" title="Next question (j)" aria-label="Next question"></button><button class="icon" id="tempBtn" hidden title="Temporary chat: nothing is saved" aria-label="Temporary chat" aria-pressed="false">◔</button><button class="icon" id="profileBtn" title="My profile" aria-label="My profile">☺</button><button class="icon" id="exportChat" title="Export chat as Markdown" aria-label="Export chat">⤓</button></div>
     </header>
     <section class="thread" id="thread" role="log" aria-live="polite" aria-label="Conversation"></section>
-    <button class="jump" id="jump" aria-label="Scroll to latest">↓</button>
+    <button class="jump" id="jump" aria-label="Scroll to latest"></button>
     <footer class="composer">
       <div class="pills" id="similar" aria-label="Asked before"></div>
       <div class="pills" id="pills"></div>
       <div class="box">
-        <button class="icon" id="upload" title="Add a text file as a source" aria-label="Add file">📎</button>
-        <button class="icon" id="mic" title="Dictate" aria-label="Dictate" hidden>●</button>
+        <button class="icon" id="upload" title="Add a text file as a source" aria-label="Add file"></button>
+        <button class="icon" id="mic" title="Dictate" aria-label="Dictate" hidden></button>
         <textarea id="q" rows="1" placeholder="Ask a question" aria-label="Question" maxlength="2000"></textarea>
-        <button class="send" id="send" aria-label="Send">↑</button>
+        <button class="send" id="send" aria-label="Send"></button>
       </div>
       <div class="cmeta"><span id="hint"></span><span>Not a substitute for professional advice.</span></div>
     </footer>

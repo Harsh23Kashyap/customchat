@@ -51,7 +51,7 @@ const SECTIONS = [
     C("you", "Your avatar", "Background behind your initial."),
     C("danger", "Warning color", "Errors and delete.") ] },
   { id: "background", icon: "\u25A6", tone: "purple", title: "Background and patterns", sub: "The page behind the chat", help: "Pick a style, then optionally lay a pattern over it.", fields: [
-    { key: "bg_style", label: "Background style", help: "Soft glow is the default. Image needs an https link.", type: "select" },
+    { key: "bg_style", label: "Background style", help: "Plain color is the default. Image needs an https link.", type: "select" },
     { key: "bg_color2", label: "Gradient second color", help: "Used by the gradient style.", type: "color" },
     { key: "bg_angle", label: "Gradient angle", help: "Direction of the gradient in degrees.", type: "range", unit: "\u00B0" },
     { key: "bg_image", label: "Image link", help: "https link to a picture, shown softly behind everything.", type: "text", ph: "https://..." },
@@ -92,7 +92,7 @@ const SECTIONS = [
     { key: "toolbar", label: "Top bar", help: "Hide it for a cleaner look. The Configuration page stays at /settings.html.", type: "select" },
     { key: "sources_panel", label: "Sources side panel", help: "The panel that opens when you click a source.", type: "toggle" } ] },
 ];
-const LABELS = { mode: { light: "Light", dark: "Dark", auto: "Match the device" }, bg_style: { soft: "Soft glow", solid: "Plain color", gradient: "Two-color gradient", image: "Image" },
+const LABELS = { mode: { light: "Light", dark: "Dark", auto: "Match the device" }, bg_style: { soft: "Soft glow (legacy)", solid: "Plain color", gradient: "Two-color gradient", image: "Image" },
   pattern: { none: "None", dots: "Dots", grid: "Grid", lines: "Lines", diagonal: "Diagonal", checker: "Checker", waves: "Waves", plus: "Plus signs" }, motion: { full: "Full", subtle: "Subtle", none: "None" },
   entrance: { fade: "Fade in", slide: "Slide up", pop: "Pop", none: "None" }, bubble: { soft: "Soft bubbles", flat: "Flat", outline: "Outline" }, density: { compact: "Compact", cozy: "Cozy", roomy: "Roomy" },
   sidebar: { left: "Left", right: "Right", hidden: "Hidden" }, chat_width: { narrow: "Narrow", normal: "Normal", wide: "Wide", full: "Full width" }, avatars: { show: "Show", hide: "Hide" },
@@ -169,6 +169,9 @@ function buildMenu() {
   const m = $("#menu"); m.replaceChildren();
   const items = [["presets", "Presets and states"], ["model", "Model"]].concat(SECTIONS.map((s) => [s.id, s.title]));
   items.forEach(([id, t]) => m.append(el("a", { href: "#sec-" + id, text: t })));
+  const links = [...m.children]; links[0].classList.add("on");
+  const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) { links.forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id)); } }, { rootMargin: "-20% 0px -70% 0px" });
+  items.forEach(([id]) => { const n = document.getElementById("sec-" + id); if (n) io.observe(n); });
 }
 function buildPresets() {
   const box = $("#presets"); box.replaceChildren();
