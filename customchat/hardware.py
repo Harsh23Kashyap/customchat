@@ -115,7 +115,7 @@ def recommend(hw, have=None):
     fits.sort(key=lambda m: m[2])
     out = {"budget_gb": round(b, 1), "mode": mode, "budget_why": why, "limit_gb": round(limit, 1), "picks": [], "note": ""}
     if not fits:
-        out["note"] = "This computer is short on memory for local models. Use a hosted provider, or try llama3.2:1b if you only need simple answers."
+        out["note"] = "Rough estimate: this computer may be short on memory for local models. A hosted provider is the safer choice. A very small model such as llama3.2:1b may still run for simple answers."
         small = CATALOG[0]
         fits = [small] if b >= 2 else []
         if not fits:
