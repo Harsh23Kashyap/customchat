@@ -4,7 +4,6 @@ app:
   id: wirelesschat
   title: WirelessChat
   tagline: Ask about wireless communications research, with cited papers.
-  accent: "#0a84ff"
   examples:
     - What is the benefit of massive MIMO?
     - How does OFDM handle multipath fading?
