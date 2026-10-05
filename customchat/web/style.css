@@ -71,3 +71,6 @@ select{border:0;background:transparent;color:var(--mut);font:inherit;font-size:1
 .chip.on{background:var(--accent);color:var(--on-accent,#fff);border-color:transparent}
 main{position:relative;min-width:0}textarea:focus-visible,select:focus-visible{outline:none}
 @media(max-width:860px){.thread{padding-left:16px;padding-right:16px}.composer{padding:8px 12px 12px}}
+@media(max-width:860px){.side{background:var(--bg);box-shadow:0 0 40px rgba(0,0,0,.25)}.app.menu-open::after{content:"";position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:4}.app.menu-open .side{z-index:5}}
+.skip{position:absolute;left:-999px;top:8px;background:var(--accent);color:var(--on-accent,#fff);padding:8px 14px;border-radius:10px;z-index:20}.skip:focus{left:8px}
+.thread{overflow-wrap:anywhere}pre,code{max-width:100%;overflow-x:auto}

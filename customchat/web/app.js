@@ -33,7 +33,7 @@ async function api(path, body) {
   if (!r.ok) throw new Error(d.error || "Request failed");
   return d;
 }
-function toast(msg) { const t = el("div", { class: "toast", text: msg }); document.body.append(t); setTimeout(() => t.remove(), 2200); }
+function toast(msg) { const t = el("div", { class: "toast", role: "status", "aria-live": "polite", text: msg }); document.body.append(t); setTimeout(() => t.remove(), 2200); }
 
 function inline(parent, text, evidence) {
   // safe inline markdown: **bold**, `code`, and [n] citations. Everything is text nodes.
@@ -168,6 +168,7 @@ async function openChat(id) {
   try { S.ratings = await api("/api/ratings?chat=" + id); } catch (e) { S.ratings = {}; }
   S.topic = S.turns.length ? S.turns[S.turns.length - 1].topic : null;
   $("#chatTitle").textContent = (await api("/api/chats")).find((c) => c.id === id)?.title || "Chat";
+  document.title = $("#chatTitle").textContent + " - " + S.cfg.app.title;
   $("#app").classList.remove("menu-open", "src"); drawThread(); loadList();
 }
 async function openTopic(id) {
@@ -274,4 +275,8 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "/") { e.preventDefault(); const s = document.getElementById("search"); if (s) s.focus(); }
   else if (e.key === "n") { e.preventDefault(); const b = document.getElementById("newChat"); if (b) b.click(); }
   else if (e.key === "?") { const u = document.createElement("div"); u.className = "toast"; u.textContent = "Shortcuts: / search, n new chat, Enter send, Shift+Enter new line, Esc close"; document.body.append(u); setTimeout(() => u.remove(), 5000); }
+});
+document.addEventListener("click", (e) => {
+  const app = document.getElementById("app");
+  if (app && app.classList.contains("menu-open") && !e.target.closest(".side") && !e.target.closest("#menu")) app.classList.remove("menu-open");
 });
