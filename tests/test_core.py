@@ -807,6 +807,31 @@ class NumberCheck(unittest.TestCase):
         self.assertEqual(led["bad_numbers"], ["40"])
         self.assertFalse(led["supported"])
 
+    def _engine(self, reply):
+        from customchat.pipeline import Engine
+        class P:
+            def complete(self, m): return reply
+        class Pr:
+            def text(self, k, f=""): return "revise"
+        e = object.__new__(Engine); e.cfg = {"provider": {"type": "openai"}}; e.provider = P(); e.prompts = Pr()
+        return e
+
+    def test_rewrite_kept_only_if_flag_is_gone(self):
+        ev = [{"n": 1, "title": "t", "text": "both groups regained weight, with more fat mass regain in the CRD group 96 adults"}]
+        bad = "IF had less regain. [1]"
+        from customchat.pipeline import Engine
+        led = Engine.ledger(bad, ev)
+        good = "The CRD group had more fat mass regain. [1]"
+        self.assertEqual(self._engine(good).correct(bad, ev, led), good)
+        self.assertEqual(self._engine("Still less regain here. [1]").correct(bad, ev, led), bad)
+
+    def test_rewrite_rejected_if_it_adds_a_number(self):
+        ev = [{"n": 1, "title": "t", "text": "both groups regained weight, with more fat mass regain in the CRD group 96 adults"}]
+        from customchat.pipeline import Engine
+        bad = "IF had less regain. [1]"
+        led = Engine.ledger(bad, ev)
+        self.assertEqual(self._engine("The CRD group had more fat mass regain in 250 adults. [1]").correct(bad, ev, led), bad)
+
     def test_empty_records_are_not_usable(self):
         from customchat.pipeline import Engine
         self.assertFalse(Engine.usable({"title": "t", "text": "  "}))
