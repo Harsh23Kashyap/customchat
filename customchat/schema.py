@@ -35,6 +35,7 @@ DEFAULTS = {
         "style": {"quick": "Answer in 2 to 4 sentences.",
                   "standard": "Answer clearly with short paragraphs.",
                   "deep": "Answer in depth with sections, caveats and open questions."},
+        "answer_note": "",
         "no_evidence": "I could not find evidence for that in the configured sources.",
     },
     "memory": {"enabled": True, "recent_turns": 4, "summary_every": 6},

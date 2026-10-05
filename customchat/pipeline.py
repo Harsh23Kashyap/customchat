@@ -186,6 +186,13 @@ class Engine:
         mp = {o: i + 1 for i, o in enumerate(order)}
         answer = re.sub(r"\[(\d+)\]", lambda m: "[%d]" % mp[int(m.group(1))] if int(m.group(1)) in mp else m.group(0), answer)
         answer = re.sub(r"(\[\d+\])(?=\[\d+\])", r"\1 ", answer)
+        def group(m):
+            ns = sorted({int(x) for x in re.findall(r"\d+", m.group(0))})
+            return " ".join("[%d]" % n for n in ns)
+        answer = re.sub(r"\[\d+\](?:\s*\[\d+\])+", group, answer)
+        # years that no passage mentions are the model's memory, not the evidence: drop "a 2022 review" down to "a review"
+        known = " ".join(e.get("title", "") + " " + e.get("text", "") + " " + str(e.get("year") or "") for e in evidence)
+        answer = re.sub(r"\b((?:a|an|the|this|that)\s+)((?:19|20)\d\d)\s+(?=[A-Za-z])", lambda m: m.group(0) if m.group(2) in known else m.group(1), answer, flags=re.I)
         out = []
         for o in order:
             e = dict(next(x for x in evidence if x["n"] == o)); e["n"] = mp[o]; out.append(e)
@@ -308,6 +315,9 @@ class Engine:
             # show only the sources the answer cites; a refusal cites nothing, so it shows none
             answer, evidence = self.tidy(answer, evidence)
             ledger = self.ledger(answer, evidence)
+            note = (self.cfg["prompt"].get("answer_note") or "").strip()
+            if evidence and note and note not in answer:
+                answer += "\n\n" + note
         if temporary:
             tid = None
         else:
@@ -344,6 +354,9 @@ class Engine:
             if self.cfg["provider"]["type"] != "mock":
                 answer, evidence = self.tidy(answer, evidence)
                 ledger = self.ledger(answer, evidence)
+                note = (self.cfg["prompt"].get("answer_note") or "").strip()
+                if evidence and note and note not in answer:
+                    answer += "\n\n" + note
         tid = self.store.add_turn(chat, topic, q, standalone, answer, evidence, ledger, style)
         if mem_on:
             self._summarize(owner, topic)
@@ -383,7 +396,7 @@ class Engine:
         if self.cfg["provider"]["type"] != "mock" and evidence:
             try:
                 out = self.provider.complete([{"role": "system", "content": self.prompts.text("followups")},
-                                              {"role": "user", "content": "Question: %s\nAnswer: %s" % (question, answer[:800])}])
+                                              {"role": "user", "content": "Question: %s\nAnswer: %s\n\nSuggest only questions that these passages can answer:\n%s" % (question, answer[:800], "\n".join("- %s. %s" % (e["title"][:80], e["text"][:200]) for e in evidence[:4]))}])
                 qs = [re.sub(r"^[-*\d.)\s]+", "", l).strip() for l in out.splitlines() if "?" in l]
                 if qs:
                     return qs[:3]
