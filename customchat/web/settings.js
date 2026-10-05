@@ -94,6 +94,7 @@ async function states() {
 const C = (k, label, help) => ({ key: k, label, help, type: "color", colors: true });
 const SECTIONS = [
   { id: "wording", icon: "Aa", tone: "green", title: "Wording", sub: "The words people read", help: "Leave a box empty to keep the default text from the app file.", fields: [
+    { key: "logo", label: "Logo", help: "Optional. Drop a picture; it blends into the page.", type: "logo" },
     { key: "txt_title", label: "App name", help: "Shown in the top bar, the welcome screen and the browser tab.", type: "text", ph: "Docs Chat" },
     { key: "txt_tagline", label: "Welcome line", help: "The sentence under the name on an empty chat.", type: "text" },
     { key: "txt_examples", label: "Example questions", help: "One per line (up to 8). They appear as buttons on an empty chat.", type: "area" },
@@ -165,7 +166,7 @@ const LABELS = { mode: { light: "Light", dark: "Dark", auto: "Match the device" 
 const FONTNAMES = { "dm-sans": "DM Sans", inter: "Inter", system: "System default", georgia: "Georgia", fraunces: "Fraunces", playfair: "Playfair Display", lora: "Lora", "space-grotesk": "Space Grotesk", nunito: "Nunito", poppins: "Poppins", jetbrains: "JetBrains Mono", mono: "System monospace", custom: "Custom (type a name below)" };
 
 const PRESETS = {
-  Forest: {},
+  Forest: { font: "dm-sans", heading_font: "fraunces" },
   Ocean: { light: { brand: "#0b3d66", accent: "#7fd1f5", bg: "#eef6fb", surface: "#ffffff", ink: "#0f2231", muted: "#5b7285", line: "#d3e2ed", sidebar: "#e1eef7", bot: "#eef5fa", you: "#cfe3f1" }, dark: { brand: "#7fc4f0", accent: "#7fd1f5", bg: "#0a1620", surface: "#0f1f2c", ink: "#e6f1f8", muted: "#8aa4b6", line: "#1e3446", sidebar: "#12263a", bot: "#142a3b", you: "#22425a" }, font: "inter", heading_font: "inter", bg_style: "gradient", bg_color2: "#d8ecf8", radius: 120 },
   Sunset: { light: { brand: "#7a2e1d", accent: "#ffb86b", bg: "#fff4ea", surface: "#fffaf5", ink: "#2b1810", muted: "#8a6a5c", line: "#f0d9c8", sidebar: "#fbe6d3", bot: "#fbeee2", you: "#f5d3b5" }, font: "poppins", heading_font: "playfair", bg_style: "gradient", bg_color2: "#ffd9c2", bg_angle: 135, radius: 140, pattern: "dots", pattern_opacity: 10 },
   Mono: { light: { brand: "#111111", accent: "#e5e5e5", bg: "#f4f4f4", surface: "#ffffff", ink: "#111111", muted: "#6b6b6b", line: "#dddddd", sidebar: "#eeeeee", bot: "#f3f3f3", you: "#e2e2e2", danger: "#aa2222" }, font: "jetbrains", heading_font: "jetbrains", bg_style: "solid", radius: 30, bubble: "outline", shadow: "none", pattern: "grid", pattern_opacity: 6 },
@@ -184,12 +185,14 @@ const MORE_PRESETS = {
 };
 /* How each tab is organised: [group title, [keys], collapsed-by-default] */
 const GROUPS = {
-  wording: [["Basics", ["txt_title", "txt_tagline"]], ["Empty chat", ["txt_examples"]], ["Question box", ["txt_placeholder"]], ["Small print and sidebar", ["txt_hint", "txt_disclaimer", "txt_sidebar", "txt_footer"], true]],
-  colors: [["Mode", ["mode"]], ["Brand", ["brand", "accent"]], ["Surfaces", ["bg", "surface", "sidebar"]], ["Text and lines", ["ink", "muted", "line"]], ["Messages and alerts", ["bot", "you", "danger"], true]],
-  background: [["Style", ["bg_style", "bg_color2", "bg_angle", "bg_image"]], ["Pattern", ["pattern", "pattern_color", "pattern_opacity", "pattern_size"], true]],
-  fonts: [["Fonts", ["font", "heading_font", "custom_font"]], ["Size", ["font_size", "line_height"]]],
-  emoji: [["Main icons", ["emoji_bot", "emoji_you", "emoji_send"]], ["Other icons", ["emoji_hero", "emoji_attach", "emoji_temp"], true]],
-  layout: [["Sizes", ["sidebar", "sidebar_width", "chat_width"]], ["Chat", ["avatars", "you_align", "composer", "sources_panel"]], ["More", ["toolbar"], true]]
+  wording: [["Basics", ["logo", "txt_title", "txt_tagline"]], ["More wording", ["txt_examples", "txt_placeholder", "txt_hint", "txt_disclaimer", "txt_sidebar", "txt_footer"], true]],
+  colors: [["Mode", ["mode"]], ["Colors", ["brand", "bg"]], ["More colors", ["accent", "surface", "sidebar", "ink", "muted", "line", "bot", "you", "danger"], true]],
+  background: [["Style", ["bg_style", "bg_color2"]], ["More background options", ["bg_angle", "bg_image", "pattern", "pattern_color", "pattern_opacity", "pattern_size"], true]],
+  fonts: [["Fonts", ["font", "heading_font"]], ["More font options", ["custom_font", "font_size", "line_height"], true]],
+  shape: [["Shape", ["radius", "density"]], ["More shape options", ["shadow", "bubble"], true]],
+  emoji: [["Icons (optional)", ["emoji_bot", "emoji_you", "emoji_send", "emoji_hero", "emoji_attach", "emoji_temp"], true]],
+  motion: [["Motion", ["motion"]], ["More motion options", ["entrance", "speed", "hover_lift"], true]],
+  layout: [["Layout", ["sidebar", "chat_width"]], ["More layout options", ["sidebar_width", "avatars", "you_align", "composer", "toolbar", "sources_panel"], true]]
 };
 const clone = (o) => JSON.parse(JSON.stringify(o));
 const get = (f) => (f.colors ? theme[editMode][f.key] : theme[f.key]);
@@ -205,6 +208,46 @@ function changed() {
   const dirty = JSON.stringify(theme) !== JSON.stringify(saved);
   $("#dirty").textContent = dirty ? "Unsaved changes (the preview shows them)" : "No unsaved changes"; $("#dirty").className = dirty ? "dirty" : "";
 }
+/* Logo: everything happens in the browser. The picture is shrunk, its plain background can be removed,
+   and its edges are feathered so it melts into the page instead of sitting in a hard box. */
+function logoControl(f, current) {
+  let orig = null; const st = { feather: 25, strip: true };
+  const prev = el("img", { class: "logoprev", alt: "Logo preview", hidden: current ? undefined : "" }); if (current) prev.src = current;
+  const file = el("input", { type: "file", accept: "image/png,image/jpeg,image/webp,image/gif", id: "f-logo-file", "aria-label": "Choose a logo picture" });
+  const fe = el("input", { type: "range", min: "0", max: "50", value: "25", "aria-label": "Edge softness", disabled: "" });
+  const rb = el("input", { type: "checkbox", checked: "", disabled: "" });
+  const note = el("div", { class: "h", text: current ? "Choose a new picture to adjust it." : "PNG, JPG, WebP or GIF. Kept on this computer." });
+  const rm = el("button", { type: "button", class: "mini", hidden: current ? undefined : "" }, "Remove");
+  function render() {
+    if (!orig) return; const max = 256, k = Math.min(1, max / Math.max(orig.width, orig.height));
+    const w = Math.max(8, Math.round(orig.width * k)), h = Math.max(8, Math.round(orig.height * k));
+    const c = document.createElement("canvas"); c.width = w; c.height = h; const x = c.getContext("2d", { willReadFrequently: true }); x.drawImage(orig, 0, 0, w, h);
+    const im = x.getImageData(0, 0, w, h), d = im.data;
+    const corner = [[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]].map(([cx, cy]) => { const i = (cy * w + cx) * 4; return [d[i], d[i + 1], d[i + 2]]; });
+    const bg = [0, 1, 2].map((j) => corner.reduce((a, c2) => a + c2[j], 0) / 4);
+    const edge = (st.feather / 100) * Math.min(w, h) / 2 || 0;
+    for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) {
+      const i = (yy * w + xx) * 4; let a = d[i + 3] / 255;
+      if (st.strip) { const dist = Math.hypot(d[i] - bg[0], d[i + 1] - bg[1], d[i + 2] - bg[2]); const t = Math.min(1, Math.max(0, (dist - 28) / 52)); a *= t * t * (3 - 2 * t); }
+      if (edge > 0) { const e = Math.min(xx, yy, w - 1 - xx, h - 1 - yy); const t = Math.min(1, e / edge); a *= t * t * (3 - 2 * t); }
+      d[i + 3] = Math.round(a * 255);
+    }
+    x.putImageData(im, 0, 0); let url = c.toDataURL("image/png");
+    if (url.length > 280000) { c.width = 128; c.height = Math.round(128 * h / w); const y = c.getContext("2d"); y.drawImage(orig, 0, 0, c.width, c.height); url = c.toDataURL("image/png"); }
+    prev.src = url; prev.hidden = false; rm.hidden = false; setv(f, url);
+  }
+  file.addEventListener("change", () => {
+    const fl = file.files[0]; if (!fl) return; if (fl.size > 4000000) { say("That picture is over 4 MB. Choose a smaller one.", true); return; }
+    const u = URL.createObjectURL(fl), im = new Image();
+    im.onload = () => { orig = im; fe.disabled = rb.disabled = false; note.textContent = "Soft edges and background removal run on this computer."; render(); URL.revokeObjectURL(u); };
+    im.onerror = () => { say("That file could not be read as a picture.", true); URL.revokeObjectURL(u); };
+    im.src = u;
+  });
+  fe.addEventListener("input", () => { st.feather = +fe.value; render(); });
+  rb.addEventListener("change", () => { st.strip = rb.checked; render(); });
+  rm.addEventListener("click", () => { orig = null; prev.hidden = true; rm.hidden = true; fe.disabled = rb.disabled = true; file.value = ""; setv(f, ""); });
+  return el("div", { class: "logobox" }, prev, el("div", { class: "logoctl" }, file, el("label", { class: "check" }, rb, "Remove plain background"), el("label", { class: "h" }, "Edge softness", fe), note, rm));
+}
 function control(f) {
   const id = "f-" + f.key; let input;
   const v = get(f);
@@ -213,6 +256,8 @@ function control(f) {
     swatch.addEventListener("input", () => { hex.value = swatch.value; setv(f, swatch.value); });
     hex.addEventListener("input", () => { if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) { swatch.value = hex.value; setv(f, hex.value.toLowerCase()); } else if (f.clearable && hex.value === "") setv(f, ""); });
     input = el("div", { class: "colorrow" }, swatch, hex); if (f.clearable) input.append(el("button", { type: "button", class: "mini", onclick: () => { hex.value = ""; setv(f, ""); } }, "Auto"));
+  } else if (f.type === "logo") {
+    input = logoControl(f, v);
   } else if (f.type === "select") {
     input = el("select", { id }); const opts = f.fonts ? Object.keys(meta.fonts).concat("custom") : meta.enums[f.key];
     opts.forEach((o) => input.append(el("option", { value: o, text: f.fonts ? FONTNAMES[o] || o : (LABELS[f.key] || {})[o] || o })));
@@ -298,7 +343,7 @@ function buildPresets() {
   for (const [name, p] of Object.entries(all)) {
     const t = Object.assign(clone(meta.default), clone(p)); t.light = Object.assign(clone(meta.default.light), p.light || {}); t.dark = Object.assign(clone(meta.default.dark), p.dark || {});
     const c = t.mode === "dark" ? t.dark : t.light;
-    const b = el("button", { type: "button", class: "preset", title: "Apply the " + name + " look", disabled: canEdit ? undefined : "" }, el("span", { class: "sw", style: `background:linear-gradient(135deg,${c.bg} 0 50%,${c.brand} 50% 75%,${c.accent} 75%)` }), name);
+    const b = el("button", { type: "button", class: "preset", title: "Apply the " + name + " look", disabled: canEdit ? undefined : "" }, el("span", { class: "sw", style: `background:linear-gradient(135deg,${c.bg} 0 50%,${c.brand} 50% 75%,${c.accent} 75%)` }), el("span", { class: "pn" }, el("span", { text: name }), el("small", { text: (FONTNAMES[t.font] || t.font) + " + " + (FONTNAMES[t.heading_font] || t.heading_font) })));
     b.addEventListener("click", () => { const keep = ["txt_title", "txt_tagline", "txt_examples", "txt_placeholder", "txt_hint", "txt_disclaimer", "txt_sidebar", "txt_footer"]; for (const k of keep) t[k] = theme[k]; theme = t; editMode = theme.mode === "dark" ? "dark" : "light"; setPvMode(editMode); drawLook(); pvPop(); changed(); say("Preset \u201c" + name + "\u201d applied to the preview. Press Save look to keep it."); });
     box.append(b);
   }

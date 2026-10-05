@@ -150,7 +150,7 @@ function drawThread() {
   if (!S.turns.length) {
     const a = S.cfg.app;
     const he = TV("emoji_hero") || TV("emoji_bot"), exs = TV("txt_examples") ? TV("txt_examples").split("\n").map((x) => x.trim()).filter(Boolean).slice(0, 8) : a.examples;
-    w.append(el("div", { class: "hero" }, el("div", { class: "av bot" + (he ? " emo" : ""), text: he || (TV("txt_title") || a.title || "AI").replace(/[^A-Za-z]/g, "").slice(0, 2) }), el("div", {}, el("h1", { text: TV("txt_title") || a.title }), el("p", { text: TV("txt_tagline") || a.tagline }),
+    w.append(el("div", { class: "hero" }, TV("logo") ? el("img", { class: "hero-logo", src: TV("logo"), alt: "" }) : el("div", { class: "av bot" + (he ? " emo" : ""), text: he || (TV("txt_title") || a.title || "AI").replace(/[^A-Za-z]/g, "").slice(0, 2) }), el("div", {}, el("h1", { text: TV("txt_title") || a.title }), el("p", { text: TV("txt_tagline") || a.tagline }),
       el("div", { class: "ex" }, exs.map((x) => el("button", { onclick: () => { $("#q").value = x; send(); } }, x))))));
   } else S.turns.forEach((t, i) => w.append(...turnView(t, S.turns[i - 1])));
   th.append(w); th.scrollTop = th.scrollHeight;
@@ -451,7 +451,7 @@ async function accountGate() {
 }
 function applyWording() {
   const a = S.cfg.app;
-  $("#brand").textContent = TV("txt_title") || a.title; document.title = TV("txt_title") || a.title;
+  { const b = $("#brand"); b.textContent = TV("txt_title") || a.title; const lg = TV("logo"); if (lg) { const im = document.createElement("img"); im.className = "tb-logo"; im.alt = ""; im.src = lg; b.prepend(im); } } document.title = TV("txt_title") || a.title;
   $("#noteName").textContent = TV("txt_title") || a.title; $("#noteText").textContent = TV("txt_footer") || a.footer;
   $("#q").placeholder = TV("txt_placeholder") || "Ask a question"; $("#hint").textContent = TV("txt_hint") || "Answers cite their sources. Check important facts.";
   const d = document.querySelector(".cmeta span:last-child"); if (d) d.textContent = TV("txt_disclaimer") || "Not a substitute for professional advice.";

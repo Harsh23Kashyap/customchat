@@ -153,3 +153,11 @@ input[type=range]{transition:opacity .15s}
 .ometa{font-size:13px;color:#4a5568}.otech{font-size:12px;color:#5a6676;font-family:ui-monospace,Menlo,monospace}
 .oact{margin-top:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.oact code{font-size:12px;background:#f2f6fb;padding:4px 8px;border-radius:8px}.oact .ok{color:#1d7a46;font-weight:600;font-size:13px}
 .otechbox{margin:10px 0 0;white-space:pre-wrap;font-size:12px;line-height:1.55;background:#f2f6fb;border-radius:12px;padding:12px;color:#2d3748}
+
+.logobox{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.logoprev{width:72px;height:72px;object-fit:contain;border:1px dashed #cfd8e3;border-radius:14px;background:repeating-conic-gradient(#f3f6fa 0 25%,#fff 0 50%) 0 0/14px 14px}
+.logoctl{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1 1 200px}.logoctl .check{font-size:13px}
+.pn{display:flex;flex-direction:column;align-items:flex-start;line-height:1.2}.pn small{font-weight:400;font-size:11px;color:#6b7788}
+.field:has(.logobox){grid-column:1/-1}
+input[type=file]{font:inherit;font-size:13px;border:0!important;padding:0!important;background:transparent!important;box-shadow:none!important}
+input[type=file]::file-selector-button{font:600 13px "DM Sans",sans-serif;border:1px solid #cfd8e3;background:#fff;border-radius:10px;padding:8px 14px;margin-right:10px;cursor:pointer;color:var(--cfg-accent,#1d5fd1)}
+input[type=file]::file-selector-button:hover{background:#f2f6fb}

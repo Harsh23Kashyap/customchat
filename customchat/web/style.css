@@ -223,3 +223,6 @@ html[data-bubble=flat] .bubble.ub{background:var(--you);color:#1f2a24}
 /* quick design-switch transition */
 body,.app,aside,.main,.bar,.bubble,.srcs button.s,.send,.composer,.chip,.icon,.cs-btn{transition:background-color .22s ease,color .22s ease,border-color .22s ease}
 @media(prefers-reduced-motion:reduce){body,.app,aside,.main,.bar,.bubble,.srcs button.s,.send,.composer,.chip,.icon{transition:none}}
+
+.tb-logo{height:28px;width:auto;max-width:90px;object-fit:contain;margin-right:8px;vertical-align:middle}
+.hero-logo{width:72px;height:72px;object-fit:contain}
