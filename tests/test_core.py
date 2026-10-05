@@ -859,6 +859,25 @@ class NumberCheck(unittest.TestCase):
         self.assertEqual(self._engine(good).correct(bad, ev, led), good)
         self.assertEqual(self._engine("Still less regain here. [1]").correct(bad, ev, led), bad)
 
+    RAT = [{"n": 1, "title": "Differential weight loss with intermittent fasting or daily calorie restriction in low- and high-fitness phenotypes.",
+            "text": "Intermittent fasting is effective for weight loss in rats with low fitness. In a separate experiment using intermittent fasting in male HCR and LCR rats, alternate-day fasting induced significantly greater loss of weight and fat mass in LCR compared with HCR rats."}]
+
+    def test_pmid_34086376_unmarked_animal_sentence_is_flagged_and_rewrite_names_rats(self):
+        # real PMID 34086376 passage text (verbatim sentences); the model output is a fake string
+        from customchat.pipeline import Engine
+        bad = "Alternate-day fasting caused greater loss of weight and fat mass in low-fitness groups. [1]"
+        led = Engine.ledger(bad, self.RAT)
+        self.assertTrue(led[0]["animal_unmarked"])
+        seen = []
+        eng = self._engine("In rats with low fitness, alternate-day fasting caused greater loss of weight and fat mass. [1]")
+        orig = eng.provider.complete
+        eng.provider.complete = lambda m: (seen.append(m[-1]["content"]), orig(m))[1]
+        out = eng.correct(bad, self.RAT, led)
+        self.assertIn("rats", out)
+        self.assertIn("rats or mice", seen[0])
+        # a rewrite that still hides the animal is rejected
+        self.assertEqual(self._engine("Fasting caused greater loss of weight in low-fitness groups. [1]").correct(bad, self.RAT, led), bad)
+
     def test_rewrite_rejected_if_it_adds_a_number(self):
         ev = [{"n": 1, "title": "t", "text": "both groups regained weight, with more fat mass regain in the CRD group 96 adults"}]
         from customchat.pipeline import Engine
