@@ -233,7 +233,12 @@ body,.app,aside,.main,.bar,.bubble,.srcs button.s,.send,.composer,.chip,.icon,.c
 .chartrow{display:flex;align-items:center;gap:18px;margin-top:10px}.donut{width:92px;height:92px;flex:none}.chartrow ul{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:calc(13px*var(--fs,1));color:var(--ink)}
 .chartrow li{display:flex;align-items:center;gap:8px}.chartrow i{width:10px;height:10px;border-radius:3px;display:inline-block}
 
-.fu-label{margin-top:-4px}.meta .chip:first-child,.meta.fu .chip:first-child{padding-left:0}
+.fu-label{margin-top:-4px}.meta>.chip:first-child{padding-left:0}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 button.chip{cursor:pointer}.meta.fu .chip:hover{background:var(--soft);color:var(--brand)}
 .fu-label{margin-left:0}.meta.fu{margin-left:0;margin-bottom:8px}.thread .meta{margin-top:6px}
+
+.box:focus-within{box-shadow:0 0 0 1px var(--brand)}.box textarea:focus,.box textarea:focus-visible{outline:0}
+.note span{color:#5e6159;font-size:calc(12px*var(--fs,1))}:root[data-theme=dark] .note span{color:#b6c4bc}
+.meta.fu .chip:hover,.meta.fu .chip:focus-visible{text-decoration:underline;text-underline-offset:3px;background:transparent}
+@media(max-width:760px){.meta.fu .chip{min-height:44px;display:inline-flex;align-items:center}.bar #style{max-width:72px}.bar .title{flex:1 1 90px}}

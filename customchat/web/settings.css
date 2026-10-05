@@ -99,7 +99,7 @@ body{padding-bottom:140px}
 .toolbar a.on{background:#fff;color:var(--cfg-accent,#1d5fd1);box-shadow:0 1px 3px rgba(0,40,90,.15)!important}
 .toolbar a:focus-visible{outline:2px solid var(--cfg-accent,#1d5fd1)}
 .preset,.presets button,[data-p]{font-family:"DM Sans",sans-serif;font-weight:600}
-.sub{margin-bottom:56px}
+.sub{margin-bottom:20px}
 .preset.more{background:transparent;border:1px dashed var(--cfg-accent,#1d5fd1);color:var(--cfg-accent,#1d5fd1);font-weight:600}
 .pvwrap,.preview,#pv{margin-bottom:90px}
 .cs-btn{border-radius:12px}
@@ -248,5 +248,6 @@ textarea.code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px
 
 body{padding-bottom:96px}
 .cmhost{position:relative}.cmhost .cm-editor{min-height:0}.cmhost .cm-scroller{min-height:72px}.cmhost.filled .cm-scroller{min-height:200px}
-.cmhost:not(.filled)::after{content:attr(data-ph);position:absolute;left:48px;top:9px;color:#8795a8;font-size:13px;pointer-events:none}
+.cmhost:not(.filled)::after{content:attr(data-ph);position:absolute;left:58px;top:12px;color:#8795a8;font-size:13px;pointer-events:none}
 .sub .keyrow.tight{flex-wrap:nowrap;gap:8px}.sub .keyrow.tight .go{padding:10px 14px;font-size:13px;letter-spacing:.02em;white-space:nowrap}
+.savebar{width:min(540px,100%);margin-left:0}
