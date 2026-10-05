@@ -766,6 +766,35 @@ def test_web_toggle():
 
 test_web_toggle()
 
+def test_open_sources():
+    from customchat.connectors import open_sources as o
+    from customchat.connectors.base import make_connector
+    calls = []
+    def fake(url, timeout=20):
+        calls.append(url)
+        if "wikipedia" in url: return {"query": {"pages": [{"title": "Vitamin D", "pageid": 1, "index": 2, "extract": "A vitamin."}, {"title": "", "extract": "x"}, "junk", {"title": "Sun", "pageid": 2, "index": 1, "extract": "A star."}]}}
+        if "crossref" in url: return {"message": {"items": [{"title": ["Paper A"], "abstract": "<jats:p>Hello <b>world</b></jats:p>", "URL": "https://doi.org/x", "issued": {"date-parts": [[2021]]}, "container-title": ["J"], "author": [{"given": "A", "family": "B"}], "DOI": "x"}, {"nothing": 1}, 5]}}
+        return {"results": [{"id": "https://openalex.org/W1", "title": "Work", "publication_year": 2020, "abstract_inverted_index": {"world": [1], "Hello": [0]}, "doi": "https://doi.org/y"}, {"title": None}]}
+    real = o._get; o._get = fake
+    try:
+        w = make_connector({"id": "w", "label": "W", "type": "wikipedia"}).search("q", 3)
+        assert [x["title"] for x in w] == ["Sun", "Vitamin D"] and w[0]["url"].endswith("/wiki/Sun")
+        c = make_connector({"id": "c", "label": "C", "type": "crossref", "mailto": "a@b.org"}).search("q", 3)
+        assert len(c) == 1 and c[0]["text"] == "Hello world" and c[0]["year"] == "2021" and "mailto=a%40b.org" in calls[-1]
+        a = make_connector({"id": "a", "label": "A", "type": "openalex"}).search("q", 3)
+        assert len(a) == 1 and a[0]["text"] == "Hello world" and a[0]["year"] == "2020"
+    finally:
+        o._get = real
+    from customchat import schema
+    from customchat.pipeline import Engine
+    from customchat.store import Store
+    e = Engine(schema.load("apps/minimal/app.yaml"), Store(":memory:"))
+    assert e.set_catalog(["wikipedia", "bogus", "arxiv"]) == ["wikipedia", "arxiv"] and "cat-wikipedia" in e.connectors
+    assert e.set_catalog([]) == [] and not [k for k in e.connectors if k.startswith("cat-")]
+    print("open sources ok")
+
+test_open_sources()
+
 test_ollama_fit_and_pull_validation()
 
 if __name__ == "__main__":
