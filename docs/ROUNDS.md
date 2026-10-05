@@ -102,3 +102,6 @@ Custom-styled dropdowns (keyboard and screen-reader friendly) on chat and config
 
 ## Backend pass 1: providers and failure handling
 Added MiniMax, Xiaomi MiMo, DeepSeek, Groq, OpenRouter, Mistral as one-line provider types (default address and key variable built in; MiniMax and MiMo addresses checked against their docs). Retry now uses exponential backoff with jitter, honors Retry-After, retries only timeouts, 408/425/429/5xx, and never retries 400/401/403/404. Streams retry before the first token. Plain-language error messages per HTTP code. Test file fixed: 37 tests after the old main block were never running; all 53 now run and pass.
+
+## Backend pass 2 and config pass 7: keys, model picker, connection test, declutter
+Local secret store (secrets.json, mode 0600, never returned by any API, never in exports or the repo). Per-provider API key field (masked), model picker that lists the provider's real models (Claude, Gemini, Ollama, any OpenAI-style server) with a type-a-name fallback, Test connection with plain pass/fail reasons. Live preview switches to a model card on the Model tab and shows which tab it follows. Wording, Colors, Background, Fonts, Icons, Layout regrouped with short sections and collapsed More options; color rows fixed (no overflow). Per-section Save and Reset. Emoji placeholders and defaults are blank.
