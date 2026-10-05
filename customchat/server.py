@@ -1,5 +1,5 @@
 """Small threaded HTTP server: static UI plus a JSON API. Standard library only."""
-import hmac, json, mimetypes, os, re, sys
+import uuid, hmac, json, mimetypes, os, re, sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 from . import schema, providers
@@ -28,6 +28,7 @@ def make_handler(cfg, engine):
             self.send_header("Content-Type", ctype)
             self.send_header("Content-Length", str(len(data)))
             self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("X-Request-Id", uuid.uuid4().hex[:12])
             self.send_header("Cache-Control", "no-store" if ctype == "application/json" else "no-cache")
             for k, v in (extra or {}).items():
                 self.send_header(k, v)
@@ -75,6 +76,12 @@ def make_handler(cfg, engine):
             if path == "/api/export-all":
                 return self._send(200, json.dumps(store.export_all(o), indent=1).encode(), "application/json",
                                   {"Content-Disposition": 'attachment; filename="customchat-export.json"'})
+            if path == "/api/rate" and method == "POST":
+                return self._send(200, {"rating": store.rate(o, str(b.get("turn", "")), int(b.get("rating", 0)))})
+            if path == "/api/ratings":
+                return self._send(200, store.ratings(o, qs.get("chat", "")))
+            if path == "/api/stats":
+                return self._send(200, store.stats(o))
             if path == "/api/import" and method == "POST":
                 n = store.import_chats(o, b.get("chats") or [])
                 return self._send(200, {"imported": n})

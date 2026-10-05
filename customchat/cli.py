@@ -13,6 +13,7 @@ def main(argv=None):
     v = sub.add_parser("validate", help="check an app file"); v.add_argument("app")
     r = sub.add_parser("run", help="serve an app"); r.add_argument("app"); r.add_argument("--host"); r.add_argument("--port", type=int)
     d = sub.add_parser("doctor", help="check provider and sources"); d.add_argument("app")
+    ev = sub.add_parser("eval", help="run questions from a file and report citation coverage"); ev.add_argument("app"); ev.add_argument("questions", help="text file, one question per line")
     a = sub.add_parser("ask", help="ask one question from the terminal"); a.add_argument("app"); a.add_argument("question"); a.add_argument("--json", action="store_true")
     args = ap.parse_args(argv)
     if args.cmd == "init":
@@ -31,6 +32,19 @@ def main(argv=None):
         serve(args.app, args.host, args.port)
     elif args.cmd == "doctor":
         doctor(args.app)
+    elif args.cmd == "eval":
+        from .pipeline import Engine
+        from .store import Store
+        c = schema.load(args.app)
+        qs = [x.strip() for x in open(args.questions, encoding="utf-8") if x.strip() and not x.startswith("#")]
+        e = Engine(c, Store(":memory:"))
+        tot = cited = 0
+        for q in qs:
+            res = e.ask("eval", e.store.new_chat("eval"), q)
+            led = res["ledger"]; ok = sum(1 for l in led if l["supported"])
+            tot += len(led); cited += ok
+            print("%-60s evidence=%d claims=%d supported=%d" % (q[:60], len(res["evidence"]), len(led), ok))
+        print("coverage: %d/%d claims cited (%.0f%%)" % (cited, tot, 100.0 * cited / tot if tot else 0))
     elif args.cmd == "ask":
         from .pipeline import Engine
         from .store import Store

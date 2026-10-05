@@ -5,6 +5,7 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS chats(id TEXT PRIMARY KEY, owner TEXT, title TEXT, pinned INTEGER DEFAULT 0, deleted REAL, created REAL);
 CREATE TABLE IF NOT EXISTS topics(id TEXT PRIMARY KEY, owner TEXT, title TEXT, summary TEXT DEFAULT '', created REAL);
 CREATE TABLE IF NOT EXISTS turns(id TEXT PRIMARY KEY, chat TEXT, topic TEXT, question TEXT, standalone TEXT, answer TEXT, evidence TEXT, ledger TEXT, style TEXT, created REAL);
+CREATE TABLE IF NOT EXISTS feedback(turn TEXT PRIMARY KEY, owner TEXT, rating INTEGER, created REAL);
 CREATE TABLE IF NOT EXISTS evidence_cache(key TEXT PRIMARY KEY, payload TEXT, created REAL);
 CREATE TABLE IF NOT EXISTS uploads(id TEXT PRIMARY KEY, owner TEXT, name TEXT, text TEXT, created REAL);
 CREATE INDEX IF NOT EXISTS turns_chat ON turns(chat, created);
@@ -156,6 +157,26 @@ class Store:
 
     def delete_upload(self, owner, upload):
         self.q("DELETE FROM uploads WHERE id=? AND owner=?", (upload, owner), write=True)
+
+    def rate(self, owner, turn, rating):
+        rating = 1 if rating > 0 else -1 if rating < 0 else 0
+        if rating == 0:
+            self.q("DELETE FROM feedback WHERE turn=? AND owner=?", (turn, owner), write=True)
+        else:
+            self.q("INSERT OR REPLACE INTO feedback VALUES(?,?,?,?)", (turn, owner, rating, time.time()), write=True)
+        return rating
+
+    def ratings(self, owner, chat):
+        return {r["turn"]: r["rating"] for r in self.q(
+            "SELECT f.turn, f.rating FROM feedback f JOIN turns t ON t.id=f.turn WHERE f.owner=? AND t.chat=?", (owner, chat))}
+
+    def stats(self, owner):
+        one = lambda sql: (self.q(sql, (owner,), one=True) or {"n": 0})["n"]
+        return {"chats": one("SELECT COUNT(*) n FROM chats WHERE owner=? AND deleted IS NULL"),
+                "turns": one("SELECT COUNT(*) n FROM turns t JOIN chats c ON c.id=t.chat WHERE c.owner=? AND t.style NOT LIKE 'deleted:%'"),
+                "uploads": one("SELECT COUNT(*) n FROM uploads WHERE owner=?"),
+                "helpful": one("SELECT COUNT(*) n FROM feedback WHERE owner=? AND rating>0"),
+                "not_helpful": one("SELECT COUNT(*) n FROM feedback WHERE owner=? AND rating<0")}
 
     def ping(self):
         try:
