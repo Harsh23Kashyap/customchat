@@ -176,3 +176,10 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - App name and Welcome line show a hint ("Blank uses the app default").
 - Preview chat opens scrolled to the newest message, so the last bubble is not cut.
 - Preset font label shows one name when the body and heading fonts are the same.
+
+## Pass 21 (from B2's critique of f0075158c8)
+- Text fields trim stray spaces on leaving the field, so the hint shows again (App name).
+- Demo: no model picker, no Refresh list, no Base URL. Base URL shows only for Ollama and Other.
+- "1 model found" grammar. Temperature and Sources values are dark text, not link blue.
+- Cloud model suggestions now link their sources (OpenAI and Google model pages, 5 Oct 2026); the "newest stable" wording is gone.
+- Memory advice is labelled a rough estimate.
