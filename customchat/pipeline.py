@@ -210,16 +210,35 @@ class Engine:
         text = " ".join((e.get("title", "") + " " + e.get("text", "")).lower() for e in evidence if e.get("n") in cites)
         return round(sum(1 for w in words if w in text) / len(words), 2)
 
+    _WORDS = {w: str(i) for i, w in enumerate("zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty".split())}
+    _WORDS.update({"thirty": "30", "forty": "40", "fifty": "50", "sixty": "60", "seventy": "70", "eighty": "80", "ninety": "90", "hundred": "100"})
+
     @staticmethod
-    def ledger(answer, evidence):
+    def numbers(text):
+        t = text.lower()
+        found = set(re.findall(r"\d+(?:\.\d+)?", t.replace(",", "")))
+        found |= {Engine._WORDS[w] for w in re.findall(r"[a-z]+", t) if w in Engine._WORDS}
+        return found
+
+    @staticmethod
+    def bad_numbers(claim, cites, evidence, asked=""):
+        """Numbers written in the claim that none of the cited passages contain (digits or number words). A deterministic check."""
+        text = " ".join((e.get("title", "") + " " + e.get("text", "")) for e in evidence if e.get("n") in cites)
+        have = Engine.numbers(text) | Engine.numbers(asked)
+        return sorted(n for n in Engine.numbers(claim) if n not in have)
+
+    @staticmethod
+    def ledger(answer, evidence, asked=""):
         valid = {e["n"] for e in evidence}
         out = []
         for sent in re.split(r"(?<=[.!?])\s+(?!\[\d+\])", answer):
             cites = [int(n) for n in re.findall(r"\[(\d+)\]", sent)]
             if sent.strip():
                 claim = re.sub(r"\s*\[\d+\]", "", sent).strip()
-                out.append({"claim": claim, "overlap": Engine.support(claim, [c for c in cites if c in valid], evidence), "cites": [c for c in cites if c in valid],
-                            "invalid": [c for c in cites if c not in valid], "supported": bool(cites) and all(c in valid for c in cites)})
+                good = [c for c in cites if c in valid]
+                bad = Engine.bad_numbers(claim, good, evidence, asked) if good else []
+                out.append({"claim": claim, "overlap": Engine.support(claim, good, evidence), "cites": good, "bad_numbers": bad,
+                            "invalid": [c for c in cites if c not in valid], "supported": bool(cites) and all(c in valid for c in cites) and not bad})
         return out
 
     # optional steps, each off by default and only used with a real model
@@ -252,6 +271,18 @@ class Engine:
         keep = {int(x) for x in re.findall(r"\d+", out)}
         kept = [e for e in evidence if e["n"] in keep]
         return kept or evidence
+
+    def revise(self, answer, evidence):
+        if not evidence or not answer or not (self._llm_on("revise") or (self.cfg["prompt"].get("revise") and self.cfg["provider"]["type"] != "mock")):
+            return answer
+        ev = "\n".join("[%d] %s. %s" % (e["n"], e["title"], e["text"][:1200]) for e in evidence)
+        try:
+            out = self.provider.complete([{"role": "system", "content": self.prompts.text("revise")}, {"role": "user", "content": "Answer:\n%s\n\nEvidence:\n%s" % (answer, ev)}]).strip()
+        except providers.ProviderError:
+            return answer
+        if len(out) < 0.4 * len(answer) or (re.search(r"\[\d+\]", answer) and not re.search(r"\[\d+\]", out)):
+            return answer
+        return out
 
     def check_support(self, answer, evidence):
         if not evidence or not answer or not self._llm_on("faithfulness"):
@@ -308,15 +339,16 @@ class Engine:
                 parts.append(piece)
                 yield "token", piece
             answer = "".join(parts).strip()
+            answer = self.revise(answer, evidence)
             note = self.check_support(answer, evidence)
             if note:
                 answer += "\n\n" + note
                 yield "token", "\n\n" + note
-        ledger = self.ledger(answer, evidence) if evidence else []
+        ledger = self.ledger(answer, evidence, standalone) if evidence else []
         if evidence and self.cfg["provider"]["type"] != "mock":
             # show only the sources the answer cites; a refusal cites nothing, so it shows none
             answer, evidence = self.tidy(answer, evidence)
-            ledger = self.ledger(answer, evidence)
+            ledger = self.ledger(answer, evidence, standalone)
             note = (self.cfg["prompt"].get("answer_note") or "").strip()
             if evidence and note and note not in answer:
                 answer += "\n\n" + note
@@ -352,10 +384,11 @@ class Engine:
             answer, ledger = self.cfg["prompt"]["no_evidence"], []
         else:
             answer = self.provider.complete(self.prompt(standalone, evidence, style, history, summary))
-            ledger = self.ledger(answer, evidence)
+            answer = self.revise(answer, evidence)
+            ledger = self.ledger(answer, evidence, standalone)
             if self.cfg["provider"]["type"] != "mock":
                 answer, evidence = self.tidy(answer, evidence)
-                ledger = self.ledger(answer, evidence)
+                ledger = self.ledger(answer, evidence, standalone)
                 note = (self.cfg["prompt"].get("answer_note") or "").strip()
                 if evidence and note and note not in answer:
                     answer += "\n\n" + note

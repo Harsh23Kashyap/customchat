@@ -49,6 +49,14 @@ STAGES = {
                     "Otherwise reply with UNSUPPORTED followed by a colon and a short list of the claims that the evidence does not support. "
                     "Do not rewrite the answer."),
     },
+    "revise": {
+        "label": "Revise against the sources", "optional": True, "on": False,
+        "help": "After the answer, rewrites it once so every statement, including words like small, short or lasting, is backed by the numbered passages. Adds one more model call. Off by default.",
+        "default": ("You edit an answer so it stays inside its numbered evidence passages.\n"
+                    "Rules: keep every [n] citation in place and keep the same length and structure. Delete or rewrite any statement, number, year or descriptive word "
+                    "(small, short, lasting, strong) that the cited passage does not state. If a cited passage says the participants lost weight or that a comparison group did better on an outcome, "
+                    "the answer must say so. Call the sources 'the sources', never 'the evidence provided'. Reply with only the edited answer."),
+    },
     "followups": {
         "label": "Follow-up suggestions", "optional": False, "on": True,
         "help": "Suggests what a curious reader might ask next.",
