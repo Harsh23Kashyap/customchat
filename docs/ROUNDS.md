@@ -120,3 +120,6 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Logo control: Original / After blending / In your app tiles, updating live on every toggle and slider.
 - Preview shows the hero and a doughnut chart card.
 - Preview audit: every control changes the preview except those that only act in another state (gradient colour and angle only with a gradient, image link only with Image, pattern colour only with a pattern, Font "custom"). Emoji for the welcome screen needs a recheck.
+
+## Setup script
+- `python3 setup_and_run.py`: private .venv, installs requirements, optional provider and hidden key prompt (saved 0600 in the app data folder, never printed), starts the app and opens the browser. Tested from a clean copy: venv, install, server answered 200.
