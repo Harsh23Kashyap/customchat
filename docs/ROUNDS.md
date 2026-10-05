@@ -200,3 +200,7 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - The missing-key message names the variable (OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY) and tells people to paste a key under Model.
 - More space under the Model heading and helper line.
 - Full dark chat shot taken (sidebar, answer, composer).
+
+## Pass 25 (first real-model run)
+- A real OpenAI test run found two bugs the fake provider could not: (1) the OPENAI_API_KEY environment variable was never read for the openai provider (only a saved key worked); (2) newer OpenAI models (gpt-5, gpt-6, o-series) reject a custom temperature with HTTP 400. Both fixed.
+- Real results: model list (141 models, includes gpt-6.1-sol, gpt-6-luna), Test connection "Works" on gpt-6-luna, and a full cited answer through the chat.
