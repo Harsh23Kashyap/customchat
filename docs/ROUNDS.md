@@ -123,3 +123,8 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 
 ## Setup script
 - `python3 setup_and_run.py`: private .venv, installs requirements, optional provider and hidden key prompt (saved 0600 in the app data folder, never printed), starts the app and opens the browser. Tested from a clean copy: venv, install, server answered 200.
+
+## Pass 11: prompts and code helpers
+- Eight prompt steps (question check, standalone, searches, relevance, answer, support check, follow-ups, summary), each readable, editable, resettable and writable with the connected model. Three are optional and off by default.
+- Code helpers for a search connector and query cleaning. Generated code is checked statically and never run.
+- Not yet tested with a real model. Tested with a fake provider and the offline template.
