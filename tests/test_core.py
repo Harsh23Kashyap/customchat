@@ -662,6 +662,46 @@ def test_ollama_fit_and_pull_validation():
         pass
     print("ollama fit/pull ok")
 
+def test_prompts_and_generators():
+    import tempfile, json as _j
+    from customchat import prompts as pm, generators as g
+    d = tempfile.mkdtemp(); ps = pm.PromptStore(d)
+    assert ps.text("queries") == pm.STAGES["queries"]["default"]
+    ps.save("queries", "Custom queries prompt"); assert pm.PromptStore(d).text("queries") == "Custom queries prompt"
+    assert ps.text("answer", "APP SYSTEM") == "APP SYSTEM"
+    assert not ps.enabled("relevance"); ps.save("relevance", on=True); assert ps.enabled("relevance")
+    ps.save("standalone", on=False); assert ps.enabled("standalone")  # required steps cannot be switched off
+    try: ps.save("nope", "x"); assert False
+    except ValueError: pass
+    try: ps.save("queries", "x" * 7000); assert False
+    except ValueError: pass
+    ps.reset("queries"); assert ps.text("queries") == pm.STAGES["queries"]["default"]
+    mock_cfg = {"provider": {"type": "mock"}}
+    r = g.generate_prompt(None, mock_cfg, "relevance", "nutrition advice for adults"); assert r["model_used"] is False and "nutrition" in r["prompt"]
+    try: g.generate_prompt(None, mock_cfg, "relevance", ""); assert False
+    except ValueError: pass
+    class Fake:
+        def __init__(s, outs): s.outs = list(outs); s.calls = 0
+        def complete(s, m): s.calls += 1; return s.outs.pop(0)
+    real = {"provider": {"type": "openai"}}
+    f = Fake(["sorry, here you go", "```json\n" + _j.dumps({"rationale": ["a"], "prompt": "You judge passages for nutrition questions. Reply with numbers only, or NONE."}) + "\n```"])
+    r = g.generate_prompt(f, real, "relevance", "nutrition"); assert r["model_used"] and f.calls == 2 and r["prompt"].startswith("You judge")
+    try: g.generate_prompt(Fake(["x", "y"]), real, "relevance", "nutrition"); assert False
+    except ValueError: pass
+    good = "import json, urllib.request\n\ndef search(query, limit=6):\n    return []\n"
+    assert g.review_code("search", good)[0]
+    for bad in ["import os\nos.system('x')\ndef search(q): pass", "import subprocess\ndef search(q): pass", "def search(q):\n    return eval(q)", "def search(q):\n    open('f','w')", "def other(): pass", "def search(:", "KEY='sk-abcdefghijklmnop12345'\ndef search(q): pass"]:
+        assert not g.review_code("search", bad)[0], bad
+    assert g.review_code("clean_query", "import re\ndef clean_query(q):\n    return q")[0]
+    assert not g.review_code("clean_query", "import urllib.request\ndef clean_query(q):\n    return q")[0]
+    f = Fake(["```python\nimport subprocess\ndef search(q): pass\n```", "```python\n" + good + "```"])
+    r = g.generate_code(f, real, "search", "my api"); assert r["ok"] and f.calls == 2
+    r = g.generate_code(None, mock_cfg, "search", "my api"); assert r["ok"] and not r["model_used"]
+    r = g.generate_code(None, mock_cfg, "clean_query", "strip filler"); assert r["ok"]
+    print("prompts and generators ok")
+
+test_prompts_and_generators()
+
 test_ollama_fit_and_pull_validation()
 
 if __name__ == "__main__":
