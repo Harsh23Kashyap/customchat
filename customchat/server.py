@@ -183,7 +183,7 @@ def make_handler(cfg, engine):
                 if not can_edit(self):
                     return self._send(403, {"error": "Only the admin can see this computer's details"})
                 return self._send(200, hardware.report(str(qs.get("base_url") or "http://localhost:11434")))
-            if path.startswith("/api/prompts") or path.startswith("/api/codegen") or path.startswith("/api/websearch"):
+            if path.startswith("/api/prompts") or path.startswith("/api/codegen") or path.startswith("/api/websearch") or path == "/api/catalog":
                 if not can_edit(self):
                     return self._send(403, {"error": "Only the admin can change prompts or generate code"})
                 try:
@@ -226,8 +226,16 @@ def make_handler(cfg, engine):
                         except OSError:
                             pass
                         return self._send(200, engine.web_state())
+                    if path == "/api/catalog" and method == "POST":
+                        types = engine.set_catalog([str(x) for x in (b.get("types") if isinstance(b.get("types"), list) else [])][:10])
+                        try:
+                            with open(os.path.join(os.path.dirname(os.path.abspath(store.path)), "catalog.json"), "w") as f:
+                                json.dump({"types": types}, f)
+                        except OSError:
+                            pass
+                        return self._send(200, {"types": types})
                     if path == "/api/websearch/status":
-                        return self._send(200, {"source": engine.web_state(), "providers": [{"id": k, "label": v["label"], "has_key": websearch.has_key(k)} for k, v in websearch.PROVIDERS.items()]})
+                        return self._send(200, {"catalog": engine.catalog_state(), "source": engine.web_state(), "providers": [{"id": k, "label": v["label"], "has_key": websearch.has_key(k)} for k, v in websearch.PROVIDERS.items()]})
                     if path == "/api/websearch/key" and method == "POST":
                         pid = str(b.get("id") or "")
                         if pid not in websearch.PROVIDERS:
@@ -444,6 +452,12 @@ def serve(path, host=None, port=None):
             if ws.get("on") and pl:
                 engine.set_web(True, pl)
     except (OSError, ValueError):
+        pass
+    try:
+        cf = os.path.join(os.path.dirname(os.path.abspath(store.path)), "catalog.json")
+        if store.path != ":memory:" and os.path.exists(cf):
+            engine.set_catalog(json.load(open(cf)).get("types"))
+    except (OSError, ValueError, AttributeError):
         pass
     engine.prompts = promptmod.PromptStore(os.path.dirname(os.path.abspath(store.path)) if store.path != ":memory:" else "")
     host, port = host or cfg["server"]["host"], port or cfg["server"]["port"]
