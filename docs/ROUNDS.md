@@ -90,3 +90,6 @@ Running total: about 62 features, about 100 UI (counting each fix above as a rou
 
 ## Design pass 3
 UI: answer actions are quiet text buttons instead of outlined pills, dark and phone layouts checked in screenshots. Running total unchanged in features, about 105 UI.
+
+## Design pass 4 (from strict review)
+Single 720px reading column, no avatars, flat bubbles. Sources are a chip row under the answer. Stray period after citations fixed. New-conversation moved to header. Actions on one line, 13px. Suggestions 14px.
