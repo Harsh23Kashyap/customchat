@@ -11,26 +11,31 @@ const el = (t, p = {}, ...k) => { const e = document.createElement(t); for (cons
 const link = (href, text) => el("a", { href, target: "_blank", rel: "noopener noreferrer", text });
 
 /* Key guides. Every link and claim below was read from the provider's own pages on 5 Oct 2026. Steps are only written where the official page confirms them. */
-const STEPS = ["Open the key page and sign in, or create an account.", "Choose the button to create a new API key and name it CustomChat.", "Copy the key right away. Some sites show it only once.", "Paste it into the key box here and press Save. Never send it to anyone or save it in a file."];
+const STEPS = ["Sign in on the key page.", "Create a key.", "Copy it and paste it here."];
 const MODEL_GUIDES = {
-  openai: { name: "OpenAI", url: "https://platform.openai.com/api-keys", help: "https://help.openai.com/en/articles/4936850", note: "API use is billed separately from a ChatGPT subscription. Check the billing page for your limits.", steps: STEPS },
-  claude: { name: "Claude", url: "https://console.anthropic.com/settings/keys", help: "https://platform.claude.com/docs/en/get-api-key", note: "Keys live in the Claude Console under Settings, then API keys.", steps: STEPS },
-  gemini: { name: "Gemini", url: "https://aistudio.google.com/app/apikey", help: "https://ai.google.dev/gemini-api/docs/api-key", note: "There is a free usage tier for the Gemini API. Its limits are listed on Google's billing page.", steps: STEPS },
-  groq: { name: "Groq", url: "https://console.groq.com/keys", help: "https://console.groq.com/docs/quickstart", note: "The keys page has a Create API Key button.", steps: STEPS },
-  mistral: { name: "Mistral", url: "https://docs.mistral.ai/getting-started/quickstarts/studio/activate-and-generate-api-key", help: "https://docs.mistral.ai/getting-started/quickstarts/studio/activate-and-generate-api-key", note: "Mistral's guide says free mode has API access on by default with no credit card.", steps: ["Open Mistral's guide and follow its steps to open Studio and create a key.", "Copy the key right away.", "Paste it into the key box here and press Save."] },
-  minimax: { name: "MiniMax", url: "https://platform.minimax.io/docs/guides/quickstart-preparation", help: "https://platform.minimax.io/docs/guides/quickstart-preparation", note: "Register, then create a key as described on that page.", steps: ["Open MiniMax's guide, register or sign in, and create an API key.", "Copy the key right away.", "Paste it into the key box here and press Save."] },
-  mimo: { name: "Xiaomi MiMo", url: "https://platform.xiaomimimo.com/console/api-keys", help: "https://mimo.mi.com/docs/en-US/quick-start/faq/api-integration", note: "After login, apply for a key in the console.", steps: ["Open the console page and sign in.", "Apply for a new API key.", "Copy it and paste it into the key box here."] },
-  deepseek: { name: "DeepSeek", url: "https://api-docs.deepseek.com/", help: "https://api-docs.deepseek.com/", note: "DeepSeek's docs say to create an API key first. I could not confirm the exact key page, so follow its docs.", steps: null },
-  openrouter: { name: "OpenRouter", url: "https://openrouter.ai/collections/free-models", help: "https://openrouter.ai/collections/free-models", note: "OpenRouter lists models with $0 prices. I could not confirm the key steps, so follow its site.", steps: null }
+  openai: { name: "OpenAI", url: "https://platform.openai.com/api-keys", help: "https://help.openai.com/en/articles/4936850", note: "Billed separately from ChatGPT.", steps: STEPS },
+  claude: { name: "Claude", url: "https://console.anthropic.com/settings/keys", help: "https://platform.claude.com/docs/en/get-api-key", note: "Settings, then API keys.", steps: STEPS },
+  gemini: { name: "Gemini", url: "https://aistudio.google.com/app/apikey", help: "https://ai.google.dev/gemini-api/docs/api-key", note: "Has a free usage tier.", steps: STEPS },
+  groq: { name: "Groq", url: "https://console.groq.com/keys", help: "https://console.groq.com/docs/quickstart", note: "", steps: STEPS },
+  mistral: { name: "Mistral", url: "https://docs.mistral.ai/getting-started/quickstarts/studio/activate-and-generate-api-key", help: "https://docs.mistral.ai/getting-started/quickstarts/studio/activate-and-generate-api-key", note: "Free mode needs no card.", steps: ["Follow Mistral's guide.", "Copy the key.", "Paste it here."] },
+  minimax: { name: "MiniMax", url: "https://platform.minimax.io/docs/guides/quickstart-preparation", help: "https://platform.minimax.io/docs/guides/quickstart-preparation", note: "", steps: ["Register or sign in.", "Create a key.", "Copy it and paste it here."] },
+  mimo: { name: "Xiaomi MiMo", url: "https://platform.xiaomimimo.com/console/api-keys", help: "https://mimo.mi.com/docs/en-US/quick-start/faq/api-integration", note: "", steps: ["Sign in to the console.", "Apply for a key.", "Copy it and paste it here."] },
+  deepseek: { name: "DeepSeek", url: "https://api-docs.deepseek.com/", help: "https://api-docs.deepseek.com/", note: "Follow DeepSeek's docs to create a key.", steps: null },
+  openrouter: { name: "OpenRouter", url: "https://openrouter.ai/collections/free-models", help: "https://openrouter.ai/collections/free-models", note: "Follow OpenRouter's site to create a key.", steps: null }
 };
 const NAME2ID = { OpenAI: "openai", Claude: "claude", Gemini: "gemini", Groq: "groq", Mistral: "mistral", MiniMax: "minimax", "Xiaomi MiMo": "mimo", DeepSeek: "deepseek", OpenRouter: "openrouter" };
 const SEARCH = [
-  { id: "tavily", name: "Tavily", pro: "Made for AI apps. Returns short, clean snippets.", free: "Free plan: 1,000 credits a month (Tavily docs).", url: "https://app.tavily.com/", docs: "https://docs.tavily.com/documentation/quickstart" },
-  { id: "exa", name: "Exa", pro: "Finds pages by meaning, good for papers and documentation.", free: "New accounts get $20 in credits, plus $10 a month on the free tier (Exa pricing).", url: "https://dashboard.exa.ai/api-keys", docs: "https://exa.ai/docs/reference/pricing" },
-  { id: "firecrawl", name: "Firecrawl", pro: "Searches and can read whole pages.", free: "Free plan: 500 searches or 1,000 pages, no card (Firecrawl pricing).", url: "https://www.firecrawl.dev/app", docs: "https://docs.firecrawl.dev/billing" },
-  { id: "parallel", name: "Parallel", pro: "Takes a plain-language goal and returns focused excerpts.", free: "Paid by use: about $5 per 1,000 searches, $1 in turbo mode. A free tier is not confirmed.", url: "https://platform.parallel.ai/", docs: "https://docs.parallel.ai/getting-started/pricing" }
+  { id: "tavily", name: "Tavily", pro: "Short, clean snippets.", free: "Free: 1,000 credits a month.", url: "https://app.tavily.com/", docs: "https://docs.tavily.com/documentation/quickstart" },
+  { id: "exa", name: "Exa", pro: "Finds pages by meaning.", free: "Free: $20 on signup, $10 a month.", url: "https://dashboard.exa.ai/api-keys", docs: "https://exa.ai/docs/reference/pricing" },
+  { id: "firecrawl", name: "Firecrawl", pro: "Also reads whole pages.", free: "Free: 500 searches, no card.", url: "https://www.firecrawl.dev/app", docs: "https://docs.firecrawl.dev/billing" },
+  { id: "parallel", name: "Parallel", pro: "Focused excerpts.", free: "Paid by use, about $5 per 1,000 searches. Free tier not confirmed.", url: "https://platform.parallel.ai/", docs: "https://docs.parallel.ai/getting-started/pricing" }
 ];
 
+function whySvg() {
+  const w = document.createElementNS("http://www.w3.org/2000/svg", "svg"); w.setAttribute("viewBox", "0 0 320 96"); w.setAttribute("class", "gsvg"); w.setAttribute("role", "img"); w.setAttribute("aria-label", "Your files and the live web both feed the answer");
+  w.innerHTML = '<g fill="none" stroke="#5d7388" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="30" width="56" height="36" rx="18"/><path d="M62 42l30-18m-6-1l6-1 1 6"/><path d="M62 54l30 18m-6 1l6 1 1-6"/><rect x="96" y="8" width="84" height="30" rx="8"/><rect x="96" y="58" width="84" height="30" rx="8"/><path d="M180 23l34 20m-6-1l6 1-1 6"/><path d="M180 73l34-20m-6 1l6-1-1-6"/><rect x="216" y="28" width="98" height="40" rx="10"/><path d="M228 44h74m-74 10h50"/></g><g fill="#5d7388" font-size="10" font-family="DM Sans,sans-serif"><text x="14" y="52">Ask</text><text x="106" y="27">Your files</text><text x="106" y="77">Live web</text><text x="226" y="21">Answer + sources</text></g>';
+  return w;
+}
 function svgSteps() {
   const s = 'http://www.w3.org/2000/svg';
   const w = document.createElementNS(s, "svg"); w.setAttribute("viewBox", "0 0 300 60"); w.setAttribute("class", "gsvg"); w.setAttribute("role", "img"); w.setAttribute("aria-label", "Open the site, create a key, paste it here");
@@ -68,7 +73,7 @@ function ctxBox() {
 const diffLines = (a, b) => { const A = a.split("\n"), B = b.split("\n"), sa = new Set(A), sb = new Set(B); return [...A.filter((x) => !sb.has(x)).map((x) => ["-", x]), ...B.filter((x) => !sa.has(x)).map((x) => ["+", x])]; };
 
 function promptsPanel(host) {
-  host.replaceChildren(el("div", { class: "pvhead" }, el("b", { text: "Try a prompt" })), el("p", { class: "h", text: "Pick a step, give it a sample question and passages, and see what your model answers. Nothing is saved." }));
+  host.replaceChildren(el("div", { class: "pvhead" }, el("b", { text: "Try a prompt" })), el("p", { class: "h", text: "Run a step on a sample. Nothing is saved." }));
   const sel = el("select", { "aria-label": "Step to try" });
   const keys = [["answer", "Answer"], ["queries", "Search queries"], ["standalone", "Standalone question"], ["relevance", "Relevance filter"], ["faithfulness", "Support check"], ["followups", "Follow-ups"], ["question_check", "Question check"], ["summary", "Summary"]];
   keys.forEach(([k, t]) => sel.append(el("option", { value: k, text: t })));
@@ -89,29 +94,29 @@ function promptsPanel(host) {
 
 let keyStatus = {};
 async function codePanel(host) {
-  host.replaceChildren(el("div", { class: "pvhead" }, el("b", { text: "Live search keys" })), el("p", { class: "h", text: "Optional. A search key lets the code helper look up an API's documentation, and lets answers include live web results. Keys stay on this computer and are never shown again." }));
-  host.append(el("details", { class: "stage", open: "" }, el("summary", {}, el("b", { text: "Why add a search key?" }), el("small", { text: "Optional" })), el("div", { class: "sbody why" },
-    el("p", { text: "Without one, answers come only from your own files and the sources you set up. A search key lets the chat look things up on the live web too." }),
-    el("b", { text: "It helps in two places" }),
-    el("ul", {}, el("li", { text: "Answers: recent facts, news and anything your files do not cover are added as extra sources, with clear web labels in the citations." }), el("li", { text: "Code helper: it can read an API's documentation first, so the connector it writes matches how that API really behaves." })),
-    el("b", { text: "In technical terms" }),
-    el("p", { class: "h", text: "The key authenticates calls to the provider's search endpoint. Results are normalized to title, text and link, deduplicated and ranked with your other evidence. If the service fails or runs out of credits, answers fall back to your local sources. Free tiers have monthly limits. You can leave this off." }))));
+  host.replaceChildren(el("div", { class: "pvhead" }, el("b", { text: "Live search keys" })), el("p", { class: "h", text: "Optional. Keys stay on this computer." }));
+  host.append(el("div", { class: "gcard why2" }, whySvg(), el("p", { class: "h", text: "A key lets answers use the live web too." })));
   let src = { on: false, provider: "" };
   try { const d = await api("/api/websearch/status"); keyStatus = Object.fromEntries(d.providers.map((p) => [p.id, p.has_key])); src = d.source || src; } catch (e) { }
   const sst = el("small", { class: "h", role: "status" });
-  const psel = el("select", { "aria-label": "Search provider for answers" }); SEARCH.forEach((p) => psel.append(el("option", { value: p.id, text: p.name + (keyStatus[p.id] ? "" : " (no key)") }))); psel.value = src.provider || (SEARCH.find((p) => keyStatus[p.id]) || SEARCH[0]).id;
+  const chosen = new Set(src.providers || []);
   const tog = el("input", { type: "checkbox", id: "websrc" }); tog.checked = !!src.on;
-  const push = async () => { try { const r = await api("/api/websearch/source", { on: tog.checked, provider: psel.value }); sst.textContent = r.on ? "On. Answers now also use live results from " + psel.value + ". If it fails, local sources still answer." : "Off."; } catch (e) { tog.checked = false; sst.textContent = e.message; } };
-  tog.addEventListener("change", push); psel.addEventListener("change", () => { if (tog.checked) push(); });
-  host.append(el("div", { class: "gcard" }, el("label", { class: "check sw" }, tog, " Add live web results to answers"), psel, sst));
+  const push = async () => { try { const r = await api("/api/websearch/source", { on: tog.checked, providers: [...chosen] }); sst.textContent = r.on ? "On. Answers also use live results from " + r.providers.join(", ") + ". Each one is optional: if it fails, the others and your local sources still answer." : "Off."; } catch (e) { tog.checked = false; sst.textContent = e.message; } };
+  tog.addEventListener("change", () => { if (tog.checked && !chosen.size) { const f = SEARCH.find((p) => keyStatus[p.id]); if (f) chosen.add(f.id); } push(); });
+  const picks = el("div", { class: "picks" });
+  const drawPicks = () => { picks.replaceChildren(...SEARCH.map((p) => { const cb = el("input", { type: "checkbox", "aria-label": "Use " + p.name }); cb.checked = chosen.has(p.id); cb.disabled = !keyStatus[p.id]; cb.addEventListener("change", () => { cb.checked ? chosen.add(p.id) : chosen.delete(p.id); if (tog.checked) push(); }); return el("label", { class: "pick", title: keyStatus[p.id] ? "" : "Save a key below first" }, cb, " " + p.name + (keyStatus[p.id] ? "" : " (no key)")); })); };
+  drawPicks();
+  host.append(el("div", { class: "gcard" }, el("label", { class: "check sw" }, tog, " Add live web results to answers"), el("small", { class: "h", text: "Pick one or more. Results are merged." }), picks, sst));
+  const cards = []; let more = false;
   for (const p of SEARCH) {
     const st = el("span", { class: "testres", role: "status" }); const key = el("input", { type: "password", placeholder: keyStatus[p.id] ? "Key saved" : "Paste key", autocomplete: "off", "aria-label": p.name + " key" });
-    const save = el("button", { type: "button", class: "go blue", text: "Save", onclick: async () => { try { const r = await api("/api/websearch/key", { id: p.id, key: key.value }); key.value = ""; key.placeholder = r.has_key ? "Key saved" : "Paste key"; st.textContent = "Saved."; } catch (e) { st.textContent = e.message; } } });
+    const save = el("button", { type: "button", class: "go blue", text: "Save", onclick: async () => { try { const r = await api("/api/websearch/key", { id: p.id, key: key.value }); key.value = ""; key.placeholder = r.has_key ? "Key saved" : "Paste key"; keyStatus[p.id] = r.has_key; drawPicks(); st.textContent = "Saved."; } catch (e) { st.textContent = e.message; } } });
     const test = el("button", { type: "button", class: "go ghost", text: "Test", onclick: async () => { st.textContent = "Testing..."; try { const r = await api("/api/websearch/test", { id: p.id, query: "NASA open APIs" }); st.textContent = r.ok ? "Works: " + r.items.length + " results" + (r.items[0] ? ". First: " + r.items[0].title.slice(0, 60) : "") : r.error; } catch (e) { st.textContent = e.message; } } });
-    const clear = el("button", { type: "button", class: "go ghost", text: "Remove", onclick: async () => { await api("/api/websearch/key", { id: p.id, clear: true }); key.placeholder = "Paste key"; st.textContent = "Removed."; } });
-    host.append(el("details", { class: "stage" }, el("summary", {}, el("b", { text: p.name }), el("small", { text: keyStatus[p.id] ? "Key saved" : "No key" })), el("div", { class: "sbody" }, el("p", { text: p.pro }), el("p", { class: "h", text: p.free }), el("div", { class: "keyrow" }, key, save, test, clear), st, stepsBlock({ url: p.url, help: p.docs, steps: STEPS }))));
+    const clear = el("button", { type: "button", class: "go ghost", text: "Remove", onclick: async () => { await api("/api/websearch/key", { id: p.id, clear: true }); keyStatus[p.id] = false; chosen.delete(p.id); drawPicks(); key.placeholder = "Paste key"; st.textContent = "Removed."; } });
+    const card = (el("details", { class: "stage" }, el("summary", {}, el("b", { text: p.name }), el("small", { text: keyStatus[p.id] ? "Key saved" : "No key" })), el("div", { class: "sbody" }, el("p", { text: p.pro }), el("p", { class: "h", text: p.free }), el("div", { class: "keyrow" }, key, save, test, clear), st, stepsBlock({ url: p.url, help: p.docs, steps: STEPS })))); cards.push(card); host.append(card);
   }
-  host.append(el("p", { class: "h", text: "The code helper's research option uses the provider chosen above, or the first one that has a key." }));
+  const mb = el("button", { type: "button", class: "chipmore", onclick: () => { more = !more; cards.forEach((c, i) => (c.hidden = i >= 3 && !more)); mb.textContent = more ? "View fewer" : "View more"; } }, "View more"); cards.forEach((c, i) => (c.hidden = i >= 3));
+  if (cards.length > 3) host.append(mb);
 }
 
 function boot() {

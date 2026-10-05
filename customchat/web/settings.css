@@ -240,3 +240,8 @@ textarea.code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px
 .diff .dl{white-space:pre-wrap;padding:1px 6px;border-radius:4px}.diff .add{background:#e9f6ee;color:#17603a}.diff .del{background:#fdecec;color:#8a2a2a}
 .preview[hidden]{display:none!important}
 .why ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:13.5px}.why p{margin:0;font-size:13.5px}
+.picks{display:flex;flex-wrap:wrap;gap:8px 14px}.pick{font-size:13.5px;display:flex;gap:4px;align-items:center}.stage[hidden]{display:none}
+.why2{align-items:flex-start}.why2 p{margin:0}
+.ctx input[type=checkbox]{width:auto;padding:0}
+.ctx .chipmore{align-self:flex-start;background:transparent;border:1px dashed #9cb7d3;border-radius:999px;padding:7px 16px;color:#1f5fbf;font:inherit;font-weight:600;font-size:13px;cursor:pointer}
+.ctx .picks label.pick{display:inline-flex!important;flex-direction:row!important;align-items:center;gap:6px;width:auto}

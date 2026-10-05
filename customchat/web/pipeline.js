@@ -60,7 +60,7 @@ function codeCard(kind, title, help, ph) {
   const raw = el("textarea", { rows: "5", class: "code", "aria-label": "Raw response", placeholder: "A raw response from the API appears here. You can also paste one.", spellcheck: "false" });
   const show = el("button", { type: "button", class: "go ghost", text: "Show raw response", onclick: async () => { try { const r = await api("/api/codegen/sample", { url: url.value, query: tq.value }); raw.value = r.body; tres.className = "review"; tres.textContent = "Got HTTP " + r.status + " (" + (r.type || "unknown type") + "). Now press Rewrite parsing."; } catch (x) { tres.className = "review bad"; tres.textContent = x.message; } } });
   const rewrite = el("button", { type: "button", class: "go blue", text: "Rewrite parsing from this response", onclick: () => { sample = raw.value; gen.click(); } });
-  const live = kind === "search" ? el("details", { class: "stage inner" }, el("summary", {}, el("b", { text: "Match a real response" }), el("small", { text: "Optional" })), el("div", { class: "sbody" }, el("p", { class: "h", text: "Show what the API really sends back, so the parsing fits it. This makes one request to the address you type." }), el("div", { class: "keyrow" }, url, show), raw, rewrite)) : null;
+  const live = kind === "search" ? el("details", { class: "stage inner" }, el("summary", {}, el("b", { text: "Match a real response" }), el("small", { text: "Optional" })), el("div", { class: "sbody" }, el("p", { class: "h", text: "Fetch one real response so the parsing fits it." }), el("div", { class: "keyrow" }, url, show), raw, rewrite)) : null;
   const copy = el("button", { type: "button", class: "go ghost", text: "Copy", onclick: () => { navigator.clipboard && navigator.clipboard.writeText(code.value); out.textContent = "Copied."; } });
   const chk = el("button", { type: "button", class: "go ghost", text: "Check again", onclick: review });
   return el("div", { class: "sub" }, el("b", { text: title }), el("small", { text: help }), brief, live, el("div", { class: "keyrow" }, gen, chk, copy), ed ? host : fallback, out, el("div", { class: "keyrow" }, tq, tryBtn), tres);
@@ -68,12 +68,12 @@ function codeCard(kind, title, help, ph) {
 
 function build(col) {
   const prompts = el("section", { class: "tile", id: "sec-prompts" }, el("div", { class: "head" }, el("span", { class: "ic purple", text: "\u2630" }), el("div", {}, el("b", { text: "Prompts" }), el("small", { text: "The instructions behind each step of an answer" }))),
-    el("div", { class: "help", text: "Every question goes through these steps in order. Open a step to read or change its instructions. You can also describe your topic and let your model write them. Steps marked optional are off until you turn them on." }));
+    el("div", { class: "help", text: "Each question passes through these steps. Open one to edit it." }));
   dg = diagram(); prompts.append(dg);
   stages.forEach((s) => prompts.append(stageCard(s)));
-  if (!real) prompts.append(el("p", { class: "h", text: "Optional steps only run with a real model. In Demo mode they stay idle." }));
+  if (!real) prompts.append(el("p", { class: "h", text: "Optional steps need a real model." }));
   const code = el("section", { class: "tile", id: "sec-code" }, el("div", { class: "head" }, el("span", { class: "ic green", text: "</>" }), el("div", {}, el("b", { text: "Code helpers" }), el("small", { text: "Describe it, read the code, then use it yourself" }))),
-    el("div", { class: "help", text: "These write small Python helpers. Nothing runs on its own. The code is checked for risky calls and shown for you to read. Press Try it to run it once, in a separate limited process, with a sample question." }),
+    el("div", { class: "help", text: "These write small Python helpers. Code is checked, then shown. It runs only when you press Try it." }),
     codeCard("search", "Search connector", "Pulls passages from your own API or website.", "Example: search my clinic's JSON API at https://example.org/api, using the q parameter, and return title, text and link."),
     codeCard("clean_query", "Query cleaning", "Tidies a question before it is searched.", "Example: remove filler words, keep drug names and numbers, and lowercase everything."));
   const m = $("#sec-model"); const anchor = $("#look");
