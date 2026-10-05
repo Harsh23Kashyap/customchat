@@ -217,3 +217,9 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Sources under an answer now list only what the answer cites (real models). A refusal cites nothing, so it shows no source chips. Found by reviewing run logs: "capital of France" used to show two unrelated chips.
 - Default prompt: a refusal is one plain sentence with no citations and no referral; one clear stance that matches the passages.
 - Checked by hand against the full PubMed abstracts: HOMA-IR down 0.31 (PMID 35371260), 14 adults and 3 weeks (PMID 35871650), 5 weeks and 6-hour window (PMID 29754952).
+
+## Pass 28
+- Citations: ranges and lists like [2, 4] or [2-5] become [2][4]; sources used are renumbered 1, 2, 3 in order of use; a space is forced before a citation that follows punctuation. The sources list matches the numbers in the text.
+- Prompt: no years, numbers or study details that are not written in a passage.
+- Checked against full abstracts: 39 participants / 6 weeks 20h-fasting 4h-eating / HOMA-IR down (PMID 39193706), four studies / 355 participants / similar fasting insulin (PMID 34391831), 8-week trial of 40 older adults (5:2 fasting). All present in the passages.
+- Sidebar rows: inactive rows are plain text by design; pin/edit/delete show on the active or hovered row.
