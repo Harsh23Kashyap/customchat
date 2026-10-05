@@ -223,3 +223,11 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Prompt: no years, numbers or study details that are not written in a passage.
 - Checked against full abstracts: 39 participants / 6 weeks 20h-fasting 4h-eating / HOMA-IR down (PMID 39193706), four studies / 355 participants / similar fasting insulin (PMID 34391831), 8-week trial of 40 older adults (5:2 fasting). All present in the passages.
 - Sidebar rows: inactive rows are plain text by design; pin/edit/delete show on the active or hovered row.
+
+## Pass 29
+- Inline code is 0.9em and baseline aligned.
+- Sidebar: chats with the same title show the time (hidden on hover or when active).
+- Related questions are generated from the retrieved passages, so they can be answered.
+- Code check, not only prompt: a year after "a/an/the" that no passage or source record contains is removed. Years that appear in the answers (2021, 2022) come from the PubMed record's year field (PMID 34633860 is 2021, 35371260 and 35871650 are 2022), not model memory.
+- Adjacent citations are sorted and spaced: "[4] [1] [2] [3]" becomes "[1] [2] [3] [4]".
+- New app option prompt.answer_note: a fixed line added to every answer that has sources. The Nutrition app sets "General research information, not medical advice." so it no longer depends on the model.

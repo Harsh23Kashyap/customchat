@@ -33,7 +33,7 @@ A list. Each entry has `type`, optional `id` and `label`.
 `top_k` (1 to 50, default 6), `min_score`.
 
 ## prompt
-`system`, `style` (named answer depths, default quick/standard/deep), `no_evidence` (reply when nothing is found).
+`system`, `style` (named answer depths, default quick/standard/deep), `no_evidence` (reply when nothing is found), `answer_note` (a fixed line added after every answer that has sources, e.g. a disclaimer).
 
 ## memory
 `enabled`, `recent_turns` (how many earlier turns go into the prompt), `summary_every` (turns between rolling-summary refreshes).
