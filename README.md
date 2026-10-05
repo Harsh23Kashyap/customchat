@@ -4,6 +4,14 @@ Build a chat application over any evidence source from one YAML file.
 
 CustomChat is the chat counterpart of [Custom-Nerd](https://github.com/Harsh23Kashyap/Custom-Nerd). Custom-Nerd turns a configuration into a question-answering engine for one domain. CustomChat adds the conversation layer on top: follow-up questions that remember what came before, saved chats, numbered citations, and a clean web interface. DietChat and WirelessChat are two instances of the same pattern, and both ship here as example apps.
 
+## Quick start (one command)
+
+```
+python3 setup_and_run.py
+```
+
+It creates a private environment, installs what is needed, asks which AI provider you use and for its API key (typed hidden, kept only on this computer), then starts the app in your browser. Skip the key to try the offline Demo.
+
 ## Quick start
 
 ```bash
