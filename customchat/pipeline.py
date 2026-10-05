@@ -195,6 +195,9 @@ class Engine:
         answer = re.sub(r"\b((?:a|an|the|this|that)\s+)((?:19|20)\d\d)\s+(?=[A-Za-z])", lambda m: m.group(0) if m.group(2) in known else m.group(1), answer, flags=re.I)
         answer = re.sub(r"[ \t]+(?=\[\d+\])", " ", answer)
         answer = re.sub(r"(\[\d+\])[ \t]+(?=[.,;:!?)])", r"\1", answer)
+        answer = re.sub(r"\b(the|these|this)\s+(?:provided\s+|available\s+)?(?:evidence|passages)(?:\s+(?:provided|here|supplied))?\b", lambda m: "the cited sources" if m.group(1).lower() == "the" else "these sources", answer, flags=re.I)
+        verbs = {"does": "do", "is": "are", "was": "were", "has": "have", "shows": "show", "suggests": "suggest", "supports": "support", "indicates": "indicate", "doesn't": "don't", "isn't": "aren't", "provides": "provide"}
+        answer = re.sub(r"\b(the cited sources|these sources) (%s)\b" % "|".join(verbs), lambda m: m.group(1) + " " + verbs[m.group(2).lower()], answer, flags=re.I)
         out = []
         for o in order:
             e = dict(next(x for x in evidence if x["n"] == o)); e["n"] = mp[o]; out.append(e)
@@ -223,7 +226,7 @@ class Engine:
     @staticmethod
     def bad_numbers(claim, cites, evidence, asked=""):
         """Numbers written in the claim that none of the cited passages contain (digits or number words). A deterministic check."""
-        text = " ".join((e.get("title", "") + " " + e.get("text", "")) for e in evidence if e.get("n") in cites)
+        text = " ".join((e.get("title", "") + " " + e.get("text", "") + " " + str(e.get("year") or "")) for e in evidence if e.get("n") in cites)
         have = Engine.numbers(text) | Engine.numbers(asked)
         return sorted(n for n in Engine.numbers(claim) if n not in have)
 
@@ -231,7 +234,7 @@ class Engine:
     def ledger(answer, evidence, asked=""):
         valid = {e["n"] for e in evidence}
         out = []
-        for sent in re.split(r"(?<=[.!?])\s+(?!\[\d+\])", answer):
+        for sent in re.split(r"(?<=[.!?])\s+(?!\[\d+\])|(?<=\])\s+(?=[A-Z0-9*])", answer):
             cites = [int(n) for n in re.findall(r"\[(\d+)\]", sent)]
             if sent.strip():
                 claim = re.sub(r"\s*\[\d+\]", "", sent).strip()
