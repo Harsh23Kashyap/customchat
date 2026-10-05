@@ -317,3 +317,9 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Sentence splitter now splits after a bold lead ("...**" then a space).
 - Undo script on 4 uniquely titled chats, one pinned, a middle one deleted: same position, pinned state and API list (ids, titles, pinned) after undo; a second tap on the toast found it gone.
 - Insulin question, 5 runs: all 5 leads hedged (Possibly x4, Mixed x1). 35871650 was never retrieved. The code guard was not exercised live (the model hedged every time); it is covered by unit tests only.
+
+## Pass 46
+- Nutrition prompt: name the population and the intervention as the passage does (for example obese adults, fasting-based strategies) and do not widen a finding. 39458528 defines FBS as "fasting-based strategies" and covers obese adults; earlier answers wrote "fasting showed no superior long-term outcomes".
+- test_pdf: the "EOF marker not found" line is a pypdf warning about the hand-made PDF in the test; it is now silenced in the test.
+- Undo checked by exact text on the phone: deleting the pinned chat, and deleting the open chat, then undo, restored the row, pin state and the first user message and the first and last 80 characters of the answer.
+- Live animal run with the real model: 34086376 forced to rank first in retrieval. It was cited in 1 of 8 runs; in that run the sentence said "The animal study in rats ...". The guard did not fire live.
