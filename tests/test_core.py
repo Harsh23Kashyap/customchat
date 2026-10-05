@@ -477,3 +477,31 @@ class Round20(unittest.TestCase):
         p = fetch._Text(); p.feed("<html><title>Doc</title><script>bad()</script><p>Hello</p><p>World</p></html>")
         self.assertEqual(p.title, "Doc")
         self.assertIn("Hello", "".join(p.out)); self.assertNotIn("bad", "".join(p.out))
+
+
+class SettingsApi(Http):
+    def post(self, path, body):
+        return self.call(path, body, {"Content-Type": "application/json"})
+
+    def test_settings_roundtrip_and_states(self):
+        code, body = self.call("/api/settings"); d = json.loads(body)
+        self.assertEqual(code, 200); self.assertTrue(d["can_edit"]); self.assertIn("claude", d["providers"])
+        self.assertNotIn("key", json.dumps(d).lower())
+        code, body = self.post("/api/settings", {"settings": {"top_k": 3, "temperature": 0.7}})
+        self.assertEqual(json.loads(body)["settings"]["top_k"], 3)
+        self.assertEqual(self.post("/api/states/save", {"name": "three"})[0], 200)
+        self.post("/api/settings", {"settings": {"top_k": 9}})
+        code, body = self.post("/api/states/load", {"name": "three"})
+        self.assertEqual(json.loads(body)["settings"]["top_k"], 3)
+        self.assertEqual(json.loads(self.call("/api/states")[1])["states"], ["three"])
+        self.post("/api/states/delete", {"name": "three"})
+        self.assertEqual(json.loads(self.call("/api/states")[1])["states"], [])
+
+    def test_bad_settings_rejected(self):
+        self.assertEqual(self.post("/api/settings", {"settings": {"provider": "nope"}})[0], 400)
+        self.assertEqual(self.post("/api/settings", {"settings": {"provider": "openai", "model": ""}})[0], 400)
+        self.assertEqual(self.post("/api/states/save", {"name": " "})[0], 400)
+        self.assertEqual(self.post("/api/states/load", {"name": "missing"})[0], 400)
+
+    def test_settings_page_served(self):
+        self.assertIn(b"Save Current State", self.call("/settings.html")[1])
