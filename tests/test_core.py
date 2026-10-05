@@ -353,3 +353,25 @@ class Round17(unittest.TestCase):
         self.assertEqual(n, 1)
         out = s.export_all("o")
         self.assertEqual(out[0]["turns"][0]["answer"], "a")
+
+
+class Round18(unittest.TestCase):
+    def test_feedback_and_stats(self):
+        import tempfile, os
+        from customchat.store import Store
+        s = Store(os.path.join(tempfile.mkdtemp(), "t.db"))
+        cid = s.new_chat("o", "x")
+        tid = s.add_turn(cid, None, "q", "q", "a", [], [], "standard")
+        self.assertEqual(s.rate("o", tid, 1), 1)
+        self.assertEqual(s.ratings("o", cid), {tid: 1})
+        self.assertEqual(s.stats("o")["helpful"], 1)
+        s.rate("o", tid, 0)
+        self.assertEqual(s.ratings("o", cid), {})
+
+    def test_eval_command(self):
+        import tempfile, os, subprocess, sys
+        d = tempfile.mkdtemp(); q = os.path.join(d, "q.txt")
+        open(q, "w").write("# c\nwhat is this\n")
+        out = subprocess.run([sys.executable, "-m", "customchat", "eval", "apps/minimal/app.yaml", q], capture_output=True, text=True, timeout=60)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertIn("coverage:", out.stdout)
