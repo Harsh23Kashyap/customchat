@@ -375,3 +375,44 @@ class Round18(unittest.TestCase):
         out = subprocess.run([sys.executable, "-m", "customchat", "eval", "apps/minimal/app.yaml", q], capture_output=True, text=True, timeout=60)
         self.assertEqual(out.returncode, 0, out.stderr)
         self.assertIn("coverage:", out.stdout)
+
+
+class Round19(unittest.TestCase):
+    def _engine(self):
+        import tempfile, os
+        from customchat import schema
+        from customchat.pipeline import Engine
+        from customchat.store import Store
+        c = schema.load("apps/minimal/app.yaml")
+        return Engine(c, Store(os.path.join(tempfile.mkdtemp(), "t.db")))
+
+    def test_temporary_chat_saves_nothing(self):
+        e = self._engine()
+        out = list(e.ask_stream("o", None, "What is CustomChat?", temporary=True))
+        done = out[-1][1]
+        self.assertTrue(done["temporary"]); self.assertIsNone(done["id"])
+        self.assertEqual(e.store.export_all("o"), [])
+        self.assertEqual(e.store.stats("o")["turns"], 0)
+
+    def test_temporary_uses_bounded_client_history(self):
+        e = self._engine()
+        h = [{"question": "q%d" % i, "answer": "a"} for i in range(20)]
+        out = list(e.ask_stream("o", None, "What about its cost?", temporary=True, temp_history=h))
+        self.assertTrue(out[-1][1]["answer"])
+
+    def test_profile_roundtrip_and_prompt(self):
+        e = self._engine()
+        e.store.set_profile("o", "Vegetarian, 30s")
+        self.assertEqual(e.store.get_profile("o"), "Vegetarian, 30s")
+        msgs = e.prompt("q", [{"n": 1, "title": "t", "year": None, "text": "x"}], "standard", [], "", "Vegetarian, 30s")
+        self.assertIn("Vegetarian", msgs[1]["content"])
+        e.store.set_profile("o", "")
+        self.assertEqual(e.store.get_profile("o"), "")
+
+    def test_similar_questions(self):
+        e = self._engine()
+        c = e.store.new_chat("o", "x")
+        e.store.add_turn(c, None, "How does conversation memory work", "q", "a", [], [], "standard")
+        e.store.add_turn(c, None, "Totally unrelated pizza topic", "q", "a", [], [], "standard")
+        r = e.similar("o", "explain conversation memory")
+        self.assertEqual(len(r), 1); self.assertIn("memory", r[0]["question"])
