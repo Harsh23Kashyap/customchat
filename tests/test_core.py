@@ -807,5 +807,11 @@ class NumberCheck(unittest.TestCase):
         self.assertEqual(led["bad_numbers"], ["40"])
         self.assertFalse(led["supported"])
 
+    def test_sentences_split_when_citations_follow_the_period(self):
+        from customchat.pipeline import Engine
+        ev = [{"n": 1, "title": "t", "text": "alpha beta"}, {"n": 2, "title": "t", "text": "gamma 96"}]
+        led = Engine.ledger("Alpha is beta. [1] Gamma is 96. [2] Both. [1] [2]", ev)
+        self.assertEqual([l["cites"] for l in led], [[1], [2], [1, 2]])
+
 if __name__ == "__main__":
     unittest.main()
