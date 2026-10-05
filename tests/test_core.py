@@ -647,5 +647,22 @@ def test_logo_validation():
 test_logo_validation()
 
 
+
+def test_ollama_fit_and_pull_validation():
+    from customchat import hardware as h
+    assert h.fit_of(2, 10)[0] == "green" and h.fit_of(8, 10)[0] == "blue" and h.fit_of(12, 10)[0] == "red"
+    for bad in ["", "a b", "x;rm -rf", "../x", "a" * 90]:
+        try:
+            h.start_pull("http://localhost:11434", bad); assert False, bad
+        except ValueError:
+            pass
+    try:
+        h.start_pull("file:///etc", "qwen3:8b"); assert False
+    except ValueError:
+        pass
+    print("ollama fit/pull ok")
+
+test_ollama_fit_and_pull_validation()
+
 if __name__ == "__main__":
     unittest.main()
