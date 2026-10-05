@@ -273,3 +273,4 @@ body{padding-bottom:104px!important}
 .menu a.on:hover{background:#e8f0fc;text-decoration:none}
 
 label.check:has(input:disabled){color:#8a95a5}
+#sec-model .head{margin-bottom:6px}#sec-model .help{margin:14px 0 16px;line-height:1.5}

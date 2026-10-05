@@ -2,7 +2,7 @@
 "use strict";
 const $ = (s) => document.querySelector(s);
 const NAMES = { mock: "Demo", ollama: "Ollama", openai: "OpenAI", claude: "Claude", gemini: "Gemini", openai_compatible: "Other", minimax: "MiniMax", mimo: "Xiaomi MiMo", deepseek: "DeepSeek", groq: "Groq", openrouter: "OpenRouter", mistral: "Mistral" };
-let cur = {}, canEdit = false, theme = null, saved = null, meta = null, editMode = "light";
+let testBlocked = false, cur = {}, canEdit = false, theme = null, saved = null, meta = null, editMode = "light";
 const token = localStorage.getItem("cc_token") || "";
 async function api(path, body) {
   const h = { "Content-Type": "application/json" }; if (token) h.Authorization = "Bearer " + token;
@@ -19,7 +19,7 @@ function draw() {
   document.querySelectorAll("#seg button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.p === cur.provider)));
   buildChips();
   provExtras();
-  for (const id of ["model", "apikey", "keysave", "keyclear", "modelPick", "refreshModels", "testconn", "base", "temp", "topk", "rewrite", "apply", "load", "saveLook", "resetAll", "imp"]) $("#" + id).disabled = !canEdit;
+  for (const id of ["model", "apikey", "keysave", "keyclear", "modelPick", "refreshModels", "testconn", "base", "temp", "topk", "rewrite", "apply", "load", "saveLook", "resetAll", "imp"]) $("#" + id).disabled = !canEdit; $("#testconn").disabled = !canEdit || testBlocked;
 }
 const read = () => ({ provider: cur.provider, model: chosenModel(), base_url: $("#base").value.trim(), temperature: +$("#temp").value, top_k: +$("#topk").value, query_rewrite: $("#rewrite").checked });
 /* ---------- key, model picker, connection test ---------- */
@@ -31,6 +31,7 @@ async function provExtras() {
   $("#keyh").textContent = p === "openai_compatible" ? "Only if your server asks for one. Stored on this computer only, never shown again." : "Stored on this computer only, never shown again.";
   const ks = $("#keystate"); ks.className = "keystate" + (k.has ? " ok" : "");
   ks.textContent = k.has ? (k.source === "env" ? "Key found in an environment variable." : "A key is saved.") : (k.needed ? "No key yet." : "");
+  { const tc = $("#testconn"), blocked = !!(k.needed && !k.has); testBlocked = blocked; tc.disabled = blocked || !canEdit; tc.title = blocked ? "Save a key first, then test it" : ""; if (blocked) $("#testres").textContent = "Save a key first, then test."; else if ($("#testres").textContent === "Save a key first, then test.") $("#testres").textContent = ""; }
   $("#keyclear").hidden = k.source !== "saved"; $("#apikey").value = "";
   ollamaPanel();
   await loadModels(false);
