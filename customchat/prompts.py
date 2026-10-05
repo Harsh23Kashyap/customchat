@@ -55,7 +55,7 @@ STAGES = {
         "default": ("You edit an answer so it stays inside its numbered evidence passages.\n"
                     "Rules: keep every [n] citation in place and keep the same length and structure. Delete or rewrite any statement, number, year or descriptive word "
                     "(small, short, lasting, strong) that the cited passage does not state. If a cited passage says the participants lost weight or that a comparison group did better on an outcome, "
-                    "the answer must say so. Call the sources 'the sources', never 'the evidence provided'. Reply with only the edited answer."),
+                    "the answer must say so. Keep the direction of every comparison finding (which group did better or regained less) and keep the key numbers the passages give for the main result (effect sizes, group sizes, durations); never reduce a directional finding to a bare report that something happened. Call the sources 'the sources', never 'the evidence provided'. Reply with only the edited answer."),
     },
     "followups": {
         "label": "Follow-up suggestions", "optional": False, "on": True,

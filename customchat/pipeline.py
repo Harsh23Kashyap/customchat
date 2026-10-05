@@ -161,7 +161,7 @@ class Engine:
     # (4) generation
     def prompt(self, question, evidence, style, history, summary, profile=""):
         p = self.cfg["prompt"]
-        ev = "\n".join("[%d] %s (%s). %s" % (e["n"], e["title"], e["year"] or "n.d.", e["text"][:1200]) for e in evidence)
+        ev = "\n".join("[%d] %s (%s). %s" % (e["n"], e["title"], e["year"] or "n.d.", e["text"][:3000]) for e in evidence)
         mem = ("About the reader (self-reported background, not evidence): %s\n" % profile[:1500] if profile else "") + ("Conversation summary: %s\n" % summary if summary else "") + "".join(
             "Earlier Q: %s\nEarlier A: %s\n" % (h["question"], h["answer"][:240]) for h in history[-self.cfg["memory"]["recent_turns"]:])
         return [{"role": "system", "content": self.prompts.text("answer", p["system"]) + " " + p["style"].get(style, p["style"]["standard"])},
@@ -278,7 +278,7 @@ class Engine:
     def revise(self, answer, evidence):
         if not evidence or not answer or not (self._llm_on("revise") or (self.cfg["prompt"].get("revise") and self.cfg["provider"]["type"] != "mock")):
             return answer
-        ev = "\n".join("[%d] %s. %s" % (e["n"], e["title"], e["text"][:1200]) for e in evidence)
+        ev = "\n".join("[%d] %s. %s" % (e["n"], e["title"], e["text"][:3000]) for e in evidence)
         try:
             out = self.provider.complete([{"role": "system", "content": self.prompts.text("revise")}, {"role": "user", "content": "Answer:\n%s\n\nEvidence:\n%s" % (answer, ev)}]).strip()
         except providers.ProviderError:
