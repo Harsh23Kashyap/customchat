@@ -234,7 +234,8 @@ async function send() {
   const w = $("#thread .wrap") || $("#thread");
   w.querySelector(".hero")?.remove();
   const live = el("div", { class: "a", id: "live" });
-  w.append(el("div", { class: "q", text: q }), el("div", { class: "think", id: "think" }, el("span", { class: "dot" }), el("span", { class: "dot" }), el("span", { class: "dot" })), live);
+  w.append(el("div", { class: "q", text: q }), el("div", { class: "think", id: "think" }, el("span", { class: "dot" }), el("span", { class: "dot" }), el("span", { class: "dot" }), el("span", { class: "tm", id: "thinkTm", text: "0.0s" })), live);
+  const t0 = Date.now(), tick = setInterval(() => { const e = $("#thinkTm"); if (e) e.textContent = ((Date.now() - t0) / 1000).toFixed(1) + "s"; else clearInterval(tick); }, 100);
   const th = $("#thread"); th.scrollTop = th.scrollHeight;
   let text = "", result = null, err = null;
   try {

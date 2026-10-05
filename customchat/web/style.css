@@ -62,6 +62,7 @@ button.chip:hover{background:var(--soft)}.chip.on{background:var(--brand);color:
 .fu-label{color:var(--mut);font-size:calc(11px*var(--fs,1));font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin:2px 0 6px 46px}.meta.fu{margin:0 0 14px 46px}
 body:not(.claims) .chip.warn{display:none}
 .think{color:var(--mut);padding:4px 0;display:flex;gap:6px}.dot{width:7px;height:7px;border-radius:50%;background:var(--mut);animation:b 1.2s infinite}.dot:nth-child(2){animation-delay:.15s}.dot:nth-child(3){animation-delay:.3s}
+.think .tm{font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums;margin-left:4px;line-height:7px;align-self:center}
 @keyframes b{0%,60%,100%{opacity:.25;transform:none}30%{opacity:1;transform:translateY(-3px)}}
 .composer{flex:none;border-top:1px solid var(--line);background:var(--paper);padding:12px clamp(14px,2.4vw,30px) 12px}
 .pills{max-width:900px;margin:0 auto 8px;display:flex;gap:8px;flex-wrap:wrap}.pills:empty{display:none}
