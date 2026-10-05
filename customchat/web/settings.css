@@ -255,3 +255,7 @@ body{padding-bottom:96px}
 .savebar span{color:#4a5568}.savebar span.dirty{color:#92400e}
 .cmhost:not(.filled) .cm-activeLine,.cmhost:not(.filled) .cm-activeLineGutter{background:transparent!important}
 .cmhost:not(.filled) .cm-gutters{background:transparent;border-right:0}
+input[type=checkbox]:focus{box-shadow:none;border-color:inherit}input[type=checkbox]:focus-visible{outline:2px solid #1d5fd1;outline-offset:2px}
+.savebar{transition:transform .22s ease,opacity .22s ease}.savebar.clean{transform:translateY(160%);opacity:0;pointer-events:none}
+.go.ghost{border-color:#9db4d6!important}.go.ghost:hover{background:#eef4ff!important;border-color:var(--cfg-accent)!important}
+.savebar{width:min(640px,100%)}.savebar button{white-space:nowrap}

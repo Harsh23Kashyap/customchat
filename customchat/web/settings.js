@@ -236,7 +236,7 @@ function pushPreview() {
 function changed() {
   clearTimeout(sendTimer); sendTimer = setTimeout(pushPreview, 40); pvExtra(); setTimeout(pvExtra, 350);
   const dirty = JSON.stringify(theme) !== JSON.stringify(saved);
-  $("#dirty").textContent = dirty ? "Unsaved changes (the preview shows them)" : "No unsaved changes"; $("#dirty").className = dirty ? "dirty" : "";
+  $("#dirty").textContent = dirty ? "Unsaved changes" : "No unsaved changes"; $("#dirty").className = dirty ? "dirty" : ""; $("#savebar").classList.toggle("clean", !dirty);
 }
 /* Logo: everything happens in the browser. The picture is shrunk, its plain background can be removed,
    and its edges are feathered so it melts into the page instead of sitting in a hard box. */

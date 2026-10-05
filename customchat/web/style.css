@@ -243,3 +243,4 @@ button.chip{cursor:pointer}.meta.fu .chip:hover{background:var(--soft);color:var
 .meta.fu .chip:hover,.meta.fu .chip:focus-visible{text-decoration:underline;text-underline-offset:3px;background:transparent}
 @media(max-width:760px){.meta.fu .chip{min-height:44px;display:inline-flex;align-items:center}.bar #style{max-width:72px}.bar .title{flex:1 1 90px}}
 .meta.fu .chip::after{content:"\2192";margin-left:6px;color:var(--mut)}
+@media(max-width:760px){.bar .cs-btn,.bar #style{max-width:84px;min-width:0;padding-left:8px;padding-right:4px}.bar .cs-btn svg,.bar .cs-btn .caret,.bar .cs-btn::after{display:none}}
