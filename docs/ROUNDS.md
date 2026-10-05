@@ -242,3 +242,8 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Related questions ask about the topic, not the wording of an example.
 - Related hover shown (underline) in the Acme shot.
 - Source chips: long titles are cut to one line with an ellipsis and the number stays on one line (they used to wrap into tall pills with "[ 2 ]" split across lines). Full title on hover.
+
+## Pass 32
+- Source chips show up to two lines of title (rounded 16px), so a counter-result title like "...but does not improve insulin sensitivity" stays readable.
+- Citation spacing: one space before a marker, none between a marker and the punctuation after it.
+- Prompt: no "lasting" or "durable" unless a passage says so; do not describe the reader's own situation.
