@@ -234,3 +234,5 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 
 ## Pass 30
 - Related questions no longer show literal backticks or bold marks (plain text only).
+- Related prompt now asks for new angles the answer does not already cover.
+- Run logs list PMID and year for every source (29754952 = 2018, 34633860 = 2021, 35371260 = 2022, 35871650 = 2022, 39193706 = 2025, 34391831 = 2021).
