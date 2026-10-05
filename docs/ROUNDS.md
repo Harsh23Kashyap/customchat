@@ -204,3 +204,8 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 ## Pass 25 (first real-model run)
 - A real OpenAI test run found two bugs the fake provider could not: (1) the OPENAI_API_KEY environment variable was never read for the openai provider (only a saved key worked); (2) newer OpenAI models (gpt-5, gpt-6, o-series) reject a custom temperature with HTTP 400. Both fixed.
 - Real results: model list (141 models, includes gpt-6.1-sol, gpt-6-luna), Test connection "Works" on gpt-6-luna, and a full cited answer through the chat.
+
+## Pass 26 (from B2's critique of passes 24-25)
+- Related questions stack one per line, wrap, and align to the answer edge instead of running off the right side.
+- Citation markers [1] [2] have a small gap.
+- Three real agents run end to end on gpt-6-luna: Docs Chat (local files), Acme Support (help-center files with a support prompt), Nutrition Evidence (live PubMed). Results in the report to B2.
