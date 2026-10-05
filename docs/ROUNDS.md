@@ -142,3 +142,10 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 
 ## Pass 14: waiting indicator
 - The waiting dots now show elapsed time ("1.6s"), an idea from the Loading State on beautifului.dev (MIT, Shane Levine). No code was copied; it is our own plain-JS version.
+
+## Pass 15 (from B2's critique of a34b03ee79)
+- Answer, actions and Related now share one left edge. Related sits closer to the actions.
+- One 2px focus ring.
+- Code editor shows a placeholder and is short until code exists. Write, Check and Copy stay on one row.
+- Config pages keep room under the sticky save bar when scrolled to the end.
+- Runtime checks, no paid calls: bad code is blocked before it runs; a valid-looking loop is stopped at 20s with a plain message; web search refuses to enable without a saved key; prompt test says plainly when there is no model; a 2500-character question is rejected.
