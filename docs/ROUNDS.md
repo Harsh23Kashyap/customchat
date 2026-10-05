@@ -273,3 +273,8 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Base prompt: report outcomes as the passage measures them (fat mass is not body weight) and use "suggested/may" when the passage does. In 2 test runs without the revise step, 1 said "less fat-mass regain" and 1 still said "less regain", so the prompt alone is not reliable; the revise step is the stronger fix.
 - Truncation mechanism shown without a model (pass37_evidence): in PMID 40749646, "fat mass" is absent from the first 1200 characters and present in the full 1558. Passages of 2130 and 2061 characters also lost their final conclusions under the old limit.
 - Read in full: PMID 41458802 (2025 review: similar effectiveness and safety to calorie restriction, better adherence for some, lacks long-term studies) and PMID 34728336 (2021 review: studies in middle-aged and older adults mostly short and small). Claims citing them in the 6 runs match.
+
+## Pass 38
+- Records with no text or no title are dropped before the prompt and chips (guard in retrieval). The "None/None/None" PMID:34086376 line in an earlier log came from my own script printing a record it had not retrieved in that run; it was a real 2021 record in the run that cited it. The guard is a safeguard, not a fix for a seen defect.
+- New check, no model: a sentence that says "regain" without "fat" while its cited passage says "fat mass regain" is flagged "to check" (field vague_regain). Both no-revise runs after the pass 37 prompt trip it.
+- Note: the old 1200-character limit cut the endings of several passages (about 3 of 4 abstracts in one run), including conclusions such as "both IF and CRD are effective short-term weight loss strategies". This affected every answer, not only one question.
