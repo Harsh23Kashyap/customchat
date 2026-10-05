@@ -742,6 +742,24 @@ def test_websearch():
 
 test_websearch()
 
+def test_web_toggle():
+    import tempfile
+    from customchat import schema, secrets as sec, websearch as w
+    from customchat.pipeline import Engine
+    from customchat.store import Store
+    sec.STORE = sec.SecretStore(tempfile.mkdtemp()); sec.STORE.set("search:tavily", "tvly-test-key-1234")
+    w.PROVIDERS["tavily"]["url"] = "http://127.0.0.1:9/none"  # nothing listens here, so every call fails
+    cfg = schema.load("apps/minimal/app.yaml")
+    e = Engine(cfg, Store(":memory:"))
+    assert not e.web_state()["on"]
+    e.set_web(True, "tavily"); assert e.web_state() == {"on": True, "provider": "tavily"} and "web" in e.connectors
+    ev, errs = e.retrieve("conversation memory", None, None)  # web fails, local docs still answer
+    assert ev and all(x["source"] != "web" for x in ev)
+    e.set_web(False); assert not e.web_state()["on"] and "web" not in e.connectors
+    print("web toggle ok")
+
+test_web_toggle()
+
 test_ollama_fit_and_pull_validation()
 
 if __name__ == "__main__":
