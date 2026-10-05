@@ -3,7 +3,7 @@ import uuid, hmac, json, mimetypes, os, re, sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 import base64
-from . import schema, providers, fetch, pdfread
+from . import schema, providers, fetch, pdfread, theme as themes
 from .pipeline import Engine
 from .store import Store
 from .accounts import Accounts
@@ -17,6 +17,7 @@ def make_handler(cfg, engine):
     store = engine.store
     token_env = cfg["auth"]["token_env"]
     hits = collections.defaultdict(list)
+    themestore = themes.ThemeStore(os.path.dirname(os.path.abspath(store.path)) if store.path != ":memory:" else "/tmp")
     acc = Accounts(store, bool(cfg["auth"].get("signup", True))) if cfg["auth"]["mode"] == "accounts" else None
 
     def settings_view():
@@ -112,6 +113,8 @@ def make_handler(cfg, engine):
                                             "sources": [x.get("id") or x.get("name") or x.get("type") for x in cfg.get("sources", [])],
                                             "db": store.ping(), "version": "0.1"})
                 return self._send(200, {"ok": True})
+            if path == "/api/theme" and method == "GET":
+                return self._send(200, {"theme": themestore.value, "meta": themes.meta(), "can_edit": can_edit(self)})
             if path == "/api/config":
                 return self._send(200, schema.public_view(cfg))
             if acc and path.startswith("/api/account/"):
@@ -141,6 +144,10 @@ def make_handler(cfg, engine):
                 return self._send(404, {"error": "Not found"})
             o = self._owner()
             b = self._body() if method == "POST" else {}
+            if path == "/api/theme" and method == "POST":
+                if not can_edit(self):
+                    return self._send(403, {"error": "The look can only be changed from this computer or by the admin"})
+                return self._send(200, {"theme": themestore.reset() if b.get("reset") else themestore.save(b.get("theme"))})
             if path == "/api/settings" and method == "GET":
                 return self._send(200, {"settings": settings_view(), "can_edit": can_edit(self), "providers": sorted(schema.PROVIDERS)})
             if path == "/api/settings" and method == "POST":
@@ -278,7 +285,7 @@ def make_handler(cfg, engine):
             data = open(full, "rb").read()
             if name == "index.html":
                 a = cfg["app"]
-                data = data.decode().replace("{{TITLE}}", _esc(a["title"])).replace("{{ACCENT}}", _esc(a["accent"])).replace("{{ACCENT2}}", _esc(a.get("accent2", "#d7ef72"))).replace("{{THEME}}", _esc(a["theme"])).encode()
+                data = data.decode().replace("{{THEME_JSON}}", json.dumps(themestore.value).replace("<", "\\u003c")).replace("{{TITLE}}", _esc(a["title"])).replace("{{ACCENT}}", _esc(a["accent"])).replace("{{ACCENT2}}", _esc(a.get("accent2", "#d7ef72"))).replace("{{THEME}}", _esc(a["theme"])).encode()
             self._send(200, data, ctype + ("; charset=utf-8" if ctype.startswith("text") or "javascript" in ctype else ""))
 
         def _guard(self, method):
