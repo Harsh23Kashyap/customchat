@@ -128,3 +128,9 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Eight prompt steps (question check, standalone, searches, relevance, answer, support check, follow-ups, summary), each readable, editable, resettable and writable with the connected model. Three are optional and off by default.
 - Code helpers for a search connector and query cleaning. Generated code is checked statically and never run.
 - Not yet tested with a real model. Tested with a fake provider and the offline template.
+
+## Pass 12: editor, panels, search keys
+- Code box is CodeMirror 6 (vendored, MIT) with line numbers, highlighting and error markers on the flagged line.
+- Prompts and Code tabs replace the chat preview with helper panels: try a prompt on a sample (needs a real model), diff against default, length estimate; live search keys with test buttons.
+- Model tab right panel gains "How to get your key" guides. Links and claims come from each provider's own pages (5 Oct 2026). DeepSeek and OpenRouter have no steps because the key pages were not confirmed.
+- Optional web search (Tavily, Exa, Firecrawl, Parallel) with a `web_search` source type that fails safe, and a research option for code generation. Tested against a local fake server, not the real services.
