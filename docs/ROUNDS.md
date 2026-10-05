@@ -288,3 +288,7 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - `correct()` keeps a rewrite only if it has no vague_regain flag and no new number or year not in the cited passage; otherwise the original stays.
 - Tests: test_rewrite_kept_only_if_flag_is_gone, test_rewrite_rejected_if_it_adds_a_number.
 - Counts (8 runs, one question, one model): 5 flagged before correction, 0 flagged after.
+
+## Pass 41
+- Touch screens: row actions (pin, rename, delete) always visible, buttons 36px (were 22px), rows 48px, no duplicate pin icon on pinned rows, time label hidden.
+- Desktop hover shot checked: actions show on the hovered row and the active row.
