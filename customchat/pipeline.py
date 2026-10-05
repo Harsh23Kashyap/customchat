@@ -397,7 +397,7 @@ class Engine:
             try:
                 out = self.provider.complete([{"role": "system", "content": self.prompts.text("followups")},
                                               {"role": "user", "content": "Question: %s\nAnswer: %s\n\nSuggest only questions that these passages can answer:\n%s" % (question, answer[:800], "\n".join("- %s. %s" % (e["title"][:80], e["text"][:200]) for e in evidence[:4]))}])
-                qs = [re.sub(r"^[-*\d.)\s]+", "", l).strip() for l in out.splitlines() if "?" in l]
+                qs = [re.sub(r"^[-*\d.)\s]+", "", l.replace("`", "").replace("**", "")).strip() for l in out.splitlines() if "?" in l]
                 if qs:
                     return qs[:3]
             except providers.ProviderError:
