@@ -53,7 +53,7 @@ function apply(t, root = document.documentElement) {
   set("--shadow", { none: "none", soft: dark ? "0 24px 70px rgba(0,0,0,.4)" : `0 24px 70px ${rgba(c.brand, 0.1)}`, strong: dark ? "0 30px 90px rgba(0,0,0,.65)" : `0 30px 90px ${rgba(c.brand, 0.28)}` }[t.shadow]);
   // fonts
   loadFonts(t);
-  set("--font", stack(t.font, t.custom_font, "system-ui,sans-serif")); set("--serif", stack(t.heading_font, t.custom_font, "Georgia,serif"));
+  set("--font", stack(t.font, t.custom_font, 'system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji"')); set("--serif", stack(t.heading_font, t.custom_font, 'Georgia,serif,"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji"'));
   set("--fs", t.font_size / 100); set("--lh", t.line_height / 100); set("--rs", t.radius / 100);
   set("--dens", { compact: 0.78, cozy: 1, roomy: 1.3 }[t.density]);
   set("--speed", 100 / t.speed);
