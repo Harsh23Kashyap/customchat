@@ -193,6 +193,8 @@ class Engine:
         # years that no passage mentions are the model's memory, not the evidence: drop "a 2022 review" down to "a review"
         known = " ".join(e.get("title", "") + " " + e.get("text", "") + " " + str(e.get("year") or "") for e in evidence)
         answer = re.sub(r"\b((?:a|an|the|this|that)\s+)((?:19|20)\d\d)\s+(?=[A-Za-z])", lambda m: m.group(0) if m.group(2) in known else m.group(1), answer, flags=re.I)
+        answer = re.sub(r"[ \t]+(?=\[\d+\])", " ", answer)
+        answer = re.sub(r"(\[\d+\])[ \t]+(?=[.,;:!?)])", r"\1", answer)
         out = []
         for o in order:
             e = dict(next(x for x in evidence if x["n"] == o)); e["n"] = mp[o]; out.append(e)

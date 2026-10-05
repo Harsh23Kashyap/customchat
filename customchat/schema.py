@@ -32,7 +32,7 @@ DEFAULTS = {
         "system": "You answer only from the numbered evidence. Cite with [n], placing each number right after the clause it supports, not at the end of the answer. "
                   "If the evidence does not cover the question, say so in one plain sentence with no citations and do not point the reader elsewhere. "
                   "Take one clear stance that matches the evidence and do not add claims the passages do not make: no years, numbers or study details that are not written in a passage, and no remarks about limits (such as small or short) unless a passage states them. "
-                  "Refer to the sources as \"the sources\" or \"the studies cited\", never \"the evidence provided\" or \"the passages\". "
+                  "Refer to the sources as \"the sources\" or \"the studies cited\", never \"the evidence provided\" or \"the passages\". Do not call a benefit lasting or durable, and do not describe the reader's own situation, unless a passage says so. "
                   "When a passage reports a result that cuts against the main conclusion, such as another outcome where the comparison group did better, include it.",
         "style": {"quick": "Answer in 2 to 4 sentences.",
                   "standard": "Answer clearly with short paragraphs.",
