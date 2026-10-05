@@ -283,3 +283,8 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - A sentence flagged as vague about regain is now corrected: one rewrite using the revise prompt plus the flagged sentence, kept only if the flag is gone (else the original stays). Real before/after from a run without the revise step: "participants in both groups regained some weight" became "both groups regained weight, but the CRD group regained more fat mass; the study reported that IF may better prevent weight regain".
 - Base prompt: no causal "therefore" the passages do not make; "in some settings or groups" instead of "for some people" unless a passage names who.
 - Tests added for the empty-record guard (Engine.usable) and for the regain check.
+
+## Pass 40
+- `correct()` keeps a rewrite only if it has no vague_regain flag and no new number or year not in the cited passage; otherwise the original stays.
+- Tests: test_rewrite_kept_only_if_flag_is_gone, test_rewrite_rejected_if_it_adds_a_number.
+- Counts (8 runs, one question, one model): 5 flagged before correction, 0 flagged after.
