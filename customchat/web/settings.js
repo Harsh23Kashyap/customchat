@@ -27,7 +27,7 @@ let keyInfo = {}, modelNote = "";
 const OTHER = "__other__";
 async function provExtras() {
   const p = cur.provider, k = keyInfo[p] || { needed: false, has: true };
-  $("#keybox").hidden = p === "mock" || p === "ollama";
+  $("#keybox").hidden = p === "mock" || p === "ollama"; { const bl = $("#base").closest("label"); if (bl) bl.hidden = !(p === "ollama" || p === "openai_compatible"); }
   $("#keyh").textContent = p === "openai_compatible" ? "Only if your server asks for one. Stored on this computer only, never shown again." : "Stored on this computer only, never shown again.";
   const ks = $("#keystate"); ks.className = "keystate" + (k.has ? " ok" : "");
   ks.textContent = k.has ? (k.source === "env" ? "Key found in an environment variable." : "A key is saved.") : (k.needed ? "No key yet." : "");
@@ -43,8 +43,8 @@ async function loadModels(force) {
   for (const n of list) sel.append(el("option", { value: n, text: n }));
   sel.append(el("option", { value: OTHER, text: list.length ? "Other (type a name)" : "Type a name" }));
   sel.value = list.includes(m) ? m : OTHER;
-  const typed = sel.value === OTHER; $("#model").hidden = !typed; if (typed) $("#model").value = m;
-  $("#modelh").textContent = list.length ? list.length + " models found." : (modelNote || "Type the model name your provider uses.");
+  const demo = p === "mock"; sel.hidden = demo; $("#refreshModels").hidden = demo; if (sel.parentElement) sel.parentElement.hidden = demo; const typed = !demo && sel.value === OTHER; $("#model").hidden = !typed; if (typed) $("#model").value = m;
+  $("#modelh").textContent = demo ? "The demo answers without a model." : list.length ? list.length + (list.length === 1 ? " model found." : " models found.") : (modelNote || "Type the model name your provider uses.");
 }
 function pickChanged() { const v = $("#modelPick").value; const typed = v === OTHER; $("#model").hidden = !typed; if (!typed) { $("#model").value = v; cur.model = v; } }
 const chosenModel = () => ($("#modelPick").value === OTHER ? $("#model").value.trim() : $("#modelPick").value);
@@ -66,7 +66,7 @@ let hwView = "simple";
    developers.openai.com/api/docs/models and ai.google.dev/gemini-api/docs/models */
 const CLOUD_PICKS = [
   { p: "openai", id: "gpt-6.1-sol", name: "GPT-6.1 Sol", why: "OpenAI's balance of intelligence and cost for complex work." },
-  { p: "gemini", id: "gemini-3.8-flash", name: "Gemini 3.8 Flash", why: "Google's newest stable Flash model, strong at reasoning and long tasks." },
+  { p: "gemini", id: "gemini-3.8-flash", name: "Gemini 3.8 Flash", why: "Google's fast model for reasoning and long tasks." },
 ]; const testLog = [];
 async function ollamaPanel() {
   const box = $("#ollamabox"); if (activeSec !== "model") return; box.hidden = false; box.dataset.loaded = "1";
@@ -91,7 +91,7 @@ async function ollamaPanel() {
     box.append(d);
   }
   if (det) box.append(el("pre", { class: "otechbox", text: ["Computer: " + hw.os + " " + hw.arch + ", " + hw.cores + " CPU cores, " + hw.ram_gb + " GB RAM", "GPU: " + (hw.gpu ? hw.gpu + " (" + hw.vram_gb + " GB video memory)" : (hw.apple_silicon ? "Apple Silicon (shared memory)" : "none found")), "Ollama: " + (r.ollama_running ? "running, " + (r.installed || []).length + " models installed" : "not reachable at the Base URL"), "", "Memory budget: " + rec.budget_gb + " GB. " + rec.budget_why, "A model must fit in 85% of that (" + rec.limit_gb + " GB), counting its file size plus about 1.5 GB for the conversation.", "Green = uses at most 60% of the budget. Blue = fits in 85%. Red = does not fit."].join("\n") }));
-  else box.append(el("div", { class: "h", text: "Based on " + hw.ram_gb + " GB of memory" + (hw.gpu ? " and your " + hw.gpu : "") + ". Choose Details to see the math." }));
+  else box.append(el("div", { class: "h", text: "Rough estimate from " + hw.ram_gb + " GB of memory" + (hw.gpu ? " and your " + hw.gpu : "") + ". Choose Details to see the math." }));
   if (rec.note && rec.picks.length) box.append(el("div", { class: "h", text: rec.note }));
 }
 function modelAction(tag, installed) {
@@ -306,7 +306,7 @@ function control(f) {
   } else if (f.type === "area") {
     input = el("textarea", { id, rows: "4", placeholder: f.ph || "" }); input.value = v || ""; input.addEventListener("input", () => setv(f, input.value));
   } else {
-    input = el("input", { type: "text", id, placeholder: f.ph || "", maxlength: f.type === "emoji" ? "8" : "300", class: f.type === "emoji" ? "emoji" : "" }); input.value = v || ""; input.addEventListener("input", () => setv(f, input.value));
+    input = el("input", { type: "text", id, placeholder: f.ph || "", maxlength: f.type === "emoji" ? "8" : "300", class: f.type === "emoji" ? "emoji" : "" }); input.value = v || ""; input.addEventListener("input", () => setv(f, input.value)); input.addEventListener("blur", () => { const t = input.value.trim(); if (t !== input.value) { input.value = t; setv(f, t); } });
   }
   if (!canEdit) input.querySelectorAll ? input.querySelectorAll("input,select,button").forEach((x) => (x.disabled = true)) : (input.disabled = true);
   if (!canEdit && input.tagName === "SELECT") input.disabled = true;
@@ -359,7 +359,7 @@ function pvFollow() {
     cp.hidden = !m;
     if (m) cp.replaceChildren(el("b", { text: "Suggested cloud models" }), ...CLOUD_PICKS.map((c) => el("div", { class: "cpick" }, mark(c.p), el("div", { class: "cpt" }, el("b", { text: c.name }), el("span", { class: "h", text: c.why })),
       cur.provider === c.p && chosenModel() === c.id ? el("span", { class: "okt", text: "In use" }) : el("button", { type: "button", class: "mini", disabled: canEdit ? undefined : "", onclick: () => { cur = { ...read(), provider: c.p, model: c.id }; draw(); const tr = $("#testres"); if (tr) { tr.textContent = ""; tr.className = ""; } loadModels(false).then(() => { const pk = $("#modelPick"); pk.value = [...pk.options].some((o) => o.value === c.id) ? c.id : OTHER; if (pk.value === OTHER) { $("#model").hidden = false; $("#model").value = c.id; } cur.model = c.id; pvFollow(); }); } }, "Use"))),
-      el("div", { class: "h", text: "Checked against the providers' model pages. Model names change; use Refresh list after adding a key." })); }
+      el("div", { class: "h" }, "Taken from ", el("a", { href: "https://developers.openai.com/api/docs/models", target: "_blank", rel: "noopener" }, "OpenAI"), " and ", el("a", { href: "https://ai.google.dev/gemini-api/docs/models", target: "_blank", rel: "noopener" }, "Google"), " model pages on 5 Oct 2026. Names change, so use Refresh list after adding a key.")); }
   { const box = $("#ollamabox"); if (box) { const cpn = $("#pvcloud"); if (box.previousElementSibling !== cpn) cpn.after(box); box.hidden = !m; if (m && !box.dataset.loaded) ollamaPanel(); }
     let hist = $("#pvhist"); if (!hist) { hist = el("div", { id: "pvhist", class: "pvhist" }); card.parentNode.append(hist); }
     hist.hidden = !(m && testLog.length); hist.replaceChildren(el("b", { text: "Recent tests" }), ...testLog.map((x) => el("div", { class: "pvh-row" }, el("span", { class: "fitdot " + (x.ok ? "green" : "red") }), el("span", { text: x.p + (x.ok ? " worked" : " failed") }), el("span", { class: "h", text: x.t })))); }

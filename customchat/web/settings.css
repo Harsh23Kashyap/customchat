@@ -264,3 +264,7 @@ input[type=checkbox]:focus{box-shadow:none;border-color:inherit}input[type=check
 .savebar{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;margin:0;border-radius:0!important;border:0;border-top:1px solid #dbe4ee;box-shadow:0 -4px 16px rgba(0,40,90,.06);background:#fff;padding:12px max(20px,calc((100vw - 1180px)/2));justify-content:flex-end}
 .savebar.clean{transform:translateY(100%)}
 body{padding-bottom:104px!important}
+
+.rangerow output,label output{color:#1a202c}
+.rangerow output{font-weight:600}
+[hidden]{display:none!important}
