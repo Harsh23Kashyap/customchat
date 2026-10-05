@@ -260,3 +260,5 @@ html[data-theme=dark] .meta .chip:not(.on){border-color:transparent;background:t
 @media(max-width:760px){.meta.fu .chip{display:block;min-height:44px;padding:10px 0;line-height:1.35}.meta.fu .chip::after{display:inline}.srcs button.s{align-items:center}}
 @media(max-width:480px){.tb-brand{min-width:max-content}.badge{display:none}}
 .meta.fu .chip:focus-visible{outline-offset:3px;border-radius:8px}
+@media(max-width:760px){.cmeta span:last-child{display:inline!important}.cmeta{flex-wrap:wrap;justify-content:center;gap:0 6px;line-height:1.4}.meta.fu .chip+.chip{border-top:1px solid var(--line)}.meta.fu{gap:0}}
+@media(max-width:760px){.meta.fu .chip,.meta.fu .chip:focus-visible{border-radius:0}}
