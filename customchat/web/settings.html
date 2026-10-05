@@ -24,9 +24,15 @@
         <div class="row2"><button class="go ghost" id="exp">Export look (file)</button><label class="go ghost filebtn" for="imp">Import look<input id="imp" type="file" accept="application/json,.json" hidden></label></div>
       </section>
       <section class="tile" id="sec-model"><div class="head"><span class="ic purple">&#9881;</span><div><b>Model</b><small>Where the answers come from</small></div></div>
-        <div class="help">Choose the AI that writes answers. <b>Demo</b> works offline with no key. Keys are read from environment variables, never typed here.</div>
+        <div class="help">Choose the AI that writes answers. <b>Demo</b> works offline with no key. Paste your key below. It stays on this computer.</div>
         <div class="seg" id="seg" role="radiogroup" aria-label="Provider"></div>
-        <label>Model<span class="h">The model name your provider uses.</span><input id="model" placeholder="e.g. gpt-4o-mini, llama3.1, claude-sonnet-4-5"></label>
+        <div class="keybox" id="keybox"><label for="apikey">API key<span class="h" id="keyh"></span></label>
+          <div class="keyrow"><input id="apikey" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your key"><button type="button" class="go blue" id="keysave">Save key</button><button type="button" class="go ghost" id="keyclear">Remove</button></div>
+          <div class="keystate" id="keystate"></div></div>
+        <label for="modelPick">Model<span class="h" id="modelh">Pick from the list your provider offers.</span></label>
+        <div class="keyrow"><select id="modelPick" aria-label="Model"></select><button type="button" class="go ghost" id="refreshModels">Refresh list</button></div>
+        <input id="model" placeholder="Type the model name" aria-label="Model name" hidden>
+        <div class="keyrow"><button type="button" class="go ghost" id="testconn">Test connection</button><span class="testres" id="testres" role="status" aria-live="polite"></span></div>
         <label>Base URL <em>(Ollama and OpenAI-compatible servers only)</em><span class="h">Where the server runs, for example http://localhost:11434 for Ollama.</span><input id="base" placeholder="http://localhost:11434"></label>
         <div class="two">
           <label>Temperature <output id="tv"></output><span class="h">Low is precise and repeatable. High is more creative.</span><input id="temp" type="range" min="0" max="2" step="0.05"></label>
@@ -40,8 +46,9 @@
     </div>
     <aside class="preview" id="pvbox" aria-label="Live preview">
       <div class="pvhead"><b>Live preview</b><div class="seg mini" id="pvmode" role="radiogroup" aria-label="Preview as"><button type="button" data-m="light" aria-checked="true">Light</button><button type="button" data-m="dark" aria-checked="false">Dark</button></div></div>
+      <div class="pvmodel" id="pvmodel" hidden aria-live="polite"></div>
       <iframe id="pv" src="/?preview=1" title="Preview of the chat" loading="eager"></iframe>
-      <small class="pvnote">This is the real chat with sample messages.</small>
+      <small class="pvnote" id="pvcap"></small><small class="pvnote">This is the real chat with sample messages.</small>
     </aside>
   </div>
   <div class="savebar" id="savebar"><span id="dirty">No unsaved changes</span><button class="go ghost" id="resetAll">Reset look to default</button><button class="go blue" id="saveLook">Save look</button></div>

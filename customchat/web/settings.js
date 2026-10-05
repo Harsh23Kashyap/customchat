@@ -17,9 +17,35 @@ function draw() {
   $("#model").value = cur.model || ""; $("#base").value = cur.base_url || ""; $("#temp").value = cur.temperature; $("#topk").value = cur.top_k; $("#rewrite").checked = !!cur.query_rewrite;
   $("#tv").textContent = (+cur.temperature).toFixed(2); $("#kv").textContent = cur.top_k;
   document.querySelectorAll("#seg button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.p === cur.provider)));
-  for (const id of ["model", "base", "temp", "topk", "rewrite", "apply", "load", "saveLook", "resetAll", "imp"]) $("#" + id).disabled = !canEdit;
+  provExtras();
+  for (const id of ["model", "apikey", "keysave", "keyclear", "modelPick", "refreshModels", "testconn", "base", "temp", "topk", "rewrite", "apply", "load", "saveLook", "resetAll", "imp"]) $("#" + id).disabled = !canEdit;
 }
-const read = () => ({ provider: cur.provider, model: $("#model").value.trim(), base_url: $("#base").value.trim(), temperature: +$("#temp").value, top_k: +$("#topk").value, query_rewrite: $("#rewrite").checked });
+const read = () => ({ provider: cur.provider, model: chosenModel(), base_url: $("#base").value.trim(), temperature: +$("#temp").value, top_k: +$("#topk").value, query_rewrite: $("#rewrite").checked });
+/* ---------- key, model picker, connection test ---------- */
+let keyInfo = {}, modelNote = "";
+const OTHER = "__other__";
+async function provExtras() {
+  const p = cur.provider, k = keyInfo[p] || { needed: false, has: true };
+  $("#keybox").hidden = p === "mock" || p === "ollama";
+  $("#keyh").textContent = p === "openai_compatible" ? "Only if your server asks for one. Stored on this computer only, never shown again." : "Stored on this computer only, never shown again.";
+  const ks = $("#keystate"); ks.className = "keystate" + (k.has ? " ok" : "");
+  ks.textContent = k.has ? (k.source === "env" ? "Key found in an environment variable." : "A key is saved.") : (k.needed ? "No key yet." : "");
+  $("#keyclear").hidden = k.source !== "saved"; $("#apikey").value = "";
+  await loadModels(false);
+}
+async function loadModels(force) {
+  const sel = $("#modelPick"), p = cur.provider; sel.replaceChildren();
+  let list = [];
+  try { const r = await api("/api/provider/models", { provider: p, base_url: $("#base").value.trim() }); list = r.models || []; modelNote = r.note || ""; } catch (e) { modelNote = e.message; }
+  const m = cur.model || "";
+  for (const n of list) sel.append(el("option", { value: n, text: n }));
+  sel.append(el("option", { value: OTHER, text: list.length ? "Other (type a name)" : "Type a name" }));
+  sel.value = list.includes(m) ? m : OTHER;
+  const typed = sel.value === OTHER; $("#model").hidden = !typed; if (typed) $("#model").value = m;
+  $("#modelh").textContent = list.length ? list.length + " models found." : (modelNote || "Type the model name your provider uses.");
+}
+function pickChanged() { const v = $("#modelPick").value; const typed = v === OTHER; $("#model").hidden = !typed; if (!typed) { $("#model").value = v; cur.model = v; } }
+const chosenModel = () => ($("#modelPick").value === OTHER ? $("#model").value.trim() : $("#modelPick").value);
 async function states() {
   const s = (await api("/api/states")).states; const sel = $("#states"); sel.replaceChildren();
   sel.append(el("option", { value: "", text: "Select a state..." })); s.forEach((n) => sel.append(el("option", { value: n, text: n })));
@@ -71,12 +97,12 @@ const SECTIONS = [
     { key: "shadow", label: "Shadow", help: "Depth of the main panel.", type: "select" },
     { key: "bubble", label: "Message style", help: "Soft: filled bubbles. Flat: no bubble for answers. Outline: thin borders.", type: "select" } ] },
   { id: "emoji", icon: "\u263A", tone: "purple", title: "Emojis and icons", sub: "Avatars and buttons", help: "Type or paste one emoji. Leave empty for the default icon.", fields: [
-    { key: "emoji_bot", label: "Assistant avatar", help: "Next to every answer.", type: "emoji", ph: "\uD83E\uDD16" },
-    { key: "emoji_you", label: "Your avatar", help: "Next to your messages.", type: "emoji", ph: "\uD83D\uDE42" },
-    { key: "emoji_hero", label: "Welcome emoji", help: "On an empty chat. Falls back to the assistant avatar.", type: "emoji", ph: "\u2728" },
-    { key: "emoji_send", label: "Send button", help: "Replaces the arrow.", type: "emoji", ph: "\uD83D\uDE80" },
-    { key: "emoji_attach", label: "Attach button", help: "Replaces the paperclip.", type: "emoji", ph: "\uD83D\uDCC4" },
-    { key: "emoji_temp", label: "Temporary chat button", help: "Replaces the clock icon.", type: "emoji", ph: "\uD83D\uDD76\uFE0F" } ] },
+    { key: "emoji_bot", label: "Assistant avatar", help: "Next to every answer.", type: "emoji", ph: "Optional" },
+    { key: "emoji_you", label: "Your avatar", help: "Next to your messages.", type: "emoji", ph: "Optional" },
+    { key: "emoji_hero", label: "Welcome emoji", help: "On an empty chat. Falls back to the assistant avatar.", type: "emoji", ph: "Optional" },
+    { key: "emoji_send", label: "Send button", help: "Replaces the arrow.", type: "emoji", ph: "Optional" },
+    { key: "emoji_attach", label: "Attach button", help: "Replaces the paperclip.", type: "emoji", ph: "Optional" },
+    { key: "emoji_temp", label: "Temporary chat button", help: "Replaces the clock icon.", type: "emoji", ph: "Optional" } ] },
   { id: "motion", icon: "\u21BB", tone: "green", title: "Motion", sub: "Animations and speed", help: "Turn animation down if it feels busy. People who ask their device for less motion always get none.", fields: [
     { key: "motion", label: "Amount of motion", help: "Full: all effects. Subtle: quick and quiet. None: nothing moves.", type: "select" },
     { key: "entrance", label: "New message effect", help: "How messages appear.", type: "select" },
@@ -116,6 +142,15 @@ const MORE_PRESETS = {
   Nord: { mode: "dark", dark: { brand: "#88c0d0", accent: "#a3be8c", bg: "#20262f", surface: "#2a313c", ink: "#e5e9f0", muted: "#9aa5b8", line: "#3b4252", sidebar: "#252b35", bot: "#303846", you: "#3b4658" }, font: "inter", heading_font: "inter", bg_style: "solid", radius: 40, bubble: "flat", shadow: "none" },
   Ink: { mode: "dark", dark: { brand: "#f2f2f2", accent: "#d4af37", bg: "#0c0c0c", surface: "#151515", ink: "#f2f2f2", muted: "#a0a0a0", line: "#2a2a2a", sidebar: "#111111", bot: "#1b1b1b", you: "#2a2a2a" }, font: "lora", heading_font: "playfair", bg_style: "solid", radius: 20, bubble: "flat", shadow: "none" },
   Sand: { light: { brand: "#6b5a3e", accent: "#d9c7a0", bg: "#f7f3ea", surface: "#fdfbf6", ink: "#2b2619", muted: "#847a66", line: "#e6dfcc", sidebar: "#efe9d9", bot: "#f3eee0", you: "#e3d9bd" }, font: "georgia", heading_font: "georgia", bg_style: "solid", radius: 30, bubble: "flat", shadow: "none" }
+};
+/* How each tab is organised: [group title, [keys], collapsed-by-default] */
+const GROUPS = {
+  wording: [["Basics", ["txt_title", "txt_tagline"]], ["Empty chat", ["txt_examples"]], ["Question box", ["txt_placeholder"]], ["Small print and sidebar", ["txt_hint", "txt_disclaimer", "txt_sidebar", "txt_footer"], true]],
+  colors: [["Mode", ["mode"]], ["Brand", ["brand", "accent"]], ["Surfaces", ["bg", "surface", "sidebar"]], ["Text and lines", ["ink", "muted", "line"]], ["Messages and alerts", ["bot", "you", "danger"], true]],
+  background: [["Style", ["bg_style", "bg_color2", "bg_angle", "bg_image"]], ["Pattern", ["pattern", "pattern_color", "pattern_opacity", "pattern_size"], true]],
+  fonts: [["Fonts", ["font", "heading_font", "custom_font"]], ["Size", ["font_size", "line_height"]]],
+  emoji: [["Main icons", ["emoji_bot", "emoji_you", "emoji_send"]], ["Other icons", ["emoji_hero", "emoji_attach", "emoji_temp"], true]],
+  layout: [["Sizes", ["sidebar", "sidebar_width", "chat_width"]], ["Chat", ["avatars", "you_align", "composer", "sources_panel"]], ["More", ["toolbar"], true]]
 };
 const clone = (o) => JSON.parse(JSON.stringify(o));
 const get = (f) => (f.colors ? theme[editMode][f.key] : theme[f.key]);
@@ -158,6 +193,25 @@ function control(f) {
   if (!canEdit && input.tagName === "SELECT") input.disabled = true;
   return el("div", { class: "field" }, el("label", { for: id, class: "flabel" }, f.label), el("span", { class: "h", text: f.help }), input);
 }
+async function saveSection(s) {
+  try {
+    const base = clone(saved);
+    for (const f of s.fields) { if (f.colors) { base.light[f.key] = theme.light[f.key]; base.dark[f.key] = theme.dark[f.key]; } else base[f.key] = theme[f.key]; }
+    saved = clone((await api("/api/theme", { theme: base })).theme); changed(); say(s.title + " saved. Other sections keep their last saved values.");
+  } catch (e) { say(e.message, true); }
+}
+/* the preview follows the section being edited */
+let activeSec = "presets";
+function pvFollow() {
+  const m = activeSec === "model", card = $("#pvmodel"), fr = $("#pv"), cap = $("#pvcap");
+  const names = { presets: "Whole look", wording: "Wording", colors: "Colors", background: "Background", fonts: "Fonts", shape: "Shape and spacing", emoji: "Icons", motion: "Motion", layout: "Layout", model: "Model" };
+  if (cap) cap.textContent = "Showing: " + (names[activeSec] || "Chat");
+  if (card.hidden === m) { (m ? card : fr).hidden = false; (m ? fr : card).hidden = true; (m ? card : fr).animate([{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }], { duration: 180, easing: "ease-out" }); }
+  if (m) {
+    const k = keyInfo[cur.provider] || {}, r = $("#testres");
+    card.replaceChildren(el("b", { text: NAMES[cur.provider] || cur.provider }), el("div", { class: "pvm-row", text: "Model: " + (chosenModel() || "not chosen yet") }), el("div", { class: "pvm-row", text: k.source === "saved" ? "Key saved" : (k.source === "env" ? "Key from environment" : (k.needed === false ? "No key needed" : "No key yet")) }), el("div", { class: "pvm-row " + (r && r.classList.contains("ok") ? "ok" : (r && r.classList.contains("bad") ? "bad" : "")), text: (r && r.textContent) || "Connection not tested yet" }), el("div", { class: "pvm-ans", text: "Sample answer: Refunds are available within 30 days of purchase [1]." }));
+  }
+}
 function pvPop() { const f = document.getElementById("pv"); if (!f || matchMedia("(prefers-reduced-motion:reduce)").matches) return; f.animate([{ opacity: .55, transform: "scale(.985)" }, { opacity: 1, transform: "scale(1)" }], { duration: 220, easing: "ease-out" }); }
 function drawLook() {
   const root = $("#look"); root.replaceChildren();
@@ -170,7 +224,20 @@ function drawLook() {
       for (const m of ["light", "dark"]) tabs.append(el("button", { type: "button", "data-m": m, role: "radio", "aria-checked": String(editMode === m), onclick: () => { editMode = m; setPvMode(m); drawLook(); } }, "Editing: " + (m === "light" ? "Light" : "Dark")));
       sec.append(tabs);
     }
-    const grid = el("div", { class: "fields" }); s.fields.forEach((f) => grid.append(control(f))); sec.append(grid); root.append(sec);
+    const byKey = Object.fromEntries(s.fields.map((f) => [f.key, f])); const gs = GROUPS[s.id];
+    if (!gs) { const grid = el("div", { class: "fields" }); s.fields.forEach((f) => grid.append(control(f))); sec.append(grid); }
+    else {
+      const used = new Set();
+      for (const [title, keys, collapsed] of gs) {
+        const fs = keys.map((k) => byKey[k]).filter(Boolean); if (!fs.length) continue; fs.forEach((f) => used.add(f.key));
+        const grid = el("div", { class: "fields" + (fs.every((f) => f.type === "color") ? " colorlist" : "") }); fs.forEach((f) => grid.append(control(f)));
+        if (collapsed) { const d = el("details", { class: "grp" }, el("summary", { text: title }), grid); sec.append(d); }
+        else sec.append(el("div", { class: "grp" }, el("h4", { text: title }), grid));
+      }
+      const rest = s.fields.filter((f) => !used.has(f.key)); if (rest.length) { const g = el("div", { class: "fields" }); rest.forEach((f) => g.append(control(f))); sec.append(el("details", { class: "grp" }, el("summary", { text: "More options" }), g)); }
+    }
+    sec.append(el("div", { class: "secfoot" }, el("button", { type: "button", class: "go blue", disabled: canEdit ? undefined : "", onclick: () => saveSection(s) }, "Save " + s.title.toLowerCase()), el("button", { type: "button", class: "go ghost", disabled: canEdit ? undefined : "", onclick: () => resetGroup(s) }, "Reset to default")));
+    root.append(sec);
   }
   buildMenu();
 }
@@ -181,7 +248,7 @@ function buildMenu() {
   const items = [["presets", "Presets and states"], ["model", "Model"]].concat(SECTIONS.map((s) => [s.id, s.title]));
   items.forEach(([id, t]) => m.append(el("a", { href: "#sec-" + id, text: t })));
   const links = [...m.children]; links[0].classList.add("on");
-  const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) { links.forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id)); } }, { rootMargin: "-20% 0px -70% 0px" });
+  const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) { activeSec = e.target.id.replace("sec-", ""); pvFollow(); links.forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id)); } }, { rootMargin: "-20% 0px -70% 0px" });
   items.forEach(([id]) => { const n = document.getElementById("sec-" + id); if (n) io.observe(n); });
 }
 function buildPresets() {
@@ -203,16 +270,21 @@ function buildPresets() {
 }
 async function init() {
   const c = await api("/api/config"); $("#h").textContent = c.app.title + " configuration"; document.title = c.app.title + " configuration";
-  const d = await api("/api/settings"); cur = d.settings; canEdit = d.can_edit;
+  const d = await api("/api/settings"); cur = d.settings; canEdit = d.can_edit; try { keyInfo = (await api("/api/provider/status")).keys; } catch (e) { keyInfo = {}; }
   const th = await api("/api/theme"); theme = th.theme; meta = th.meta; saved = clone(theme); canEdit = canEdit && th.can_edit !== false;
   const seg = $("#seg");
-  d.providers.forEach((p) => { const b = el("button", { type: "button", "data-p": p, role: "radio" }, NAMES[p] || p); b.addEventListener("click", () => { if (canEdit) { cur = { ...read(), provider: p }; draw(); } }); seg.append(b); });
+  d.providers.forEach((p) => { const b = el("button", { type: "button", "data-p": p, role: "radio" }, NAMES[p] || p); b.addEventListener("click", () => { if (canEdit) { cur = { ...read(), provider: p, model: "" }; draw(); } }); seg.append(b); });
   draw(); await states(); buildPresets(); drawLook();
   document.querySelectorAll("#pvmode button").forEach((b) => b.addEventListener("click", () => { setPvMode(b.dataset.m); pushPreview(); }));
   $("#pv").addEventListener("load", () => { setPvMode(theme.mode === "dark" ? "dark" : "light"); setTimeout(pushPreview, 250); });
   if (!canEdit) say("View only. Open this page on the computer running the app, or sign in as the admin, to change anything.");
   $("#temp").addEventListener("input", () => ($("#tv").textContent = (+$("#temp").value).toFixed(2)));
   $("#topk").addEventListener("input", () => ($("#kv").textContent = $("#topk").value));
+  $("#modelPick").addEventListener("change", pickChanged);
+  $("#refreshModels").addEventListener("click", () => loadModels(true));
+  $("#keysave").addEventListener("click", async () => { const v = $("#apikey").value.trim(); if (!v) { say("Paste a key first.", true); return; } try { const r = await api("/api/provider/key", { provider: cur.provider, key: v }); keyInfo[cur.provider] = r.key; $("#apikey").value = ""; await provExtras(); say("Key saved on this computer."); } catch (e) { say(e.message, true); } });
+  $("#keyclear").addEventListener("click", async () => { try { const r = await api("/api/provider/key", { provider: cur.provider, clear: true }); keyInfo[cur.provider] = r.key; await provExtras(); say("Key removed."); } catch (e) { say(e.message, true); } });
+  $("#testconn").addEventListener("click", async () => { const t = $("#testres"); t.className = "testres"; t.textContent = "Testing..."; try { const r = await api("/api/provider/test", { provider: cur.provider, model: chosenModel(), base_url: $("#base").value.trim() }); t.className = "testres " + (r.ok ? "ok" : "bad"); t.textContent = (r.ok ? "Passed. " : "Failed. ") + r.message; pvFollow(); } catch (e) { t.className = "testres bad"; t.textContent = "Failed. " + e.message; } });
   $("#apply").addEventListener("click", async () => { try { cur = (await api("/api/settings", { settings: read() })).settings; draw(); say("Applied. New questions use these settings."); } catch (e) { say(e.message, true); } });
   $("#save").addEventListener("click", async () => { try { const n = (await api("/api/states/save", { name: $("#sname").value })).name; await states(); say("Saved as \u201c" + n + "\u201d."); } catch (e) { say(e.message, true); } });
   $("#load").addEventListener("click", async () => { const n = $("#states").value; if (!n) return say("Choose a saved state first", true); try { cur = (await api("/api/states/load", { name: n })).settings; draw(); say("Loaded \u201c" + n + "\u201d."); } catch (e) { say(e.message, true); } });
