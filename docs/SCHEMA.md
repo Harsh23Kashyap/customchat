@@ -14,7 +14,7 @@ Every key is optional. Unknown top-level keys are rejected so typos fail loudly.
 ## provider
 | key | meaning |
 |---|---|
-| type | `mock`, `ollama`, `openai`, `openai_compatible` |
+| type | `mock`, `ollama`, `openai`, `claude`, `gemini`, `openai_compatible` |
 | model | required except for mock |
 | base_url | Ollama default `http://localhost:11434` (or `OLLAMA_BASE_URL`); OpenAI default `https://api.openai.com/v1` |
 | api_key_env | NAME of the environment variable holding the key. `openai` defaults to `OPENAI_API_KEY` |

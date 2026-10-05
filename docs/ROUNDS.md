@@ -58,3 +58,8 @@ Running total: about 37 features, 49 UI.
 ## Batch 9
 UI (8): re-skin to the DietChat look (forest, lime and cream palette, DM Sans and Fraunces), top toolbar with theme toggle, sidebar header with + and Temporary, chat header with status dot and style select, avatar bubbles with a Sources block inside, rounded composer with lime send button, hero with serif heading, dark mode retuned. New `app.accent2` setting.
 Running total: about 37 features, 57 UI.
+
+## Batch 10
+Features (4): native Claude provider, native Gemini provider (key sent as a header, never in the URL), add a web page as a source by link (public addresses only, no private or loopback hosts, size and time limits), "Context" view showing how an answer was built.
+UI (2): Context dialog, link option in the add-source prompt.
+Running total: about 41 features, 59 UI.
