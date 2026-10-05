@@ -44,7 +44,7 @@ ENUMS = {
 
 DEFAULT = {
     "mode": "auto", "light": dict(LIGHT), "dark": dict(DARK),
-    "bg_style": "soft", "bg_color2": "#e6f0d0", "bg_angle": 160, "bg_image": "",
+    "bg_style": "solid", "bg_color2": "#e6f0d0", "bg_angle": 160, "bg_image": "",
     "pattern": "none", "pattern_opacity": 12, "pattern_size": 24, "pattern_color": "",
     "font": "dm-sans", "heading_font": "fraunces", "custom_font": "", "font_size": 100, "line_height": 150,
     "radius": 100, "density": "cozy", "shadow": "soft",
