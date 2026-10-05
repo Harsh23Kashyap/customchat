@@ -245,3 +245,8 @@ textarea.code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px
 .ctx input[type=checkbox]{width:auto;padding:0}
 .ctx .chipmore{align-self:flex-start;background:transparent;border:1px dashed #9cb7d3;border-radius:999px;padding:7px 16px;color:#1f5fbf;font:inherit;font-weight:600;font-size:13px;cursor:pointer}
 .ctx .picks label.pick{display:inline-flex!important;flex-direction:row!important;align-items:center;gap:6px;width:auto}
+
+body{padding-bottom:96px}
+.cmhost{position:relative}.cmhost .cm-editor{min-height:0}.cmhost .cm-scroller{min-height:72px}.cmhost.filled .cm-scroller{min-height:200px}
+.cmhost:not(.filled)::after{content:attr(data-ph);position:absolute;left:48px;top:9px;color:#8795a8;font-size:13px;pointer-events:none}
+.sub .keyrow.tight{flex-wrap:nowrap;gap:8px}.sub .keyrow.tight .go{padding:10px 14px;font-size:13px;letter-spacing:.02em;white-space:nowrap}

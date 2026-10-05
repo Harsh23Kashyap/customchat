@@ -232,3 +232,8 @@ body,.app,aside,.main,.bar,.bubble,.srcs button.s,.send,.composer,.chip,.icon,.c
 .chartcard{border:1px solid var(--line);border-radius:calc(14px*var(--rs,1));padding:14px 16px;margin:14px 0;background:var(--paper)}.chartcard b{font-size:calc(14px*var(--fs,1))}
 .chartrow{display:flex;align-items:center;gap:18px;margin-top:10px}.donut{width:92px;height:92px;flex:none}.chartrow ul{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:calc(13px*var(--fs,1));color:var(--ink)}
 .chartrow li{display:flex;align-items:center;gap:8px}.chartrow i{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+.fu-label{margin-top:-4px}.meta .chip:first-child,.meta.fu .chip:first-child{padding-left:0}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+button.chip{cursor:pointer}.meta.fu .chip:hover{background:var(--soft);color:var(--brand)}
+.fu-label{margin-left:0}.meta.fu{margin-left:0;margin-bottom:8px}.thread .meta{margin-top:6px}

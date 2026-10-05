@@ -45,6 +45,7 @@ function codeCard(kind, title, help, ph) {
   const ed = window.CCEditor ? window.CCEditor.create(host, { doc: "" }) : null;
   const fallback = ed ? null : el("textarea", { rows: "12", class: "code", spellcheck: "false", "aria-label": title + " code" });
   const code = { get value() { return ed ? ed.get() : fallback.value; }, set value(v) { if (ed) ed.set(v); else fallback.value = v; } };
+  if (ed) { host.dataset.ph = "The code appears here after you press Write the code."; const sync = () => host.classList.toggle("filled", !!ed.get()); new MutationObserver(sync).observe(host, { childList: true, subtree: true, characterData: true }); sync(); }
   const out = el("div", { class: "review", role: "status", "aria-live": "polite" });
   async function review() { try { const r = await api("/api/codegen/review", { kind, code: code.value }); out.className = "review " + (r.ok ? "ok" : "bad"); if (ed) ed.mark(r.marks || []); out.replaceChildren(el("b", { text: r.ok ? "Safety check passed" : "Needs changes" }), ...(r.problems || []).map((p) => el("div", { text: p }))); } catch (x) { out.textContent = x.message; } }
   const gen = el("button", { type: "button", class: "go blue", text: "Write the code", onclick: async () => { if (!brief.value.trim()) { out.className = "review bad"; out.textContent = "Describe what it should do first."; return; } gen.disabled = true; out.className = "review"; out.textContent = "Writing..."; try { const r = await api("/api/codegen", { kind, brief: brief.value, sample }); sample = ""; code.value = r.code || ""; await review(); if (!r.model_used) out.append(el("div", { class: "h", text: "No model is connected, so this is a starting template to edit." })); } catch (x) { out.className = "review bad"; out.textContent = x.message; } gen.disabled = false; } });
@@ -63,7 +64,7 @@ function codeCard(kind, title, help, ph) {
   const live = kind === "search" ? el("details", { class: "stage inner" }, el("summary", {}, el("b", { text: "Match a real response" }), el("small", { text: "Optional" })), el("div", { class: "sbody" }, el("p", { class: "h", text: "Fetch one real response so the parsing fits it." }), el("div", { class: "keyrow" }, url, show), raw, rewrite)) : null;
   const copy = el("button", { type: "button", class: "go ghost", text: "Copy", onclick: () => { navigator.clipboard && navigator.clipboard.writeText(code.value); out.textContent = "Copied."; } });
   const chk = el("button", { type: "button", class: "go ghost", text: "Check again", onclick: review });
-  return el("div", { class: "sub" }, el("b", { text: title }), el("small", { text: help }), brief, live, el("div", { class: "keyrow" }, gen, chk, copy), ed ? host : fallback, out, el("div", { class: "keyrow" }, tq, tryBtn), tres);
+  return el("div", { class: "sub" }, el("b", { text: title }), el("small", { text: help }), brief, live, el("div", { class: "keyrow tight" }, gen, chk, copy), ed ? host : fallback, out, el("div", { class: "keyrow" }, tq, tryBtn), tres);
 }
 
 function build(col) {
