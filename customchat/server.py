@@ -3,7 +3,7 @@ import uuid, hmac, json, mimetypes, os, re, sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 import base64
-from . import schema, providers, fetch, pdfread, secrets, theme as themes
+from . import schema, providers, fetch, pdfread, secrets, hardware, theme as themes
 from .pipeline import Engine
 from .store import Store
 from .accounts import Accounts
@@ -179,6 +179,10 @@ def make_handler(cfg, engine):
                 if path == "/api/provider/test" and method == "POST":
                     ok, msg = providers.test_connection(cfg, kind, str(b.get("model") or "")[:120], base)
                     return self._send(200, {"ok": ok, "message": msg})
+            if path == "/api/hardware":
+                if not can_edit(self):
+                    return self._send(403, {"error": "Only the admin can see this computer's details"})
+                return self._send(200, hardware.report(str(qs.get("base_url") or "http://localhost:11434")))
             if path == "/api/states" and method == "GET":
                 return self._send(200, {"states": store.states(o)})
             if path == "/api/states/save" and method == "POST":
