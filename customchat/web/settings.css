@@ -239,3 +239,4 @@ textarea.code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px
 .diff{display:flex;flex-direction:column;gap:2px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;background:#fff;border-radius:12px;padding:10px}.diff b{font-family:inherit;font-size:13px}
 .diff .dl{white-space:pre-wrap;padding:1px 6px;border-radius:4px}.diff .add{background:#e9f6ee;color:#17603a}.diff .del{background:#fdecec;color:#8a2a2a}
 .preview[hidden]{display:none!important}
+.why ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:13.5px}.why p{margin:0;font-size:13.5px}

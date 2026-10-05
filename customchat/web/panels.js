@@ -90,6 +90,12 @@ function promptsPanel(host) {
 let keyStatus = {};
 async function codePanel(host) {
   host.replaceChildren(el("div", { class: "pvhead" }, el("b", { text: "Live search keys" })), el("p", { class: "h", text: "Optional. A search key lets the code helper look up an API's documentation, and lets answers include live web results. Keys stay on this computer and are never shown again." }));
+  host.append(el("details", { class: "stage", open: "" }, el("summary", {}, el("b", { text: "Why add a search key?" }), el("small", { text: "Optional" })), el("div", { class: "sbody why" },
+    el("p", { text: "Without one, answers come only from your own files and the sources you set up. A search key lets the chat look things up on the live web too." }),
+    el("b", { text: "It helps in two places" }),
+    el("ul", {}, el("li", { text: "Answers: recent facts, news and anything your files do not cover are added as extra sources, with clear web labels in the citations." }), el("li", { text: "Code helper: it can read an API's documentation first, so the connector it writes matches how that API really behaves." })),
+    el("b", { text: "In technical terms" }),
+    el("p", { class: "h", text: "The key authenticates calls to the provider's search endpoint. Results are normalized to title, text and link, deduplicated and ranked with your other evidence. If the service fails or runs out of credits, answers fall back to your local sources. Free tiers have monthly limits. You can leave this off." }))));
   let src = { on: false, provider: "" };
   try { const d = await api("/api/websearch/status"); keyStatus = Object.fromEntries(d.providers.map((p) => [p.id, p.has_key])); src = d.source || src; } catch (e) { }
   const sst = el("small", { class: "h", role: "status" });
