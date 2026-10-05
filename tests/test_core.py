@@ -616,5 +616,23 @@ def test_secret_store():
 test_secret_store()
 
 
+def test_hardware_logic():
+    from customchat import hardware as h
+    big = h.recommend({"ram_gb": 64, "vram_gb": 24, "cores": 16})
+    assert [p["tag"] for p in big["picks"]][0] == "gemma3:27b" and len(big["picks"]) == 3
+    assert len({p["tag"] for p in big["picks"]}) == 3
+    mac = h.recommend({"ram_gb": 16, "cores": 8, "apple_silicon": True})
+    assert mac["budget_gb"] == 10.4 and all(p["needs_gb"] <= mac["limit_gb"] for p in mac["picks"])
+    cpu = h.recommend({"ram_gb": 64, "cores": 16})
+    assert all(p["download_gb"] <= 10 for p in cpu["picks"])
+    tiny = h.recommend({"ram_gb": 4, "cores": 2})
+    assert tiny["picks"] == [] and tiny["note"]
+    assert h.detect()["ram_gb"] > 0
+    print("hardware ok")
+
+
+test_hardware_logic()
+
+
 if __name__ == "__main__":
     unittest.main()
