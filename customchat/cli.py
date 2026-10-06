@@ -6,6 +6,15 @@ TEMPLATE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__
 
 
 def main(argv=None):
+    try:
+        _main(argv)
+    except schema.ConfigError as e:
+        sys.exit("There is a problem with the app file:\n  %s" % e)
+    except KeyboardInterrupt:
+        sys.exit(0)
+
+
+def _main(argv=None):
     ap = argparse.ArgumentParser(prog="customchat", description="Build a chat app over any evidence source.")
     ap.add_argument("--version", action="version", version=__version__)
     sub = ap.add_subparsers(dest="cmd", required=True)

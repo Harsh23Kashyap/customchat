@@ -92,13 +92,21 @@ def _load_env(directory):
 
 def load(path):
     """Load and validate an app file (YAML or JSON). Returns the merged config dict."""
-    with open(path, "r", encoding="utf-8") as f:
-        text = f.read()
-    if path.endswith(".json"):
-        raw = json.loads(text)
-    else:
-        import yaml
-        raw = yaml.safe_load(text) or {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            text = f.read()
+    except OSError as e:
+        raise ConfigError("Cannot read %s (%s). Check the path, or create an app with: customchat init my-app" % (path, e.strerror or e))
+    try:
+        if path.endswith(".json"):
+            raw = json.loads(text)
+        else:
+            import yaml
+            raw = yaml.safe_load(text) or {}
+    except Exception as e:
+        raise ConfigError("%s is not valid %s. %s" % (path, "JSON" if path.endswith(".json") else "YAML", str(e).replace("\n", " ")[:300]))
+    if not isinstance(raw, dict):
+        raise ConfigError("%s must contain a mapping at the top level (app:, provider:, sources:)." % path)
     _load_env(os.path.dirname(os.path.abspath(path)))
     cfg = validate(raw)
     cfg["_dir"] = os.path.dirname(os.path.abspath(path))
