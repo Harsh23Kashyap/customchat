@@ -121,7 +121,7 @@ function turnView(t, prev) {
   if (t.seconds !== undefined) meta.append(el("span", { "data-more": "1", class: "chip", title: "Time to answer" }, t.seconds < 1 ? "<1s" : t.seconds + "s"));
   if (t.standalone && t.standalone !== t.question) meta.append(el("span", { class: "chip", title: "Understood as" }, "Understood as: " + t.standalone));
   meta.append(el("button", { "data-more": "1", class: "chip", title: "How this answer was built", onclick: () => contextDialog(t) }, "Context"));
-  meta.append(el("button", { class: "chip", onclick: () => navigator.clipboard.writeText(t.answer).then(() => toast("Copied")) }, "Copy"));
+  meta.append(el("button", { class: "chip copy", onclick: (ev) => { const b = ev.currentTarget; navigator.clipboard.writeText(t.answer).then(() => { toast("Copied"); b.textContent = "Copied"; b.classList.add("done"); setTimeout(() => { b.textContent = "Copy"; b.classList.remove("done"); }, 1600); }); } }, "Copy"));
   if (t.evidence.length) {
     for (const v of [1, -1]) meta.append(el("button", { class: "chip" + (S.ratings[t.id] === v ? " on" : ""), "aria-pressed": String(S.ratings[t.id] === v), onclick: async () => { const r = S.ratings[t.id] === v ? 0 : v; try { await api("/api/rate", { turn: t.id, rating: r }); if (r) S.ratings[t.id] = r; else delete S.ratings[t.id]; drawThread(); } catch (e) { toast(e.message); } } }, v > 0 ? "Helpful" : "Not helpful"));
     meta.append(el("button", { "data-more": "1", class: "chip", onclick: () => download("/api/bibtex?turn=" + t.id, "references.bib") }, "BibTeX"));
@@ -510,3 +510,5 @@ function tour() {
 
 document.getElementById("sideClose")?.addEventListener("click", () => document.getElementById("app").classList.remove("menu-open"));
 (() => { const c = document.querySelector(".composer"); if (!c) return; const set = () => document.documentElement.style.setProperty("--composer-h", Math.ceil(c.getBoundingClientRect().height + (window.innerHeight - c.getBoundingClientRect().bottom)) + "px"); set(); window.addEventListener("resize", set); if (window.ResizeObserver) new ResizeObserver(set).observe(c); })();
+
+(function () { const q = document.getElementById("q"), sb = document.getElementById("send"); if (!q || !sb) return; const upd = () => sb.classList.toggle("idle", !q.value.trim() && sb.getAttribute("aria-label") === "Send"); q.addEventListener("input", upd); setInterval(upd, 400); upd(); })();

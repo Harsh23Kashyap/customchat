@@ -39,8 +39,8 @@
         <div class="keyrow"><button type="button" class="go ghost" id="testconn">Test connection</button><span class="testres" id="testres" role="status" aria-live="polite"></span></div>
         <label>Base URL <em>(Ollama and OpenAI-compatible servers only)</em><span class="h">Where the server runs, for example http://localhost:11434 for Ollama.</span><input id="base" placeholder="http://localhost:11434"></label>
         <div class="two">
-          <label>Temperature <output id="tv"></output><span class="h">Low is precise and repeatable. High is more creative.</span><input id="temp" type="range" min="0" max="2" step="0.05"></label>
-          <label>Sources per answer <output id="kv"></output><span class="h">How many passages are shown to the model for each question.</span><input id="topk" type="range" min="1" max="20" step="1"></label>
+          <label>Temperature <output id="tv"></output><span class="h">Low is precise and repeatable. High is more creative.</span><input id="temp" aria-label="Temperature" type="range" min="0" max="2" step="0.05"></label>
+          <label>Sources per answer <output id="kv"></output><span class="h">How many passages are shown to the model for each question.</span><input id="topk" aria-label="Sources per answer" type="range" min="1" max="20" step="1"></label>
         </div>
         <label class="check"><input id="rewrite" type="checkbox"> Rewrite follow-up questions before searching</label>
         <button class="go blue big" id="apply">Apply</button>
