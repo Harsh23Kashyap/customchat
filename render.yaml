@@ -1,0 +1,20 @@
+# One-click Render deploy: chat only, no configuration page.
+# 1. Push this repo to your GitHub. 2. In Render choose New > Blueprint and pick the repo.
+# 3. Paste your OPENAI_API_KEY when asked (it stays in Render, never in the repo).
+services:
+  - type: web
+    name: customchat
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/health
+    envVars:
+      - key: CUSTOMCHAT_CONFIG
+        value: "off"
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PORT
+        value: "8080"
+    disk:
+      name: chatdata
+      mountPath: /app/apps/minimal/data
+      sizeGB: 1
