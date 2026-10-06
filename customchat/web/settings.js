@@ -2,7 +2,7 @@
 "use strict";
 const $ = (s) => document.querySelector(s);
 const NAMES = { mock: "Demo", ollama: "Ollama", openai: "OpenAI", claude: "Claude", gemini: "Gemini", openai_compatible: "Other", minimax: "MiniMax", mimo: "Xiaomi MiMo", deepseek: "DeepSeek", groq: "Groq", openrouter: "OpenRouter", mistral: "Mistral" };
-let testBlocked = false, cur = {}, canEdit = false, theme = null, saved = null, meta = null, editMode = "light";
+let autoTimer = 0, testBlocked = false, cur = {}, canEdit = false, theme = null, saved = null, meta = null, editMode = "light";
 const token = localStorage.getItem("cc_token") || "";
 async function api(path, body) {
   const h = { "Content-Type": "application/json" }; if (token) h.Authorization = "Bearer " + token;
@@ -243,7 +243,8 @@ function changed() {
   updateVis();
   clearTimeout(sendTimer); sendTimer = setTimeout(pushPreview, 40); pvExtra(); setTimeout(pvExtra, 350);
   const dirty = JSON.stringify(theme) !== JSON.stringify(saved);
-  $("#dirty").textContent = dirty ? "Unsaved changes" : "No unsaved changes"; $("#dirty").className = dirty ? "dirty" : ""; $("#savebar").classList.toggle("clean", !dirty);
+  $("#dirty").textContent = dirty ? "Saving..." : "All changes saved"; $("#dirty").className = dirty ? "dirty" : ""; $("#savebar").classList.toggle("clean", !dirty);
+  clearTimeout(autoTimer); if (dirty && canEdit) autoTimer = setTimeout(async () => { const snap = clone(theme); try { await api("/api/theme", { theme: snap }); saved = clone(snap); const d = $("#dirty"); if (JSON.stringify(theme) === JSON.stringify(saved)) { d.textContent = "All changes saved"; d.className = ""; $("#savebar").classList.add("clean"); say("Saved. The chat now uses it."); } } catch (e) { say(e.message, true); } }, 1500);
 }
 /* Logo: everything happens in the browser. The picture is shrunk, its plain background can be removed,
    and its edges are feathered so it melts into the page instead of sitting in a hard box. */
@@ -414,7 +415,7 @@ function buildPresets() {
   const box = $("#presets"); box.replaceChildren();
   let showMore = false;
   const draw = () => { box.replaceChildren();
-  const all = showMore ? Object.assign({}, PRESETS, MORE_PRESETS) : PRESETS;
+  const all = showMore ? Object.assign({}, PRESETS, MORE_PRESETS) : Object.fromEntries(Object.entries(PRESETS).slice(0, 4));
   for (const [name, p] of Object.entries(all)) {
     const t = Object.assign(clone(meta.default), clone(p)); t.light = Object.assign(clone(meta.default.light), p.light || {}); t.dark = Object.assign(clone(meta.default.dark), p.dark || {});
     const c = t.mode === "dark" ? t.dark : t.light;
@@ -458,3 +459,19 @@ init().then(() => { updateVis(); setTimeout(updateVis, 500); }).catch((e) => say
 
 
 (function () { const upd = () => document.querySelectorAll("input[type=range]").forEach((r) => { const mn = +r.min || 0, mx = +r.max || 100; r.style.setProperty("--p", ((+r.value - mn) / (mx - mn) * 100) + "%"); }); document.addEventListener("input", upd); setInterval(upd, 400); upd(); })();
+
+(function () {
+  const mk = () => {
+    const f = document.getElementById("f-font"), h = document.getElementById("f-heading_font");
+    if (f && !document.getElementById("typeprev")) { const host = f.closest(".field") || f.parentElement; const d = document.createElement("div"); d.id = "typeprev"; d.className = "typeprev"; d.innerHTML = '<span class="tp-h">Heading sample</span><span class="tp-b">The quick brown fox jumps over the lazy dog.</span>'; host.parentElement.insertBefore(d, host.nextSibling); }
+    const tp = document.getElementById("typeprev"); if (tp) { const sf = (sel) => { const o = sel && sel.options[sel.selectedIndex]; return o && o.value && !["system", "custom"].includes(o.value) ? '"' + o.textContent + '", sans-serif' : ""; }; const bf = sf(f), hf = sf(h); tp.querySelector(".tp-b").style.fontFamily = bf; tp.querySelector(".tp-h").style.fontFamily = hf || bf; }
+    const sb = document.getElementById("f-sidebar"), cw = document.getElementById("f-chat_width");
+    if (sb && !document.getElementById("layprev")) { const host = sb.closest(".field") || sb.parentElement; const d = document.createElement("div"); d.id = "layprev"; d.className = "layprev"; d.innerHTML = '<i class="lp-s"></i><i class="lp-c"></i>'; host.parentElement.insertBefore(d, host); }
+    const lp = document.getElementById("layprev"); if (lp && sb) { lp.dataset.side = sb.value; lp.dataset.w = cw ? cw.value : ""; }
+    const mo = document.getElementById("f-motion"); if (mo && !document.getElementById("motprev")) { const host = mo.closest(".field") || mo.parentElement; const d = document.createElement("div"); d.id = "motprev"; d.className = "motprev"; d.innerHTML = "<i></i><span>Motion preview</span>"; host.parentElement.insertBefore(d, host.nextSibling); }
+    const mp = document.getElementById("motprev"); if (mp && mo) mp.dataset.m = mo.value;
+  };
+  setInterval(mk, 500);
+})();
+
+document.addEventListener("click", (e) => { if (e.target && e.target.id === "resetLink") { const r = document.getElementById("resetAll"); if (r) r.click(); } });

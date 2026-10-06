@@ -73,7 +73,9 @@ function build(col) {
   const prompts = el("section", { class: "tile", id: "sec-prompts" }, el("div", { class: "head" }, el("span", { class: "ic purple", text: "\u2630" }), el("div", {}, el("b", { text: "Prompts" }), el("small", { text: "The instructions behind each step of an answer" }))),
     el("div", { class: "help", text: "Each question passes through these steps. Open one to edit it." }));
   dg = diagram(); prompts.append(dg);
-  stages.forEach((s) => prompts.append(stageCard(s)));
+  const GROUPS = [["Understand the question", ["question_check", "standalone", "queries"]], ["Find the evidence", ["relevance"]], ["Write and check the answer", ["answer", "faithfulness", "revise", "followups", "summary"]]];
+  const used = new Set(); GROUPS.forEach(([t, ks]) => { const list = stages.filter((s) => ks.includes(s.key)); if (!list.length) return; list.forEach((s) => used.add(s.key)); prompts.append(el("div", { class: "pgroup", text: t })); list.forEach((s) => prompts.append(stageCard(s))); });
+  stages.filter((s) => !used.has(s.key)).forEach((s) => prompts.append(stageCard(s)));
   if (!real) prompts.append(el("p", { class: "h", text: "Optional steps need a real model." }));
   const code = el("section", { class: "tile", id: "sec-code" }, el("div", { class: "head" }, el("span", { class: "ic green", text: "</>" }), el("div", {}, el("b", { text: "Code helpers" }), el("small", { text: "Describe it, read the code, then use it yourself" }))),
     el("div", { class: "help", text: "These write small Python helpers. Code is checked, then shown. It runs only when you press Try it." }),

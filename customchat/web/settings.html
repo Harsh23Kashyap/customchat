@@ -16,13 +16,15 @@
     <nav class="menu" id="menu" aria-label="Sections"></nav>
     <div class="col" id="col">
       <section class="tile" id="sec-presets"><div class="head"><span class="ic green">&#9733;</span><div><b>Presets and saved states</b><small>Start from a ready-made look, or save and reload your own setups</small></div></div>
-        <div class="help">A preset changes colors, fonts, background and shape in one click. You can still adjust anything afterwards. Nothing is kept until you press <b>Save look</b>.</div>
+        <div class="help">A preset changes colors, fonts, background and shape in one click. You can still adjust anything afterwards. Changes save by themselves.</div>
         <div class="presets" id="presets"></div>
-        <div class="two">
-          <div class="sub"><b>Save current look</b><small>Name it, then save it</small><input id="sname" placeholder="Look name" aria-label="State name"><button class="go green" id="save">Save look</button></div>
-          <div class="sub"><b>Load a saved look</b><small>Pick one to bring it back</small><select id="states" aria-label="Saved states"></select><div class="row2"><button class="go blue" id="load">Load</button><button class="go ghost" id="del">Delete</button></div></div>
+        <div class="saved"><b class="sv-t">Saved looks</b>
+          <div class="two">
+            <div class="sub"><small>Save the current look under a name</small><input id="sname" placeholder="Look name" aria-label="State name"><button class="go green" id="save">Save look</button></div>
+            <div class="sub"><small>Bring a saved look back</small><select id="states" aria-label="Saved states"></select><div class="row2"><button class="go blue" id="load">Load</button><button class="go ghost" id="del">Delete</button></div></div>
+          </div>
+          <div class="row2 quiet"><button class="go ghost" id="exp">Export</button><label class="go ghost filebtn" for="imp">Import<input id="imp" type="file" accept="application/json,.json" hidden></label><button class="go ghost" type="button" id="resetLink">Reset to default</button></div>
         </div>
-        <div class="row2"><button class="go ghost" id="exp">Export look</button><label class="go ghost filebtn" for="imp">Import look<input id="imp" type="file" accept="application/json,.json" hidden></label></div>
       </section>
       <section class="tile" id="sec-model"><div class="head"><span class="ic purple">&#9881;</span><div><b>Model</b><small>Where the answers come from</small></div></div>
         <div class="help">Choose the AI that writes answers. <b>Demo</b> works offline with no key. Paste your key below. It is saved in a private file on this computer and never shown again.</div>
