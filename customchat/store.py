@@ -21,8 +21,18 @@ class Store:
             os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
         self.path = path
         self._mem = sqlite3.connect(":memory:", check_same_thread=False) if path == ":memory:" else None
-        with self.c() as c:
-            c.executescript(SCHEMA)
+        try:
+            with self.c() as c:
+                c.executescript(SCHEMA)
+        except sqlite3.DatabaseError:
+            # A damaged data file must not stop the app. Keep the bad file for recovery and start fresh.
+            if self._mem or not os.path.exists(path):
+                raise
+            keep = path + ".corrupt-" + time.strftime("%Y%m%d-%H%M%S")
+            os.replace(path, keep)
+            print("customchat: data file was damaged; moved to " + keep + " and started a new one")
+            with self.c() as c:
+                c.executescript(SCHEMA)
 
     def c(self):
         if self._mem:
