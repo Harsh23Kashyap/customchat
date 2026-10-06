@@ -718,3 +718,6 @@ label.check input[type=checkbox]::after{left:2px!important;top:2px!important;wid
 label.check input[type=checkbox]:checked::after{transform:translateX(16px)!important}
 :root[data-theme=dark] label.check input[type=checkbox]{background:rgba(255,255,255,.22)!important}
 .logobox{border-radius:14px;transition:background-color .18s cubic-bezier(.22,1,.36,1),box-shadow .18s cubic-bezier(.22,1,.36,1)}.logobox.dragover{background:rgba(23,63,53,.07);box-shadow:inset 0 0 0 2px rgba(23,63,53,.35)}.logobox.dragover .dropnote{color:#173f35}.dropnote{margin-left:10px}
+@media(max-width:560px){.row2{display:grid!important;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px}.row2>.go,.row2>label.go{width:100%;min-width:0;max-width:none;padding-left:8px;padding-right:8px;text-align:center;justify-content:center;white-space:nowrap;box-sizing:border-box}.sub .row2{margin-top:8px}}
+@media(max-width:560px){.row2{align-items:center}.row2>label.filebtn{display:flex;align-items:center;margin:0;line-height:1.2}.row2.quiet>.go{padding-top:10px;padding-bottom:10px}}
+@media(max-width:560px){#save,#savekey,#keysave{display:block;width:100%;max-width:none;margin-left:0;margin-right:0;box-sizing:border-box}}
