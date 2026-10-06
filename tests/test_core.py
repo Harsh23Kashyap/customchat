@@ -846,6 +846,11 @@ class CiteFormat(unittest.TestCase):
         led = Engine.ledger("**Mixed: fasting results differ across the rat groups studied.** [1] More text here about rats and fasting results. [1]", ev)
         self.assertEqual(len(led), 2); self.assertEqual(led[0]["cites"], [1]); self.assertFalse(led[0]["uncited"])
 
+    def test_honest_no_evidence_sentence_is_not_flagged_uncited(self):
+        ev = [{"n": 1, "title": "t", "text": "about the docs folder"}]
+        led = Engine.ledger("The sources do not explain how to run an app from a YAML file.", ev)
+        self.assertFalse(led[0]["uncited"])
+
     def test_uncited_sentences_are_rewritten_with_fewer_flags(self):
         ev = [{"n": 1, "title": "t", "text": "fasting results matter in obese adults and long term outcomes"}]
         bad = "**Mixed: fasting results matter in obese adults and long term outcomes.** Fasting results matter in obese adults. [1]"
