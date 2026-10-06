@@ -323,3 +323,9 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - test_pdf: the "EOF marker not found" line is a pypdf warning about the hand-made PDF in the test; it is now silenced in the test.
 - Undo checked by exact text on the phone: deleting the pinned chat, and deleting the open chat, then undo, restored the row, pin state and the first user message and the first and last 80 characters of the answer.
 - Live animal run with the real model: 34086376 forced to rank first in retrieval. It was cited in 1 of 8 runs; in that run the sentence said "The animal study in rats ...". The guard did not fire live.
+
+## Pass 47
+- Undo of an open chat now reopens it (before: it stayed on "New chat" with nothing selected). Undo of a chat that is not open leaves the open chat selected; that is intended, so undoing a delete never moves the reader away from what they are reading.
+- Tested on a 4-turn chat (8 messages): same chat id after undo, same title and pinned state, 0 of 8 messages differ.
+- test_pdf now asserts the exact extracted text, so silencing the pypdf warning hides nothing.
+- Weight-loss and long-term question after the population rule, 3 runs: the long-term sentence named "obese adults" and "fasting-based strategies" in 3 of 3.
