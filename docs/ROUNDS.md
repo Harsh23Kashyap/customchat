@@ -423,3 +423,16 @@ Gemini text used as design input only. No resting pills (house rule); hover and 
 - Composer: textarea 38px high, line-height 20px, centre 714 equals icon centre 714.
 - Answer actions: hover tint (8% green) and press tint on buttons, 8px radius, no resting background.
 Open: Gemini's ask for resting pill containers was declined on purpose.
+
+## Pass 65 (Gemini round 4 96/100, ChatGPT round 1 79/100)
+Reviewer text used as design input only. Skipped: left borders, resting heavy pills.
+- Copy: never a resting background (hover and press tint only, forced with !important); the grey in the earlier shot was a captured hover.
+- Related arrows are an SVG mask icon, not text. Settings lead uses text-wrap balance. Delete button has a lighter border.
+- Live preview header tightened (gaps, 88px select, 13px title) so "Refund questions" is not cut.
+- Empty evidence answers now show "No evidence found", the answer line and 3 tips.
+- Mobile header: Configuration button and style select hidden under 760px, 44px icon targets, title takes the space (182px at 390).
+- User bubble max 88% (86% on mobile) with 16px thread padding; reading column 780px on desktop.
+- Sidebar: action icons only on hover or focus, not on the selected row at rest.
+- Citation cards smaller radius and padding, lighter border. Footer note 12px. Inactive tab darker.
+- Settings: "state" wording changed to "look" everywhere (Save look, Load a saved look); "Updates as you edit" tag on the preview; nav rows tighter.
+Not done: full spacing scale and type scale audit; superscript citation numbers in prose.
