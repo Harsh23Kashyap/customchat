@@ -534,3 +534,6 @@ Mobile section tabs scroll in one row with edge fade (44px chips), filled border
 
 ## Pass 89 (round 21)
 Motion preview dot removed, solid circular send button, RELATED in sentence case, fixed-width source numbers, 15.5px phone answers, 14px source titles, stronger unselected Light/Dark text, dark secondary text lifted.
+
+## Pass 90 (round 22)
+Code-helper rows compacted, Load more as quiet text, 44px aligned key row, 20px phone padding, answer line height 1.65, hanging-indent source rows, centred send arrow, no-evidence bullet spacing. Left-border audit: 0 found (light and dark).
