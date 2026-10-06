@@ -547,6 +547,7 @@ test_accounts()
 
 
 def test_pdf():
+    import logging; logging.getLogger("pypdf").setLevel(logging.CRITICAL)  # the hand-made PDF triggers a harmless "EOF marker not found" warning
     import zlib
     from customchat import pdfread
     c = zlib.compress(b"BT (Hello from a PDF with enough words.) Tj 0 -14 Td [(Second ) -300 (line here.)] TJ ET")
