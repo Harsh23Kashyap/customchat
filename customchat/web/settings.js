@@ -175,7 +175,7 @@ const SECTIONS = [
     { key: "emoji_attach", label: "Attach button", help: "Replaces the paperclip.", type: "emoji", ph: "Optional" },
     { key: "emoji_temp", label: "Temporary chat button", help: "Replaces the clock icon.", type: "emoji", ph: "Optional" } ] },
   { id: "motion", icon: "\u21BB", tone: "green", title: "Motion", sub: "Animations and speed", help: "Turn animation down if it feels busy. Visitors whose device asks for less motion always get none.", fields: [
-    { key: "motion", label: "Amount of motion", help: "Full: all effects. Subtle: quick and quiet. None: nothing moves.", type: "select" },
+    { key: "motion", label: "Amount of motion", help: "Full: all effects. Subtle: quick and quiet. None: nothing moves. Your device's reduced-motion setting always overrides Full.", type: "select" },
     { key: "entrance", label: "New message effect", help: "How messages appear.", type: "select" },
     { key: "speed", label: "Animation speed", help: "100 is normal. Higher is faster.", type: "range", unit: "%" },
     { key: "hover_lift", label: "Lift items on hover", help: "Buttons and chips rise slightly under the mouse.", type: "toggle" } ] },

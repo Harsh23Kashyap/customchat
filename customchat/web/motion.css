@@ -189,3 +189,16 @@ html[data-sidebar=hidden] .side{transition:transform .28s var(--ease)}
 }
 @keyframes m-num{from{opacity:.55}to{opacity:1}}
 @media(prefers-reduced-motion:no-preference){output.tick{animation:m-num .1s ease-out}}
+
+/* preview sheet opens with a short rise; section icons answer hover and press */
+@keyframes m-sheet{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:none}}
+.ic{transition:transform var(--m-hover) var(--ease)}
+@media(hover:hover){.ic:hover{transform:scale(1.04)}}
+.ic:active{transform:scale(.97)}
+@media(prefers-reduced-motion:no-preference){body.pvopen .preview{animation:m-sheet .26s var(--ease) both}}
+
+/* spacing (Compact / Cozy / Roomy) glides: every gap and padding that uses --dens interpolates together */
+@property --dens{syntax:"<number>";inherits:true;initial-value:1}
+@media(prefers-reduced-motion:no-preference){
+  :root{transition:--brand .35s ease,--ink .35s ease,--cream .35s ease,--paper .35s ease,--line .35s ease,--mut .35s ease,--soft .35s ease,--lime .35s ease,--on-brand .35s ease,--on-lime .35s ease,--dens .26s var(--ease)}
+}
