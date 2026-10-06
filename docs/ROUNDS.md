@@ -498,3 +498,6 @@ Audit of computed styles and ::before/::after on chat (1440, 390, no-evidence 39
 
 ## Pass 77: UI round 8 fixes
 One save bar for the look: the per-panel Save and Reset blocks are gone from the look panels (each panel keeps its small reset in the header, the sticky bar saves everything). Measured at 390 after a change: save bar sits directly above the Preview bar with no overlap. Also: 12px radius on inputs and buttons, 24px thumb and 360px max width on sliders, panel subtitles darker, left-aligned composer text, 16px under the disclaimer, 32px above user messages, balanced text wrapping, source text 12px. Not done: SVG chevrons, dark code editor page, unified preset icons, kebab for code-helper buttons, auto-save.
+
+## Pass 78 (round 10)
+Serif 22px panel headings, prompt statuses right aligned, preset padding 16px, one segmented style, 4px slider, Preview bar blur + safe-area padding, larger empty state (34px/16px), no-evidence text no italics, stronger sidebar and answer type. Left-border audit: 0 found.
