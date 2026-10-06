@@ -674,3 +674,20 @@ details.helper>summary small{display:block;line-height:1.4}
 }
 .pgroup{margin:36px 0 8px}.tile .head{margin-bottom:16px}.tile h3,.sub-h,.grp{margin:32px 0 8px}
 .tile>.help{margin-bottom:20px}
+
+/* micro-animations */
+@keyframes mm-up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes mm-tick{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+.tile{animation:mm-up .45s cubic-bezier(.2,.7,.2,1) both}.tile:nth-of-type(2){animation-delay:.05s}.tile:nth-of-type(3){animation-delay:.1s}.tile:nth-of-type(n+4){animation-delay:.15s}
+.preset{transition:transform .2s cubic-bezier(.2,.7,.2,1),background .2s,border-color .2s}.preset:hover{transform:translateY(-1px)}.preset:active{transform:scale(.98)}
+.go,button.mini{transition:transform .15s,background .2s,box-shadow .2s,opacity .2s}.go:active:not(:disabled){transform:scale(.97)}
+input[type=range]::-webkit-slider-thumb{transition:transform .15s,box-shadow .15s}input[type=range]:active::-webkit-slider-thumb{transform:scale(1.18);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+details[open]>*:not(summary){animation:mm-up .28s cubic-bezier(.2,.7,.2,1) both}
+.stage summary,details.helper>summary{transition:background .2s}.stage summary:hover,details.helper>summary:hover{background:rgba(23,63,53,.04)}
+#dirty{display:inline-block}#dirty:not(.dirty){animation:mm-tick .4s cubic-bezier(.2,.7,.2,1) both}
+nav.menu a{transition:background .2s,color .2s,transform .15s}nav.menu a:active{transform:scale(.97)}
+.cs-opt{transition:background .15s}.cs.open .cs-list{animation:mm-up .18s cubic-bezier(.2,.7,.2,1) both}
+.typeprev{animation:mm-up .3s both}
+#pvfab{transition:transform .15s}#pvfab:active{transform:scale(.96)}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+html[data-motion=none] *{animation:none!important;transition:none!important}
