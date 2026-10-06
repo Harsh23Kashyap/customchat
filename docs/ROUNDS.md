@@ -477,3 +477,6 @@ Still open from the reviews: one sticky save bar, preview from the real chat com
 - Settings title 28px. Simple/Advanced switch smaller with a light green fill.
 - Chat: no-evidence block left-aligned, answer 15px/1.55, source cards 13px, action row 12.5px, empty state lower with 32px gap before suggestions, dark composer 1px light border, disclaimer safe-area padding.
 Still open: custom select popovers, toggle switches on prompt rows, row chevrons, preview from real chat component.
+
+## Pass 71: UI round 2 fixes (part 1)
+Chat column 700px centred with composer to match. Quieter sidebar, top bar controls without pills, composer radius 18 and 1px border, 38px send, source rows without borders, 32px action targets (44px on phones), tighter phone composer and disclaimer, 32/28px empty heading, dark palette with readable secondary text, equal-height key input and save button, segmented control thumb shadow. Not done yet: custom select popovers, toggles on prompt rows, sticky save bar, real-chat preview.
