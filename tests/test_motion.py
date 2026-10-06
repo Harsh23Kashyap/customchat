@@ -36,6 +36,13 @@ class Motion(unittest.TestCase):
         self.assertIn(".app.menu-open::after{opacity:.35}", css)
         self.assertIn("pointer-events:none", css[css.index(".app::after"):css.index(".app::after") + 200])
 
+    def test_preview_fade_and_grid(self):
+        css, js = rd("motion.css"), rd("motion.js")
+        self.assertIn("fade-soft", js)
+        i = css.index(".preview.fade-soft")
+        self.assertIn("prefers-reduced-motion:no-preference", css[max(0, i - 80):i])
+        self.assertIn("grid-template-columns var(--m-layout)", css)
+
 
 if __name__ == "__main__":
     unittest.main()
