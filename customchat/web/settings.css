@@ -537,3 +537,18 @@ input[type=range]::-moz-range-thumb{background:#fff;border:2px solid var(--cfg-a
  body.pvopen #pvfab{position:fixed!important;top:10px}
 }
 @media(max-width:760px){.wrap,main,.page,.card{padding-left:20px;padding-right:20px}.tile{padding-left:20px;padding-right:20px;padding-top:24px;padding-bottom:24px}}
+
+/* round 14 */
+input[type=range]{-webkit-appearance:none;appearance:none;background:none;height:28px;max-width:none;width:100%}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:linear-gradient(90deg,var(--cfg-accent,#173f35) var(--p,50%),rgba(23,63,53,.14) var(--p,50%))}
+input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:rgba(23,63,53,.14)}
+input[type=range]::-moz-range-progress{height:4px;background:var(--cfg-accent,#173f35)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;margin-top:-10px}
+details.helper{border:1px solid rgba(23,63,53,.12);border-radius:14px;padding:0;margin-bottom:12px}
+details.helper>summary{list-style:none;cursor:pointer;display:flex;flex-direction:column;gap:2px;padding:14px 44px 14px 16px;position:relative;min-height:48px}
+details.helper>summary::-webkit-details-marker{display:none}
+details.helper>summary::after{content:"";position:absolute;right:16px;top:20px;width:14px;height:14px;background:#597066;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") center/contain no-repeat;transition:transform .2s}
+details.helper[open]>summary::after{transform:rotate(180deg)}
+details.helper>*:not(summary){margin-left:16px;margin-right:16px}details.helper>*:last-child{margin-bottom:16px}
+.preset{background:none;border-color:rgba(23,63,53,.12);border-radius:12px}.preset:hover{background:rgba(23,63,53,.05)}
+.field label,.sw,.switchrow{min-height:44px}

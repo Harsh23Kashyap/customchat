@@ -66,7 +66,7 @@ function codeCard(kind, title, help, ph) {
   const live = kind === "search" ? el("details", { class: "stage inner" }, el("summary", {}, el("b", { text: "Match a real response" }), el("small", { text: "Optional" })), el("div", { class: "sbody" }, el("p", { class: "h", text: "Fetch one real response so the parsing fits it." }), el("div", { class: "keyrow" }, url, show), raw, rewrite)) : null;
   const copy = el("button", { type: "button", class: "go ghost", text: "Copy", onclick: () => { navigator.clipboard && navigator.clipboard.writeText(code.value); out.textContent = "Copied."; } });
   const chk = el("button", { type: "button", class: "go ghost", text: "Check again", onclick: review });
-  return el("div", { class: "sub" }, el("b", { text: title }), el("small", { text: help }), brief, live, el("div", { class: "keyrow tight" }, gen, chk, copy), ed ? host : fallback, ed ? el("small", { class: "h", text: "Press Esc, then Tab, to move past the editor." }) : null, out, el("div", { class: "keyrow" }, tq, tryBtn), tres);
+  return el("details", { class: "sub helper" }, el("summary", {}, el("b", { text: title }), el("small", { text: help })), brief, live, el("div", { class: "keyrow tight" }, gen, chk, copy), ed ? host : fallback, ed ? el("small", { class: "h", text: "Press Esc, then Tab, to move past the editor." }) : null, out, el("div", { class: "keyrow" }, tq, tryBtn), tres);
 }
 
 function build(col) {

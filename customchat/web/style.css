@@ -461,3 +461,12 @@ html.preview .bar .title{font-size:13px!important}
 :root[data-theme=dark] .box{border:1px solid rgba(255,255,255,.15)}
 .box{box-shadow:0 2px 8px rgba(0,0,0,.04)}
 .meta{margin-top:16px}
+
+/* round 14 */
+.ans,.bubble .a{line-height:1.6}
+.box textarea{padding-right:56px}
+.composer{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 20px)}
+.srcs button.s .st{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.meta.fu .chip{font-size:calc(14px*var(--fs,1))}
+.bubble.none strong,.bubble.none b,.nf-h{font-size:calc(16px*var(--fs,1));font-weight:600}
+@media(max-width:760px){.ans,.bubble .a{font-size:15.5px;line-height:1.6}}

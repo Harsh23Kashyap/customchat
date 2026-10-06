@@ -456,3 +456,5 @@ async function init() {
 init().then(() => { updateVis(); setTimeout(updateVis, 500); }).catch((e) => say(e.message, true));
 })();
 
+
+(function () { const upd = () => document.querySelectorAll("input[type=range]").forEach((r) => { const mn = +r.min || 0, mx = +r.max || 100; r.style.setProperty("--p", ((+r.value - mn) / (mx - mn) * 100) + "%"); }); document.addEventListener("input", upd); setInterval(upd, 400); upd(); })();
