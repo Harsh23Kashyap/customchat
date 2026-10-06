@@ -9,7 +9,7 @@ claude             Anthropic Messages API, key from ANTHROPIC_API_KEY
 gemini             Google Gemini, key from GEMINI_API_KEY
 openai_compatible  any OpenAI-style server (LM Studio, vLLM, llama.cpp) via base_url
 """
-import json, os, re, urllib.request, urllib.error
+import http.client, json, os, re, urllib.request, urllib.error
 
 
 RETRY_CODES = {408, 409, 425, 429, 500, 502, 503, 504, 529}
@@ -85,7 +85,9 @@ def _post_once(url, payload, headers, timeout):
             return json.loads(r.read().decode())
     except urllib.error.HTTPError as e:
         raise _http_error(e) from None
-    except (urllib.error.URLError, TimeoutError, OSError) as e:
+    except (urllib.error.URLError, TimeoutError, OSError, http.client.HTTPException) as e:
+        if isinstance(e, http.client.HTTPException):
+            raise ProviderError("The provider connection dropped in the middle of its reply") from None
         raise ProviderError("Provider unreachable: %s" % getattr(e, "reason", e)) from None
     except ValueError:
         raise ProviderError("The provider sent a reply that could not be read", 502) from None
@@ -121,7 +123,9 @@ def _stream_once(url, payload, headers, timeout):
                     yield line
     except urllib.error.HTTPError as e:
         raise _http_error(e) from None
-    except (urllib.error.URLError, TimeoutError, OSError) as e:
+    except (urllib.error.URLError, TimeoutError, OSError, http.client.HTTPException) as e:
+        if isinstance(e, http.client.HTTPException):
+            raise ProviderError("The provider connection dropped in the middle of its reply") from None
         raise ProviderError("Provider unreachable: %s" % getattr(e, "reason", e)) from None
     except ValueError:
         raise ProviderError("The provider sent a reply that could not be read", 502) from None
@@ -154,14 +158,26 @@ class Mock(Streams):
 class Ollama(Streams):
     def stream(self, messages):
         base = (self.base)
+        got = done = False
         for line in _stream_lines(base + "/api/chat", {"model": self.model, "messages": messages, "stream": True,
                                   "options": {"temperature": self.temp}}, {}, self.t):
             try:
                 d = json.loads(line)
             except ValueError:
                 continue
+            if not isinstance(d, dict):
+                continue
+            if d.get("error"):
+                raise ProviderError("Ollama stopped the answer: %s" % str(d["error"])[:120], 502)
+            if d.get("done"):
+                done = True
             if d.get("message", {}).get("content"):
+                got = True
                 yield d["message"]["content"]
+        if not got:
+            raise ProviderError("Ollama sent an empty reply", 502)
+        if not done:
+            raise ProviderError("The answer stream ended early", 502)
 
     def __init__(self, cfg):
         p = cfg["provider"]
@@ -192,15 +208,33 @@ class OpenAICompatible(Streams):
 
     def stream(self, messages):
         headers = self._auth()
+        got = done = False
         for line in _stream_lines(self.base + "/chat/completions", self._body(messages, stream=True), headers, self.t):
-            if not line.startswith("data:") or line.endswith("[DONE]"):
+            if not line.startswith("data:"):
+                continue
+            if line.endswith("[DONE]"):
+                done = True
                 continue
             try:
-                piece = json.loads(line[5:])["choices"][0]["delta"].get("content")
-            except (ValueError, KeyError, IndexError):
+                d = json.loads(line[5:])
+            except ValueError:
+                continue
+            if isinstance(d, dict) and d.get("error"):
+                raise ProviderError("The provider stopped the answer: %s" % str((d["error"] or {}).get("message", d["error"]) if isinstance(d["error"], dict) else d["error"])[:120], 502)
+            try:
+                ch = d["choices"][0]
+                piece = ch["delta"].get("content")
+                if ch.get("finish_reason"):
+                    done = True
+            except (KeyError, IndexError, TypeError, AttributeError):
                 continue
             if piece:
+                got = True
                 yield piece
+        if not got:
+            raise ProviderError("The provider sent an empty reply", 502)
+        if not done:
+            raise ProviderError("The answer stream ended early", 502)
 
     def __init__(self, cfg):
         from .schema import PRESET_PROVIDERS
@@ -313,7 +347,7 @@ def _get(url, headers, timeout=15):
             return json.loads(r.read().decode())
     except urllib.error.HTTPError as e:
         raise _http_error(e) from None
-    except (urllib.error.URLError, TimeoutError, OSError) as e:
+    except (urllib.error.URLError, TimeoutError, OSError, http.client.HTTPException) as e:
         raise ProviderError("Could not reach the provider: %s" % getattr(e, "reason", e)) from None
     except ValueError:
         raise ProviderError("The provider sent a reply that could not be read", 502) from None
