@@ -168,7 +168,7 @@ input[type=range]::-moz-range-thumb{transition:transform var(--m-hover) var(--ea
 @media(prefers-reduced-motion:no-preference){.chip.copy.done{animation:m-in .16s var(--ease)}}
 @media(prefers-reduced-motion:no-preference) and (min-width:861px){.app{transition:grid-template-columns var(--m-layout) var(--ease)}}
 @keyframes m-soft{from{opacity:.55}to{opacity:1}}
-@media(prefers-reduced-motion:no-preference){.preview.fade-soft{animation:m-soft .24s ease-out}}
+@media(prefers-reduced-motion:no-preference){.preview.fade-soft,.typeprev.fade-soft{animation:m-soft .24s ease-out}}
 
 /* hidden-sidebar layout uses the same drawer and scrim as the phone */
 html[data-sidebar=hidden] .app::after{content:"";position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:24;transition:opacity .28s var(--ease)}
@@ -208,4 +208,14 @@ html[data-sidebar=hidden] .side{transition:transform .28s var(--ease)}
   .cm-editor{animation:m-up .2s var(--ease) both}
   .cm-panel-lint li,.cm-diagnostic{animation:m-in .18s var(--ease) both}
   .logoprev.leave{opacity:0;transform:scale(.98);transition:opacity .18s ease-out,transform .18s ease-out}
+}
+@media(prefers-reduced-motion:no-preference){
+  #menu>*{transition:transform .18s var(--ease)}
+  .app.menu-open #menu>*{transform:rotate(90deg)}
+}
+
+/* corner roundness glides: every radius that uses --rs moves together */
+@property --rs{syntax:"<number>";inherits:true;initial-value:1}
+@media(prefers-reduced-motion:no-preference){
+  :root{transition:--brand .35s ease,--ink .35s ease,--cream .35s ease,--paper .35s ease,--line .35s ease,--mut .35s ease,--soft .35s ease,--lime .35s ease,--on-brand .35s ease,--on-lime .35s ease,--dens .26s var(--ease),--rs .26s var(--ease)}
 }
