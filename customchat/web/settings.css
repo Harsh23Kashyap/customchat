@@ -647,3 +647,10 @@ input:focus-visible,textarea:focus-visible,.cs-btn:focus-visible,select:focus-vi
 .head button.mini:hover{color:#173f35!important;text-decoration:underline}
 input[type=range]::-webkit-slider-thumb{width:20px;height:20px;margin-top:-8px}
 @media(min-width:1181px){.preview{position:sticky;top:16px;align-self:start;max-height:calc(100vh - 32px)}}
+
+/* round 21 */
+.seg.mini button[aria-checked=false]{color:#3d4d45!important}
+.filebtn,label.filebtn{text-decoration:none!important}
+#motprev{display:none!important}
+@media(max-width:760px){.stage summary{min-height:48px}.stage summary b{font-size:14.5px}}
+.typeprev{border:1px solid rgba(23,63,53,.1)}

@@ -468,8 +468,6 @@ init().then(() => { updateVis(); setTimeout(updateVis, 500); }).catch((e) => say
     const sb = document.getElementById("f-sidebar"), cw = document.getElementById("f-chat_width");
     if (sb && !document.getElementById("layprev")) { const host = sb.closest(".field") || sb.parentElement; const d = document.createElement("div"); d.id = "layprev"; d.className = "layprev"; d.innerHTML = '<i class="lp-s"></i><i class="lp-c"></i>'; host.parentElement.insertBefore(d, host); }
     const lp = document.getElementById("layprev"); if (lp && sb) { lp.dataset.side = sb.value; lp.dataset.w = cw ? cw.value : ""; }
-    const mo = document.getElementById("f-motion"); if (mo && !document.getElementById("motprev")) { const host = mo.closest(".field") || mo.parentElement; const d = document.createElement("div"); d.id = "motprev"; d.className = "motprev"; d.innerHTML = "<i></i><span>Motion preview</span>"; host.parentElement.insertBefore(d, host.nextSibling); }
-    const mp = document.getElementById("motprev"); if (mp && mo) mp.dataset.m = mo.value;
   };
   setInterval(mk, 500);
 })();

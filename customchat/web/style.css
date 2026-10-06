@@ -504,3 +504,12 @@ html.preview .bar .title{font-size:13px!important}
 @media(max-width:760px){.srcs button.s .st{font-size:13.5px}.cmeta,.cmeta span{font-size:12.5px}.meta.fu .chip{font-size:14.5px}}
 .bubble.none ul,.nf ul{list-style:none;padding-left:0}.bubble.none li,.nf li{position:relative;padding-left:16px}.bubble.none li::before,.nf li::before{content:"";position:absolute;left:2px;top:.7em;width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.5}
 .srcs button.s .n,.srcs button.s b{margin-left:-2px}
+
+/* round 21 */
+.send svg,.send .arr{stroke-width:2.6}
+.send{background:var(--brand,#173f35);color:var(--on-brand,#fff);border-radius:50%!important;width:40px;height:40px}
+.fu-label{text-transform:none;letter-spacing:0;font-size:calc(13px*var(--fs,1));font-weight:600}
+.srcs button.s .n,.srcs button.s>b:first-child,.srcs button.s>span:first-child{display:inline-block;min-width:24px}
+.meta{gap:0 16px}
+@media(max-width:760px){.ans,.bubble .a{font-size:15.5px}.srcs button.s .st{font-size:14px;white-space:normal}.cmeta{font-size:12.5px}}
+:root[data-theme=dark] .srcs button.s,:root[data-theme=dark] .cmeta,:root[data-theme=dark] .srcs button.s .st{color:#c7d3cc}
