@@ -739,7 +739,10 @@ def test_websearch():
     w.PROVIDERS["tavily"]["url"] = base + "/bad"
     try: w.search("tavily", "q"); assert False
     except w.SearchError as e: assert "did not accept" in str(e)
-    assert c.search("q", 3) == []  # fails safe
+    try:
+        c.search("q", 3); raise AssertionError("expected the failure to be reported")
+    except w.SearchError:
+        pass  # reported to the engine, which keeps answering from the other sources
     # several providers at once: merged, deduped, and one failing does not hurt the rest
     sec.STORE.set("search:exa", "exa-test-key-123456"); w.PROVIDERS["tavily"]["url"] = base + "/search"; w.PROVIDERS["exa"]["url"] = base + "/bad"
     m = make_connector({"id": "web", "label": "Web", "type": "web_search", "providers": ["tavily", "exa", "nope"]})
