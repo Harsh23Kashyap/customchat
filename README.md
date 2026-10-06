@@ -4,6 +4,17 @@ Build a chat application over any evidence source from one YAML file.
 
 CustomChat is the chat counterpart of [Custom-Nerd](https://github.com/Harsh23Kashyap/Custom-Nerd). Custom-Nerd turns a configuration into a question-answering engine for one domain. CustomChat adds the conversation layer on top: follow-up questions that remember what came before, saved chats, numbered citations, and a clean web interface. DietChat and WirelessChat are two instances of the same pattern, and both ship here as example apps.
 
+## Deploy on Render with no configuration page
+
+For end users who should only chat. Set `CUSTOMCHAT_CONFIG=off` and the app serves the chat only: no Configuration link, `/settings.html` and every settings, key, prompt and model endpoint return 404.
+
+1. Fork or push this repo to GitHub.
+2. In Render choose New, then Blueprint, and pick the repo. `render.yaml` sets the lock, a health check and a small disk for saved chats.
+3. Paste `OPENAI_API_KEY` when Render asks. The key stays in Render's environment.
+4. To use your own app file, set `APP=apps/yourapp/app.yaml`. Tune the look and sources locally first, then commit the app folder.
+
+The lock was tested locally. A real Render deploy has not been run from here.
+
 ## Quick start (one command)
 
 ```
