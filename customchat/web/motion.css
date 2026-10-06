@@ -219,3 +219,9 @@ html[data-sidebar=hidden] .side{transition:transform .28s var(--ease)}
 @media(prefers-reduced-motion:no-preference){
   :root{transition:--brand .35s ease,--ink .35s ease,--cream .35s ease,--paper .35s ease,--line .35s ease,--mut .35s ease,--soft .35s ease,--lime .35s ease,--on-brand .35s ease,--on-lime .35s ease,--dens .26s var(--ease),--rs .26s var(--ease)}
 }
+
+/* unsaved dot turns into a tick when saved */
+#dirty:not(.dirty)::before{content:"\2713";display:inline-block;margin-right:6px;color:#1d7a46;font-weight:700}
+@media(prefers-reduced-motion:no-preference){#dirty:not(.dirty)::before{animation:m-tick .26s var(--ease)}}
+.keystate.ok::before{content:"\2713";display:inline-block;margin-right:5px;font-weight:700}
+@media(prefers-reduced-motion:no-preference){.keystate.ok::before{animation:m-tick .26s var(--ease)}}
