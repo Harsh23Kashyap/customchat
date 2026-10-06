@@ -3,7 +3,7 @@
 app:
   id: minimal
   title: Docs Chat
-  tagline: Ask questions about the files in ./docs
+  tagline: Ask questions about your documents
   examples:
     - What is CustomChat?
     - How does conversation memory work?
