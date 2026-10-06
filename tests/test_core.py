@@ -834,6 +834,24 @@ class LeadAndAttribution(unittest.TestCase):
         self.assertEqual(led[0]["weak_cites"], [1, 3])  # only source 2 says it
 
 
+class CiteFormat(unittest.TestCase):
+    def test_citation_moves_outside_bold(self):
+        from customchat.pipeline import Engine
+        ev = [{"n": 1, "title": "t", "text": "x"}]
+        out, _ = Engine.tidy("**Mixed: fasting may help. [1]** More text.", ev)
+        self.assertIn("**Mixed: fasting may help.** [1]", out)
+
+    def test_bold_lead_keeps_its_citation(self):
+        ev = [{"n": 1, "title": "t", "text": "fasting results in rats"}]
+        led = Engine.ledger("**Mixed: fasting results differ across the rat groups studied.** [1] More text here about rats and fasting results. [1]", ev)
+        self.assertEqual(len(led), 2); self.assertEqual(led[0]["cites"], [1]); self.assertFalse(led[0]["uncited"])
+
+    def test_uncited_sentence_is_flagged(self):
+        ev = [{"n": 1, "title": "t", "text": "fasting results"}]
+        led = Engine.ledger("Overall the sources are limited and mixed on fasting. Fasting results matter. [1]", ev)
+        self.assertTrue(led[0]["uncited"]); self.assertFalse(led[1]["uncited"])
+
+
 class PubMedQuery(unittest.TestCase):
     def test_keywords_drop_question_words(self):
         from customchat.connectors.pubmed import keywords
