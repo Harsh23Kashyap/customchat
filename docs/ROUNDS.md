@@ -543,3 +543,6 @@ Two-column groups and row buttons stack at 390, Preview button 44px with safe-ar
 
 ## Pass 92 (micro-animations)
 Transform/opacity-only micro-animations: staggered suggestion entrance with chevron nudge, send button hover/press, composer focus ring, citation and source hover lift, sidebar item shift, settings tiles fade-up, preset lift, button press, slider thumb grow, accordion content fade, saved-tick, custom select open. Disabled by Motion = none and prefers-reduced-motion.
+
+## Pass 93 (R23 leftovers + Harsh note)
+Chat column centred in the main area (was left-anchored at 1440, leaving a gap on the right), empty state capped at 640px, slider value readouts aligned and no-wrap, provider buttons share one baseline, desktop preview 560px, settings content flush-left, 20px phone padding.
