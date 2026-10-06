@@ -448,3 +448,16 @@ Reviewer text used as design input only. Not done on purpose: white cards, dashe
 - Chat: 24px gap before a user turn after an answer; bullets 1.6 line height; 16px action gaps; dark disclaimer #a9b7b0; user bubble padding 12px 16px; tab shadow; safe-area bottom padding; header icon gap 12px.
 - Mobile settings: 20px side padding (card 16px), inputs, selects and buttons 44px, section and save buttons 48px.
 Not done: font previews inside options, radius slider cap, stepper scroll, provider icon audit, icon stroke audit, user bubble colour change (kept #efe9d8, matches theme.py).
+
+## Pass 68 (ChatGPT full-set 63/100, Gemini FAB sheet bug, Harsh: Simple/Advanced)
+Reviewer text used as design input only. Skipped: left borders, resting pills.
+- Capture fixed: the "answer with sources" shot now uses the Nutrition app and shows source cards (4, 2, 3, 3 cited sources in light/dark desktop/390); before it showed no-evidence.
+- Model tab and intro say one thing: keys stay on the computer running CustomChat, from an environment variable or a private local file (secrets.json, mode 0600), never shown again.
+- Preview sheet at 390 had overlapping cards because `#pvmodel{min-height:48px}` overrode the panel height; removed. Sheet children no longer shrink (iframe 433px). Checked 3 sections: Model (status cards), Colors, Layout: 0 overlaps.
+- Settings page background now cream #f5f1e8 (was pale blue).
+- Irrelevant fields hidden: gradient colour and angle only with Gradient, image link only with Image, pattern controls only with a pattern.
+- 390: sticky horizontal jump menu (12 chips, 44px), composer 48px, send and icons 44px, suggestion chips 36px.
+- Dark muted text #a3b3ab. No-evidence tips padding 16px.
+- Simple / Advanced switch on the config page, saved in the browser, Simple by default. Simple hides Prompts, Code helpers, pattern controls, line spacing, animation speed, sidebar width, image link and Ollama/guide boxes (10 sections, 10 menu items). Advanced shows all (12 and 12).
+Pages that exist: chat (/) and configuration (/settings.html). There is no About or Contact page.
+Not done: one sticky save bar instead of per-section Save and Reset, preview rebuilt from the production chat component, wider desktop sidebar.
