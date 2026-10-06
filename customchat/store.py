@@ -1,4 +1,4 @@
-"""SQLite storage. Chats are sessions; conversations (topics) are threads of thought that can span chats."""
+"""SQLite storage (MySQL optional, see mysqlstore.py). Chats are sessions; conversations (topics) are threads of thought that can span chats."""
 import json, os, sqlite3, time, uuid
 
 SCHEMA = """
@@ -16,10 +16,25 @@ CREATE INDEX IF NOT EXISTS turns_topic ON turns(topic, created);
 
 
 class Store:
-    def __init__(self, path):
+    def __init__(self, path, url=None):
         if path != ":memory:":
             os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
         self.path = path
+        self.kind = "sqlite"
+        self._my = None
+        url = url if url is not None else os.environ.get("CUSTOMCHAT_DB_URL", "")
+        if url and path != ":memory:":
+            try:
+                from . import mysqlstore
+                self._my = mysqlstore.parse(url)
+                with self.c() as c:
+                    c.executescript(SCHEMA)
+                self.kind = "mysql"
+                print("customchat: using MySQL at " + self._my["host"])
+                return
+            except Exception as e:
+                self._my = None
+                print("customchat: MySQL not available (" + str(e)[:120] + "); using the local SQLite file instead")
         self._mem = sqlite3.connect(":memory:", check_same_thread=False) if path == ":memory:" else None
         try:
             with self.c() as c:
@@ -35,6 +50,9 @@ class Store:
                 c.executescript(SCHEMA)
 
     def c(self):
+        if self._my:
+            from . import mysqlstore
+            return mysqlstore.Conn(self._my)
         if self._mem:
             self._mem.row_factory = sqlite3.Row
             return self._mem
@@ -95,7 +113,7 @@ class Store:
     # topics (conversations)
     def new_topic(self, owner, title):
         i = str(uuid.uuid4())
-        self.q("INSERT INTO topics(id,owner,title,created) VALUES(?,?,?,?)", (i, owner, title[:120], time.time()), write=True)
+        self.q("INSERT INTO topics(id,owner,title,summary,created) VALUES(?,?,?,'',?)", (i, owner, title[:120], time.time()), write=True)
         return i
 
     def topic(self, owner, topic):
