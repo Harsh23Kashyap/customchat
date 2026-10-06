@@ -1,0 +1,76 @@
+/* Pass 4: one motion system. press 90ms, hover 140ms, state 180ms, layout 280ms, stagger 28ms */
+:root{--ease:cubic-bezier(.22,1,.36,1);--m-press:90ms;--m-hover:140ms;--m-state:180ms;--m-layout:280ms;--m-dist:6px}
+@keyframes m-up{from{opacity:0;transform:translateY(var(--m-dist))}to{opacity:1;transform:none}}
+@keyframes m-in{from{opacity:0}to{opacity:1}}
+@keyframes m-settle{from{opacity:0;transform:translateY(4px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes m-tick{0%{transform:scale(1)}45%{transform:scale(1.12)}100%{transform:scale(1)}}
+@keyframes m-dot{0%,100%{opacity:.3;transform:none}40%{opacity:1;transform:translateY(-2px)}}
+@keyframes m-flash{0%{box-shadow:0 0 0 0 rgba(23,63,53,0)}30%{box-shadow:0 0 0 3px rgba(23,63,53,.14)}100%{box-shadow:0 0 0 0 rgba(23,63,53,0)}}
+@keyframes m-shake{0%,100%{transform:none}25%{transform:translateX(-3px)}60%{transform:translateX(2px)}}
+/* chat: empty state settles in a stagger */
+.hero>*{animation:m-up .24s var(--ease) both}
+.hero>*:nth-child(1){animation-delay:0s}.hero>*:nth-child(2){animation-delay:.03s}.hero>*:nth-child(3){animation-delay:.06s}.hero>*:nth-child(4){animation-delay:.09s}.hero>*:nth-child(5){animation-delay:.12s}
+.ex button:nth-child(1){animation-delay:.1s}.ex button:nth-child(2){animation-delay:.13s}.ex button:nth-child(3){animation-delay:.16s}.ex button:nth-child(4){animation-delay:.19s}
+.composer{animation:m-settle .26s var(--ease) both .12s}
+/* messages */
+.fresh.row.u{animation:m-up .16s var(--ease) both}
+.fresh.row:not(.u){animation:m-up .22s var(--ease) both}
+.bubble{transition:background-color var(--m-state) var(--ease),box-shadow var(--m-state) var(--ease)}
+/* typing dots, if present */
+.typing i,.dots i,.thinking i{animation:m-dot .9s var(--ease) infinite}.typing i:nth-child(2),.dots i:nth-child(2),.thinking i:nth-child(2){animation-delay:.12s}.typing i:nth-child(3),.dots i:nth-child(3),.thinking i:nth-child(3){animation-delay:.24s}
+/* citations and sources stagger */
+.fresh .a sup,.fresh .cite{animation:m-in .14s var(--ease) both}
+.fresh .srcs button.s{animation:m-up .18s var(--ease) both}
+.srcs button.s{transition:background-color var(--m-hover) var(--ease),transform var(--m-hover) var(--ease),box-shadow var(--m-hover) var(--ease)}
+.fresh .srcs button.s:nth-of-type(1){animation-delay:.03s}.fresh .srcs button.s:nth-of-type(2){animation-delay:.06s}.fresh .srcs button.s:nth-of-type(3){animation-delay:.09s}.fresh .srcs button.s:nth-of-type(4){animation-delay:.12s}.fresh .srcs button.s:nth-of-type(5){animation-delay:.15s}.fresh .srcs button.s:nth-of-type(n+6){animation-delay:.18s}
+.srcs button.s:hover{transform:translateY(-1px);box-shadow:0 2px 8px rgba(23,63,53,.07)}
+.srcs button.s:hover .go,.nf-tips button:hover .go,.nf-tips a:hover .go{transform:translateX(3px);color:var(--brand)}
+.fresh .nf-tips>*{animation:m-up .18s var(--ease) both}.fresh .nf-tips>*:nth-child(2){animation-delay:.04s}.fresh .nf-tips>*:nth-child(3){animation-delay:.08s}
+.fresh .meta.fu .chip{animation:m-up .18s var(--ease) both}.fresh .meta.fu .chip:nth-child(2){animation-delay:.03s}.fresh .meta.fu .chip:nth-child(3){animation-delay:.06s}.fresh .meta.fu .chip:nth-child(4){animation-delay:.09s}
+.meta button:hover,.meta .chip:hover{transition-duration:.12s}
+.meta button.pop,.meta .pop{animation:m-tick .18s var(--ease)}
+/* example rows: text nudge on hover, press */
+.ex button{transition:transform var(--m-hover) var(--ease),background-color var(--m-hover) var(--ease),border-color var(--m-hover) var(--ease)}
+.ex button:hover{transform:translateX(2px)}
+.ex button:active,.btn-dark:active,.btn-out:active,.go:active,.tab:active{transform:scale(.985);transition-duration:var(--m-press)}
+/* send readiness */
+.send{transition:transform .15s var(--ease),opacity .15s var(--ease),background-color .15s}
+.send.ready{animation:m-tick .15s var(--ease)}
+.box:focus-within{transition:box-shadow .16s ease-out,border-color .16s ease-out}
+/* sidebar items */
+.side .list .item{animation:m-in .18s var(--ease) both}
+.tab{transition:background-color var(--m-state) var(--ease),color var(--m-state) var(--ease)}
+.jump{transition:opacity .2s var(--ease),transform .2s var(--ease);transform:translateY(6px)}.jump.show{transform:none}
+.toast{animation:m-up .2s var(--ease) both}
+/* settings */
+.col .tile{animation:m-up .24s var(--ease) both}
+.col .tile:nth-child(2){animation-delay:.03s}.col .tile:nth-child(3){animation-delay:.06s}.col .tile:nth-child(4){animation-delay:.09s}
+.menu a{transition:background-color var(--m-hover) var(--ease),color var(--m-hover) var(--ease),box-shadow var(--m-hover) var(--ease),transform var(--m-hover) var(--ease)}
+.menu a:hover{transform:translateX(2px)}
+.preset,.presets>*{transition:transform var(--m-hover) var(--ease),box-shadow var(--m-hover) var(--ease),background-color var(--m-hover) var(--ease)}
+.preset:hover{transform:translateY(-1px)}.preset:active{transform:scale(.985);transition-duration:var(--m-press)}
+.seg button{transition:color var(--m-state) var(--ease),background-color var(--m-state) var(--ease),box-shadow var(--m-state) var(--ease),transform var(--m-press)}
+.seg button:active{transform:scale(.985)}
+.msg{transition:opacity var(--m-state) var(--ease),color var(--m-state)}.msg:not(:empty){animation:m-up .18s var(--ease) both}.msg.err{animation:m-shake .24s var(--ease)}
+.testres:not(:empty),.keystate:not(:empty){animation:m-up .18s var(--ease) both}
+.preview{transition:box-shadow var(--m-state) var(--ease)}
+.preview.pulse{animation:m-flash .5s var(--ease)}
+.preview *{transition:background-color .22s var(--ease),color .22s var(--ease),border-radius .22s var(--ease),font-size .22s var(--ease),padding .22s var(--ease),gap .22s var(--ease),max-width .28s var(--ease),width .28s var(--ease)}
+input[type=range]{transition:filter var(--m-hover)}input[type=range]::-webkit-slider-thumb{transition:transform var(--m-hover) var(--ease)}input[type=range]:active::-webkit-slider-thumb{transform:scale(1.12)}
+input[type=text],input[type=url],input[type=password],input[type=number],textarea,select{transition:background-color .16s ease-out,box-shadow .16s ease-out,border-color .16s ease-out}
+.savebar .go,.saved .go{transition:transform var(--m-press),background-color var(--m-state),opacity var(--m-state)}
+.dirty-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#d97706;margin-left:8px;vertical-align:middle;animation:m-tick .2s var(--ease)}
+details>summary{transition:color var(--m-hover)}details[open]>*:not(summary){animation:m-in .2s var(--ease) both}
+/* mobile: press instead of hover */
+@media(hover:none){.srcs button.s:hover,.ex button:hover,.preset:hover,.menu a:hover{transform:none;box-shadow:none}.srcs button.s:active,.ex button:active{transform:scale(.985)}:root{--m-dist:4px}}
+/* subtle: <=4px, short */
+html[data-motion=subtle]{--m-dist:3px}
+html[data-motion=subtle] *,html[data-motion=subtle] *::before{animation-duration:.12s!important;animation-delay:0s!important}
+html[data-motion=none] *,html[data-motion=none] *::before,html[data-motion=none] *::after{animation:none!important;transition:none!important}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* pass 4 fixes: full-width source rows on phones, edge fade on the settings nav */
+@media(max-width:640px){.srcs,.srcs button.s{width:100%;max-width:none}.srcs button.s{box-sizing:border-box}
+.menu{-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}}
+
+@media(max-width:640px){.menu.end{-webkit-mask-image:none;mask-image:none}}
