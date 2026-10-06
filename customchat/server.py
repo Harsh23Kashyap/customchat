@@ -118,8 +118,8 @@ def make_handler(cfg, engine):
                 if qs.get("deep"):
                     return self._send(200, {"ok": True, "app": cfg["app"].get("title") or cfg["app"].get("name", ""), "provider": cfg["provider"]["type"],
                                             "sources": [x.get("id") or x.get("name") or x.get("type") for x in cfg.get("sources", [])],
-                                            "db": store.ping(), "version": "0.1"})
-                return self._send(200, {"ok": True})
+                                            "db": store.ping(), "version": "0.1", "degraded": store.degraded})
+                return self._send(200, {"ok": True, "degraded": store.degraded} if store.degraded else {"ok": True})
             if path == "/api/theme" and method == "GET":
                 return self._send(200, {"theme": themestore.value, "meta": themes.meta(), "can_edit": can_edit(self)})
             if path == "/api/config":

@@ -17,11 +17,17 @@ CREATE INDEX IF NOT EXISTS turns_topic ON turns(topic, created);
 
 class Store:
     def __init__(self, path, url=None):
-        if path != ":memory:":
-            os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
         self.path = path
         self.kind = "sqlite"
         self._my = None
+        self.degraded = ""
+        self._mem = None
+        if path != ":memory:":
+            try:
+                os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+            except OSError as e:
+                self._degrade("cannot create the data folder (%s)" % (e.strerror or e))
+                return
         url = url if url is not None else os.environ.get("CUSTOMCHAT_DB_URL", "")
         if url and path != ":memory:":
             try:
@@ -39,10 +45,15 @@ class Store:
         try:
             with self.c() as c:
                 c.executescript(SCHEMA)
-        except sqlite3.DatabaseError:
+        except sqlite3.DatabaseError as e:
             # A damaged data file must not stop the app. Keep the bad file for recovery and start fresh.
             if self._mem or not os.path.exists(path):
+                if self._mem or self._unwritable(e):
+                    if self._mem: raise
+                    self._degrade(str(e)); return
                 raise
+            if self._unwritable(e):
+                self._degrade(str(e)); return
             keep = path + ".corrupt-" + time.strftime("%Y%m%d-%H%M%S")
             os.replace(path, keep)
             print("customchat: data file was damaged; moved to " + keep + " and started a new one")
@@ -60,17 +71,39 @@ class Store:
         c.row_factory = sqlite3.Row
         return c
 
-    def q(self, sql, args=(), one=False, write=False):
-        c = self.c()
+    @staticmethod
+    def _unwritable(e):
+        m = str(e).lower()
+        return any(k in m for k in ("readonly", "read-only", "disk is full", "database or disk is full", "unable to open", "disk i/o", "permission"))
+
+    def _degrade(self, why):
+        """Disk full, read-only or missing folder: keep answering from memory instead of failing. History is not saved."""
+        self._mem = sqlite3.connect(":memory:", check_same_thread=False)
+        self._mem.executescript(SCHEMA)
         try:
-            cur = c.execute(sql, args)
-            rows = cur.fetchall()
-            if write:
-                c.commit()
-            return (rows[0] if rows else None) if one else [dict(r) for r in rows]
-        finally:
-            if not self._mem:
-                c.close()
+            from .accounts import TABLES
+            self._mem.executescript(TABLES)
+        except Exception:
+            pass
+        self.degraded = "Chats cannot be saved right now (%s). Answers still work; history is kept only until the app restarts." % str(why)[:100]
+        print("customchat: " + self.degraded)
+
+    def q(self, sql, args=(), one=False, write=False):
+        for attempt in (0, 1):
+            c = self.c(); ismem = bool(self._mem)
+            try:
+                cur = c.execute(sql, args)
+                rows = cur.fetchall()
+                if write:
+                    c.commit()
+                return (rows[0] if rows else None) if one else [dict(r) for r in rows]
+            except sqlite3.OperationalError as e:
+                if attempt == 0 and not self._mem and not self._my and self.kind == "sqlite" and write and self._unwritable(e):
+                    self._degrade(str(e)); continue
+                raise
+            finally:
+                if not ismem:
+                    c.close()
 
     # chats
     def new_chat(self, owner, title="New chat"):
