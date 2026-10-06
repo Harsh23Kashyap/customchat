@@ -202,3 +202,10 @@ html[data-sidebar=hidden] .side{transition:transform .28s var(--ease)}
 @media(prefers-reduced-motion:no-preference){
   :root{transition:--brand .35s ease,--ink .35s ease,--cream .35s ease,--paper .35s ease,--line .35s ease,--mut .35s ease,--soft .35s ease,--lime .35s ease,--on-brand .35s ease,--on-lime .35s ease,--dens .26s var(--ease)}
 }
+
+/* code editor rises in when its section opens; lint messages fade in */
+@media(prefers-reduced-motion:no-preference){
+  .cm-editor{animation:m-up .2s var(--ease) both}
+  .cm-panel-lint li,.cm-diagnostic{animation:m-in .18s var(--ease) both}
+  .logoprev.leave{opacity:0;transform:scale(.98);transition:opacity .18s ease-out,transform .18s ease-out}
+}

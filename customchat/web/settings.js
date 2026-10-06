@@ -288,7 +288,7 @@ function logoControl(f, current) {
   });
   fe.addEventListener("input", () => { st.feather = +fe.value; render(); });
   rb.addEventListener("change", () => { st.strip = rb.checked; render(); });
-  rm.addEventListener("click", () => { orig = null; prev.hidden = true; before.hidden = true; onpage.hidden = true; rm.hidden = true; fe.disabled = rb.disabled = true; file.value = ""; setv(f, ""); });
+  rm.addEventListener("click", () => { orig = null; prev.classList.add("leave"); setTimeout(() => { prev.hidden = true; prev.classList.remove("leave"); }, 180); before.hidden = true; onpage.hidden = true; rm.hidden = true; fe.disabled = rb.disabled = true; file.value = ""; setv(f, ""); });
   const box = el("div", { class: "logobox" });
   const take = (fl) => { if (!fl || !/^image\//.test(fl.type)) { say("Drop a PNG, JPG, WebP or GIF picture.", true); return; } const dt = new DataTransfer(); dt.items.add(fl); file.files = dt.files; file.dispatchEvent(new Event("change")); };
   let depth = 0; const over = (on) => box.classList.toggle("dragover", on);
