@@ -51,6 +51,14 @@ class Motion(unittest.TestCase):
         self.assertIn(".preview.demo", css)
         self.assertIn("data-k=motion", js)
 
+    def test_tip_underline_key_status_jump(self):
+        css, js = rd("motion.css"), rd("motion.js")
+        self.assertIn(".nf-tips .tip:hover>span:first-child", css)
+        self.assertIn("m-mark", css)
+        self.assertIn("keystate", js)
+        self.assertIn("jump-in", css)
+        self.assertIn("jump-in", js)
+
 
 if __name__ == "__main__":
     unittest.main()
