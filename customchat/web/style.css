@@ -499,3 +499,8 @@ html.preview .bar .title{font-size:13px!important}
 :root[data-theme=dark] .a sup,:root[data-theme=dark] .cite{background:rgba(255,255,255,.1)}
 .bar,header.bar{padding-left:20px;padding-right:20px}
 .ex button{align-items:center}
+
+/* round 20 */
+@media(max-width:760px){.srcs button.s .st{font-size:13.5px}.cmeta,.cmeta span{font-size:12.5px}.meta.fu .chip{font-size:14.5px}}
+.bubble.none ul,.nf ul{list-style:none;padding-left:0}.bubble.none li,.nf li{position:relative;padding-left:16px}.bubble.none li::before,.nf li::before{content:"";position:absolute;left:2px;top:.7em;width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.5}
+.srcs button.s .n,.srcs button.s b{margin-left:-2px}

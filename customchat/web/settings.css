@@ -632,3 +632,18 @@ input[type=text],input[type=password],input:not([type]),select,.cs-btn{min-heigh
 .presets{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .check,label.check{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px}
 .seg.mini{background:rgba(23,63,53,.07)}.seg.mini button[aria-checked=true]{background:#fff!important;color:#173f35!important;box-shadow:0 1px 3px rgba(0,0,0,.15)!important}
+
+/* round 20 */
+@media(max-width:1000px){
+ nav.menu{flex-wrap:nowrap!important;overflow-x:auto!important;scroll-snap-type:x proximity;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 90%,transparent)!important;mask-image:linear-gradient(90deg,#000 90%,transparent)!important;padding-right:32px;gap:8px}
+ nav.menu::-webkit-scrollbar{display:none}
+ nav.menu a{flex:none;scroll-snap-align:start;min-height:44px;border:0;background:rgba(23,63,53,.06)}
+}
+input[type=text],input[type=password],input:not([type]),textarea,select,.cs-btn{background:rgba(23,63,53,.05)!important;border:1px solid transparent!important}
+input:focus-visible,textarea:focus-visible,.cs-btn:focus-visible,select:focus-visible{outline:0;border-color:var(--cfg-accent,#173f35)!important;box-shadow:0 0 0 3px rgba(23,63,53,.14)}
+:root[data-theme=dark] input[type=text],:root[data-theme=dark] input[type=password],:root[data-theme=dark] textarea,:root[data-theme=dark] .cs-btn{background:rgba(255,255,255,.06)!important}
+.tile .head b{font-size:19px}
+.tile .head .mini,.head button.mini{background:none!important;border:0!important;color:#7a887f!important;font-size:12.5px;text-decoration:none;min-height:32px;padding:0 8px}
+.head button.mini:hover{color:#173f35!important;text-decoration:underline}
+input[type=range]::-webkit-slider-thumb{width:20px;height:20px;margin-top:-8px}
+@media(min-width:1181px){.preview{position:sticky;top:16px;align-self:start;max-height:calc(100vh - 32px)}}
