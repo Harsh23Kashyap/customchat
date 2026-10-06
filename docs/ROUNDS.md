@@ -414,3 +414,12 @@ Gemini text used as design input only. Skipped the left-border advice (house rul
 - Save/Load state cards equal height (243 and 243) and equal padding.
 - Chat header Configuration link weight 500.
 Open: nothing new. Checks are DOM and computed-style numbers (p64.cjs), not pixels.
+
+## Pass 64 (Gemini round 3, 88/100, plus B2 pixels on pass 64)
+Gemini text used as design input only. No resting pills (house rule); hover and press tint instead.
+- Save/Load state: inputs 100% width, 44px high, placeholder fits; Save, Load, Delete all 40px high on one baseline (top 833); cards equal width 242 and equal height 213 at 1600.
+- Settings grid: nav 170px, gap 22px, cards 566px wide, container 1180px (nav to cards gap 22).
+- Sidebar active row: 14px right padding, 4px icon gap, title max-width leaves room for icons.
+- Composer: textarea 38px high, line-height 20px, centre 714 equals icon centre 714.
+- Answer actions: hover tint (8% green) and press tint on buttons, 8px radius, no resting background.
+Open: Gemini's ask for resting pill containers was declined on purpose.
