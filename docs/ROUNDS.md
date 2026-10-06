@@ -501,3 +501,6 @@ One save bar for the look: the per-panel Save and Reset blocks are gone from the
 
 ## Pass 78 (round 10)
 Serif 22px panel headings, prompt statuses right aligned, preset padding 16px, one segmented style, 4px slider, Preview bar blur + safe-area padding, larger empty state (34px/16px), no-evidence text no italics, stronger sidebar and answer type. Left-border audit: 0 found.
+
+## Pass 79 (round 11)
+Mobile provider chips become a 2-column grid, tab menu fades at the edge, stage rows 48px, monospace padded code boxes, SVG select chevrons, source chips tinted, dark muted text lifted, sidebar active row stronger.
