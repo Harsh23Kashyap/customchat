@@ -390,3 +390,13 @@ input[type=color]::-webkit-color-swatch-wrapper{padding:0}input[type=color]::-we
 .keyrow input,.keyrow select,.keyrow button{height:40px;box-sizing:border-box}
 #cfgmode{padding:2px}
 #cfgmode [aria-checked=true]{box-shadow:0 2px 4px rgba(0,0,0,.12)}
+
+/* round 4: preview becomes a bottom bar, never floats over controls */
+@media(max-width:1000px){
+#pvfab{left:0;right:0;bottom:0;width:100%;min-height:56px;padding:0 16px max(0px,env(safe-area-inset-bottom));border-radius:0;background:var(--paper,#fffdf7);color:#173f35;border-top:1px solid rgba(23,63,53,.14);box-shadow:0 -6px 20px rgba(23,63,53,.06);font-weight:600;justify-content:space-between}
+#pvfab::after{content:"";width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-135deg) translate(-2px,-2px);opacity:.6}
+body.pvopen #pvfab::after{transform:rotate(45deg) translate(-2px,-2px)}
+body{padding-bottom:96px!important}main.card{margin-bottom:0}
+}
+:root[data-theme=dark] #pvfab{background:#0d211c;color:#f3f0e7;border-top-color:rgba(255,255,255,.10)}
+@media(max-width:1000px){main.card{padding-bottom:88px}}

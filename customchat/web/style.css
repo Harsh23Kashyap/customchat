@@ -365,3 +365,22 @@ html.preview .bar .title{font-size:13px!important}
 .row.u .bubble{padding:10px 14px;border-radius:14px;max-width:80%}
 .thread{padding-left:16px;padding-right:16px}.composer{padding-left:16px;padding-right:16px}
 }
+
+/* round 4 */
+.box{border-color:rgba(23,63,53,.22)}
+.srcs button.s{background:transparent;border-radius:8px;padding:10px 8px;margin:0 -8px;transition:background-color .15s}
+.srcs button.s:hover{background:color-mix(in srgb,var(--brand) 7%,transparent)}
+.ex button{background:transparent!important;border:0!important;border-radius:8px;text-align:left;padding:10px 8px;box-shadow:none}
+.ex button:hover{background:color-mix(in srgb,var(--brand) 7%,transparent)!important}
+.ex button::after{content:"\2192";margin-left:8px;color:var(--mut)}
+.ex{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.hero h1,#empty h1,.empty h1{font-size:calc(28px*var(--fs,1));line-height:1.2}
+:root[data-theme=dark]{--cream:#07130f;--paper:#0b1c16;--bot:#10261e;--soft:#10261e;--side-bg:#0d201a;--mut:#a7b5ae}
+:root[data-theme=dark] .box{background:#10261e}
+@media(max-width:760px){
+.thread,.composer{padding-left:20px;padding-right:20px}
+.ans,.bubble{font-size:14.5px;line-height:1.5}
+.hero h1,#empty h1,.empty h1{font-size:calc(24px*var(--fs,1))}
+.srcs button.s .st{font-size:13px;line-height:18px}
+.cmeta{font-size:11px;line-height:15px}
+}
