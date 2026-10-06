@@ -556,3 +556,9 @@ Copy button confirms in place (tick, "Copied" for 1.6 s, plus the toast), send b
 - Copy is hidden when there is no answer to copy.
 - Mobile answer actions have wider spacing and 36px targets.
 - Skipped on purpose: borders on inputs (house rule: filled borderless inputs), pill-free chips stay.
+
+## Pass 96 (polish from R25 tech vs non-tech review)
+- Sample app tagline no longer shows a file path: "Ask questions about your documents".
+- No-evidence action row reads "See which documents this chat uses".
+- The collapsed actions button reads "Details" when there is no answer to act on (was "More").
+- Not changed: Simple already hides Prompts and Code. Model stays visible in Simple because the key and provider are first-run needs.
