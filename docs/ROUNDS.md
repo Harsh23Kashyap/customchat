@@ -365,3 +365,6 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 
 ## Pass 55
 - Code editor now wraps long lines with the editor's own line wrapping (the CSS-only wrap in pass 54 did not show in pixels). Check with a 260-character comment line: that line is 105 px tall (several rows), the other long lines 35 and 53 px, no horizontal scroll.
+
+## Pass 56
+- Code editor: wrapped rows have a 20 px hanging indent. Measured on the 260-character line: first row starts at x=170, continuation rows at x=190. Narrow check at 480 px wide: no horizontal scroll, the long line wraps to 175 px tall.
