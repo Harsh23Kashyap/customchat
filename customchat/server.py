@@ -98,7 +98,12 @@ def make_handler(cfg, engine):
             n = int(self.headers.get("Content-Length") or 0)
             if n > 11_500_000:
                 raise OverflowError("Request too large")
-            return json.loads(self.rfile.read(n) or b"{}")
+            d = json.loads(self.rfile.read(n) or b"{}")
+            if d is None:
+                return {}
+            if not isinstance(d, dict):
+                raise ValueError("The request must be a JSON object")
+            return d
 
         def _route(self, method):
             u = urlparse(self.path)
@@ -443,6 +448,8 @@ def make_handler(cfg, engine):
                 self._send(413, {"error": "That file is too large. The limit is 8 MB for a PDF."})
             except (ValueError, KeyError, json.JSONDecodeError) as e:
                 self._send(400, {"error": str(e) or "Bad request"})
+            except (TypeError, AttributeError):
+                self._send(400, {"error": "That request had the wrong shape. Check the values and try again."})
             except providers.ProviderError as e:
                 self._send(502, {"error": str(e)})
             except Exception:
