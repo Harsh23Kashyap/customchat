@@ -320,3 +320,13 @@ html.preview .bar .title{font-size:13px!important}
 :root[data-theme=dark]{--mut:#a3b3ab}
 @media(max-width:760px){.box{min-height:48px;padding:6px 8px}.box .icon,.send{min-width:44px;min-height:44px}.box textarea{min-height:44px;padding-top:12px;padding-bottom:12px}.ex button,.chips .chip,.empty .chip{min-height:36px;font-size:13px;padding:8px 12px}.cmeta{margin-top:8px}.thread{padding-bottom:24px}}
 .nf-tips{padding-left:16px}.nf-h{font-size:14px}
+/* pass 70 */
+.bubble.none,.bubble.none .nf-h,.bubble.none .nf-tips{text-align:left}
+.srcs button.s{font-size:calc(13px*var(--fs,1));line-height:1.4;padding:6px 10px}
+.bubble.bb{font-size:calc(15px*var(--fs,1));line-height:1.55}
+.meta>button{font-size:calc(12.5px*var(--fs,1))}
+.fu-label{margin-top:4px}.meta.fu{gap:4px}
+.empty,.hero,#empty{padding-top:4vh}.empty .ex,.hero .ex,#empty .ex{margin-top:32px}
+.cmeta{padding-bottom:max(16px,env(safe-area-inset-bottom,16px))}
+:root[data-theme=dark] .box{border-color:rgba(255,255,255,.12);background:#14201b}
+.bar{align-items:center}.bar .menu,.bar #menuBtn{display:inline-flex;align-items:center;justify-content:center}

@@ -369,3 +369,19 @@ input[type=range]{min-height:24px}
 @media(max-width:560px){h1{font-size:26px;margin-bottom:6px}.lead{font-size:14px;line-height:1.5;margin-bottom:12px}input[type=range]{min-height:44px}.row2{flex-wrap:wrap}.row2 .go,.row2 .filebtn{flex:1 1 100%}.two .sub .row2 .go{flex:1 1 auto}}
 .secfoot .go.ghost{color:#4f6158!important}
 .pvnote:not(#pvcap),#pvcap{font-size:13px}
+/* pass 70: UI round 1 (Gemini 58, ChatGPT 72) */
+input[type=text],input[type=password],input:not([type]),input[type=number],textarea,select{border:1px solid rgba(23,63,53,.22)!important;border-radius:12px;background-color:#fffdf8}
+input:focus,textarea:focus,select:focus{border-color:#173f35!important}
+h1{font-size:28px!important;line-height:34px}
+.go,.mini,#seg button{border-radius:999px}
+.tile,.sub,.ocard,.ollamabox,.pvmodel{border-radius:16px}
+input[type=range]{-webkit-appearance:none;appearance:none;background:transparent}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:#cfd9d1}
+input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:#cfd9d1}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#173f35;border:3px solid #fffdf8;margin-top:-8px;box-shadow:0 2px 6px rgba(23,63,53,.3)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#173f35;border:3px solid #fffdf8;box-shadow:0 2px 6px rgba(23,63,53,.3)}
+input[type=color]{-webkit-appearance:none;appearance:none;width:40px;height:40px;padding:0;border-radius:50%;overflow:hidden;cursor:pointer;border:1px solid rgba(23,63,53,.22)!important;background:none}
+input[type=color]::-webkit-color-swatch-wrapper{padding:0}input[type=color]::-webkit-color-swatch{border:0;border-radius:50%}input[type=color]::-moz-color-swatch{border:0;border-radius:50%}
+#cfgmode{background:rgba(23,63,53,.08)}#cfgmode button{padding:5px 14px;min-height:32px;font-size:13px}
+@media(max-width:1000px){body{padding-bottom:180px!important}main.card{margin-bottom:96px}#pvfab{bottom:max(20px,env(safe-area-inset-bottom))}}
+@media(max-width:560px){#cfgmode button{min-height:40px}}
