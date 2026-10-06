@@ -56,5 +56,7 @@
   <div class="savebar clean" id="savebar"><span id="dirty">No unsaved changes</span><button class="go ghost" id="resetAll">Reset look to default</button><button class="go blue" id="saveLook">Save look</button></div>
 </main>
 <script src="/settings.js"></script><script src="/codeeditor.js" defer></script><script src="/pipeline.js" defer></script><script src="/panels.js" defer></script>
+<button type="button" id="pvfab" aria-label="Show live preview" hidden>Preview</button>
+<script>(function(){var b=document.getElementById("pvfab");if(!b)return;b.hidden=false;b.addEventListener("click",function(){var o=document.body.classList.toggle("pvopen");b.textContent=o?"Close preview":"Preview";b.setAttribute("aria-label",o?"Close live preview":"Show live preview")})})()</script>
 </body>
 </html>

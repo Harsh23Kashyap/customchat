@@ -304,3 +304,15 @@ html.preview .bar .title{font-size:13px!important}
 @media(max-width:760px){.bar #style{display:none}.bar .icon{min-width:44px;min-height:44px}.bar .title{flex:1 1 auto;min-width:0}.thread{padding-left:16px;padding-right:16px}.row.u .bubble{max-width:86%}}
 .cmeta{font-size:12px!important;line-height:16px}
 @media(max-width:760px){.bar .cs-btn{display:none}}
+/* pass 67 */
+:root[data-theme=dark] .cmeta,:root[data-theme=dark] .cmeta *{color:#a9b7b0}
+.row:not(.u)+.row.u{margin-top:24px}
+.row.u .bubble.ub{padding:12px 16px}
+.bubble.bb li{line-height:1.6}.bubble.bb ul,.bubble.bb ol{line-height:1.6}
+.meta:not(.fu){column-gap:16px}
+.tab.on{box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.bar .status{transform:translateY(-1px)}
+.bar-r{gap:12px}
+.composer{padding-bottom:max(12px,env(safe-area-inset-bottom,12px))}
+.empty p,.empty .sub,.hero p{margin-top:12px}
+.nf-h{margin-top:0}
