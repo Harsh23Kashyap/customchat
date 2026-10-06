@@ -483,3 +483,6 @@ Chat column 700px centred with composer to match. Quieter sidebar, top bar contr
 
 ## Pass 72: UI round 3 fixes (part 2)
 Preview is a full-width bottom bar under 1000px (no overlap measured with visible controls). Sources are plain rows with a hover tint, example questions are text rows with an arrow, composer border softened, dark palette split into canvas #07130F, surface #0B1C16, elevated #10261E, 20px side padding and 14.5px answer text on phones. Audit: no coloured left borders, no dark borders and no resting backgrounds on action links found in the DOM at 390 chat, 390 settings, 1440 settings (composer border was dark green, now softened).
+
+## Pass 73: UI round 4 fixes
+Settings: every select is now a custom listbox (bottom sheet on phones), checkboxes are switches, file input has a styled button, no textarea resize handles, section menu is text with an underline for the active item. Chat: source numbers are round badges, dots between actions removed (16px gap), phone sources are a one-line horizontal row, phone header has blur and a faint divider, phone hint line hidden (the one-line safety note stays). Not done: single sticky save bar, real-chat preview, desktop 3-column layout, font/colour specimens, copy cut, dark code editor page.
