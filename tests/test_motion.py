@@ -87,6 +87,11 @@ class Motion(unittest.TestCase):
         self.assertIn("--rs .26s", css)
         self.assertIn("typeprev", js)
 
+    def test_dot_to_tick_and_key_tick(self):
+        css = rd("motion.css")
+        self.assertIn('#dirty:not(.dirty)::before{content:"\\2713"', css)
+        self.assertIn(".keystate.ok::before", css)
+
 
 if __name__ == "__main__":
     unittest.main()
