@@ -196,9 +196,24 @@ class Engine:
     def _fix(self, answer, evidence, ledger, asked):
         fixed = self.correct(answer, evidence, ledger, asked)
         if fixed == answer:
-            return answer, evidence, ledger
+            return self._drop_uncited_numbers(answer, evidence, ledger, asked)
         self.corrections = (getattr(self, "corrections", []) + [{"before": answer, "after": fixed}])[-20:]
         new, ev2 = self.tidy(fixed, evidence)
+        return self._drop_uncited_numbers(new, ev2, self.ledger(new, ev2, asked), asked)
+
+    def _drop_uncited_numbers(self, answer, evidence, ledger, asked):
+        """A sentence that carries a number but no [n] cannot be checked, so it is removed from the answer (kept in self.dropped)."""
+        bad = [l["claim"] for l in ledger if re.search(r"\d", l["claim"]) and not l.get("cites") and len(l["claim"].split()) >= 4 and not l["claim"].lower().startswith(("i could not", "i couldn"))]
+        out = answer
+        for c in bad:
+            if c in out:
+                out = out.replace(c, "", 1)
+        if out == answer:
+            return answer, evidence, ledger
+        self.dropped = (getattr(self, "dropped", []) + bad)[-50:]
+        out = re.sub(r"[ \t]{2,}", " ", out)
+        out = re.sub(r"\n{3,}", "\n\n", out).strip()
+        new, ev2 = self.tidy(out, evidence)
         return new, ev2, self.ledger(new, ev2, asked)
 
     @staticmethod
