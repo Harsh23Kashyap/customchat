@@ -78,11 +78,22 @@ def venv_python():
     return os.path.join(VENV, "Scripts" if os.name == "nt" else "bin", "python.exe" if os.name == "nt" else "python")
 
 
+def venv_ok():
+    """True when the .venv Python can actually run."""
+    try:
+        return subprocess.run([venv_python(), "-c", "import sys"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=20).returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
 def ensure_env():
     if sys.version_info < (3, 10):
         sys.exit("CustomChat needs Python 3.10 or newer. You have %s." % sys.version.split()[0])
     if is_wsl() and ROOT.startswith("/mnt/"):
         say("Note: this folder is on the Windows drive (%s). It works but is slow. For speed, clone the repo inside the Linux home folder (~/customchat)." % ROOT)
+    if os.path.exists(venv_python()) and not venv_ok():
+        say("The .venv folder is broken (the folder was probably moved or Python was updated). Rebuilding it ...")
+        shutil.rmtree(VENV, ignore_errors=True)
     if not os.path.exists(venv_python()):
         say("Creating a private Python environment (.venv) ...")
         try:
@@ -96,7 +107,7 @@ def ensure_env():
     want = req_hash(req)
     if not os.path.exists(stamp) or open(stamp).read() != want:
         say("Installing requirements ...")
-        r = subprocess.run([venv_python(), "-m", "pip", "install", "--disable-pip-version-check", "-r", req], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+        r = subprocess.run([venv_python(), "-m", "pip", "install", "--disable-pip-version-check", "--timeout", "30", "--retries", "3", "-r", req], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
         if r.returncode:
             say("\n".join(r.stdout.strip().splitlines()[-8:]))
             sys.exit("Could not install the requirements. Check your internet connection and run this again.")
@@ -105,6 +116,13 @@ def ensure_env():
 
 
 def ask_key(app):
+    try:
+        _ask_key(app)
+    except (EOFError, KeyboardInterrupt):
+        say("\nSkipped the key step. You can add a key later on the Configuration page, Model tab.")
+
+
+def _ask_key(app):
     from_env = [k for k in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY", "DEEPSEEK_API_KEY") if os.environ.get(k)]
     if from_env:
         say("Found %s in your environment; it will be used. Skipping the key prompt." % ", ".join(from_env))
@@ -136,6 +154,25 @@ def ask_key(app):
     say("Saved on this computer only. Pick %s on the Model tab and press Test connection." % name)
 
 
+def check(app):
+    """Plain report for support: nothing is changed."""
+    ok = True
+    def line(good, text):
+        nonlocal ok
+        ok = ok and good
+        say(("OK    " if good else "FIX   ") + text)
+    line(sys.version_info >= (3, 10), "Python %s (needs 3.10 or newer)" % sys.version.split()[0])
+    line(os.path.exists(venv_python()) and venv_ok(), ".venv present and working (run setup_and_run.py to create it)")
+    stamp = os.path.join(VENV, ".req-stamp")
+    line(os.path.exists(stamp) and open(stamp).read() == req_hash(os.path.join(ROOT, "requirements.txt")), "requirements installed and up to date")
+    line(os.path.exists(app), "app file found: %s" % app)
+    line(port_free(8095), "port 8095 is free (another port is picked automatically if not)")
+    folder = os.path.join(os.path.dirname(app), "data")
+    line(os.access(folder if os.path.isdir(folder) else os.path.dirname(app), os.W_OK), "data folder is writable")
+    say("Everything looks fine." if ok else "Fix the lines marked FIX, then run: python3 setup_and_run.py")
+    return 0 if ok else 1
+
+
 def main():
     ap = argparse.ArgumentParser(description="Set up and run CustomChat")
     ap.add_argument("--app", default=os.path.join("apps", "minimal", "app.yaml"))
@@ -143,10 +180,14 @@ def main():
     ap.add_argument("--host", default="127.0.0.1", help="use 0.0.0.0 to reach it from other devices")
     ap.add_argument("--no-browser", action="store_true")
     ap.add_argument("--no-key-prompt", action="store_true")
+    ap.add_argument("--lock-config", action="store_true", help="hide the Configuration page (for a public deployment)")
+    ap.add_argument("--check", action="store_true", help="print what is installed and what is missing, then exit")
     a = ap.parse_args()
     app = a.app if os.path.isabs(a.app) else os.path.join(ROOT, a.app)
     if not os.path.exists(app):
         sys.exit("App file not found: %s" % app)
+    if a.check:
+        sys.exit(check(app))
     ensure_env()
     if not a.no_key_prompt and sys.stdin.isatty():
         ask_key(app)
@@ -158,6 +199,9 @@ def main():
         threading.Thread(target=lambda: wait_ready(url) and open_browser(url), daemon=True).start()
     say("\nStarting CustomChat at %s  (Ctrl+C to stop)" % url)
     env = dict(os.environ, PYTHONPATH=ROOT)
+    if a.lock_config:
+        env["CUSTOMCHAT_CONFIG"] = "off"
+        say("Configuration page is hidden.")
     try:
         sys.exit(subprocess.call([venv_python(), "-m", "customchat", "run", app, "--host", a.host, "--port", str(port)], cwd=ROOT, env=env))
     except KeyboardInterrupt:
