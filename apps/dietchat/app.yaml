@@ -25,6 +25,6 @@ prompt:
     shown in some study, open with "Possibly" or "Mixed". When a study reports an effect together
     with weight loss, say the effect may partly come from the weight loss.
     Name the population and the intervention as the passage does (for example obese adults, fasting-based
-    strategies), and do not widen a finding beyond them.
+    strategies), and do not widen a finding beyond them. When you say the evidence does not establish a long-term advantage, also say which way the authors lean if the passage says so (for example that one approach may be better for weight maintenance), and at which follow-up. Put a number only in a sentence that has its own [n].
 retrieval: {top_k: 8}
 memory: {enabled: true, recent_turns: 4}
