@@ -233,12 +233,12 @@ async function stream(body, onEvent) {
   const h = { "Content-Type": "application/json" };
   if (S.token) h.Authorization = "Bearer " + S.token;
   const r = await fetch("/api/ask-stream", { method: "POST", headers: h, body: JSON.stringify(body), signal: aborter.signal });
-  if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.error || "Request failed"); }
+  if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.error || ("The app returned an error (HTTP " + r.status + ")")); }
   const reader = r.body.getReader(), dec = new TextDecoder(); let buf = "";
   for (;;) {
     const { value, done } = await reader.read(); if (done) break;
     buf += dec.decode(value, { stream: true });
-    let i; while ((i = buf.indexOf("\n")) >= 0) { const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1); if (line) onEvent(JSON.parse(line)); }
+    let i; while ((i = buf.indexOf("\n")) >= 0) { const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1); if (line) { let ev; try { ev = JSON.parse(line); } catch (e) { continue; } onEvent(ev); } }
   }
 }
 async function send() {
@@ -257,17 +257,23 @@ async function send() {
       else if (ev.type === "done") result = ev.data;
       else if (ev.type === "error") err = ev.data;
     });
-  } catch (e) { err = e.name === "AbortError" ? "Stopped" : e.message; }
+  } catch (e) { err = e.name === "AbortError" ? "Stopped" : (e instanceof TypeError ? "Could not reach the app. Is it still running?" : e.message); }
+  if (!result && !err) err = text ? "The answer was cut short" : "No answer came back";
   if (result) {
     if (!S.temp) { S.chat = result.chat; S.topic = result.topic; S.newTopic = false; }
     S.turns.push(result);
     if (Object.keys(result.source_errors || {}).length) toast("Some sources were unavailable: " + Object.keys(result.source_errors).join(", "));
     if (S.turns.length === 1 && !S.temp) $("#chatTitle").textContent = q.slice(0, 60);
   } else {
-    const u = el("div", { class: "toast", onclick: () => { u.remove(); $("#q").value = q; send(); } }, (err || "Something went wrong") + ". Click to retry"); centerToast(u);
+    const u = el("div", { class: "toast", onclick: () => { u.remove(); $("#q").value = q; send(); } }, (err || "Something went wrong").replace(/[.?!]+$/, "") + ". Click to retry"); centerToast(u);
     document.body.append(u); setTimeout(() => u.remove(), 7000);
   }
   S.busy = false; applyIcons(); $("#send").setAttribute("aria-label", "Send"); drawThread(); loadList(); $("#q").focus();
+  if (!result) {
+    // keep what the user typed, and any text that did arrive, instead of losing both
+    if (text && err !== "Stopped") { const w2 = $("#thread .wrap") || $("#thread"); w2.querySelector(".hero")?.remove(); w2.append(el("div", { class: "q", text: q }), el("div", { class: "a" }, text + "\n\n(Cut short. Click the notice to ask again.)")); }
+    else if (!$("#q").value) { $("#q").value = q; autosize(); }
+  }
 }
 async function uploadDialog() {
   const link = prompt("Paste a web page link to add it as a source, or press Cancel to choose files");
