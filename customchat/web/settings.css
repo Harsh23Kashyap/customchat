@@ -284,5 +284,10 @@ label.check:has(input:disabled){color:#8a95a5}
 
 .lead{max-width:600px;margin-left:auto;margin-right:auto}.go,.mini{border-radius:12px}
 
-.layout{max-width:1180px;margin-left:auto;margin-right:auto}
+.layout{max-width:1180px;grid-template-columns:170px minmax(0,1fr) 400px;gap:22px;margin-left:auto;margin-right:auto}
 .two{align-items:stretch}.two .sub{display:flex;flex-direction:column;gap:8px;padding:16px;box-sizing:border-box;height:100%}.two .sub>:last-child{margin-top:auto}
+.two .sub .go{white-space:nowrap;height:40px;padding:0 22px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;width:auto;align-self:center;margin-top:auto}
+.two .sub .row2{margin-top:auto}.two .sub .row2 .go{margin-top:0;padding:0 22px}
+.two .sub input,.two .sub select{width:100%;box-sizing:border-box;min-width:0;padding-left:12px;padding-right:12px;font-size:14px}
+.two .sub input::placeholder{font-size:13.5px}
+.two .sub input,.two .sub select{height:44px}

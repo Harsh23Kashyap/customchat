@@ -278,3 +278,8 @@ html[data-theme=dark] .meta .chip:not(.on){border-color:transparent;background:t
 .meta>*+*{position:relative}.meta>*+*::before{content:"\00b7";position:absolute;left:-8px;top:50%;transform:translateY(-52%);color:var(--mut);opacity:.7;pointer-events:none;font-weight:700}
 .meta.fu>*+*::before{content:none}.meta>.more::before{left:-8px}
 .bubble.none{color:var(--mut)}.bubble.none .a,.bubble.none p{font-style:italic;color:var(--mut)}
+.box{align-items:flex-end}.box textarea{min-height:38px;box-sizing:border-box;padding-top:9px;padding-bottom:9px;line-height:20px}
+.item{padding-right:14px}.item .acts{gap:4px}.item.on .t,.item:hover .t{max-width:calc(100% - 96px)}
+.meta>button,.meta>a{border-radius:8px;padding:6px 6px;margin:-6px -2px;transition:background-color .15s}
+@media(hover:hover){.meta>button:hover{background:color-mix(in srgb,var(--brand) 8%,transparent)}}
+.meta>button:active{background:color-mix(in srgb,var(--brand) 12%,transparent)}
