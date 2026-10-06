@@ -48,7 +48,8 @@ async function api(path, body) {
   if (!r.ok) throw new Error(d.error || "Request failed");
   return d;
 }
-function toast(msg) { const t = el("div", { class: "toast", role: "status", "aria-live": "polite", text: msg }); document.body.append(t); setTimeout(() => t.remove(), 2200); }
+function centerToast(t) { const m = document.querySelector(".main"); if (m) { const r = m.getBoundingClientRect(); t.style.left = (r.left + r.width / 2) + "px"; } return t; }
+function toast(msg) { const t = el("div", { class: "toast", role: "status", "aria-live": "polite", text: msg }); document.body.append(t); centerToast(t); setTimeout(() => t.remove(), 2200); }
 
 function inline(parent, text, evidence) {
   // safe inline markdown: **bold**, `code`, and [n] citations. Everything is text nodes.
@@ -132,7 +133,7 @@ function turnView(t, prev) {
   }
   meta.append(el("button", { "data-more": "1", class: "chip del", title: "Delete this answer", onclick: async () => {
     await api("/api/delete-turn", { turn: t.id }); S.turns = S.turns.filter((x) => x.id !== t.id); drawThread();
-    const u = el("div", { class: "toast", onclick: async () => { await api("/api/restore-turn", { turn: t.id }); S.turns = await api("/api/turns?chat=" + S.chat); drawThread(); u.remove(); } }, "Answer deleted. Click to undo");
+    const u = el("div", { class: "toast", onclick: async () => { await api("/api/restore-turn", { turn: t.id }); S.turns = await api("/api/turns?chat=" + S.chat); drawThread(); u.remove(); } }, "Answer deleted. Click to undo"); centerToast(u);
     document.body.append(u); setTimeout(() => u.remove(), 6000); } }, "Delete"));
   const more = [...meta.querySelectorAll("[data-more]")];
   if (more.length) { const d = el("details", { class: "more" }, el("summary", { class: "chip", title: "More actions" }, "More")); const box = el("div", { class: "more-box" }); more.forEach((b) => box.append(b)); d.append(box); meta.append(d); }
@@ -186,7 +187,7 @@ async function loadList() {
         el("span", { class: "acts" },
           el("button", { class: c.pinned ? "is-pinned" : "", title: c.pinned ? "Unpin" : "Pin", "aria-label": (c.pinned ? "Unpin " : "Pin ") + c.title, "aria-pressed": c.pinned ? "true" : "false", onclick: async (e) => { e.stopPropagation(); await api("/api/pin", { chat: c.id, pinned: !c.pinned }); loadList(); } }, svg("pin")),
           el("button", { title: "Rename", "aria-label": "Rename " + c.title, onclick: async (e) => { e.stopPropagation(); const t = prompt("Rename chat", c.title); if (t) { await api("/api/rename", { chat: c.id, title: t }); loadList(); } } }, svg("edit")),
-          el("button", { title: "Delete", "aria-label": "Delete " + c.title, onclick: async (e) => { e.stopPropagation(); const wasOpen = S.chat === c.id; await api("/api/delete", { chat: c.id }); if (wasOpen) newChat(); loadList(); const u = el("div", { class: "toast", onclick: async () => { await api("/api/restore", { chat: c.id }); loadList(); u.remove(); if (wasOpen) openChat(c.id); } }, "Chat deleted. Undo"); document.body.append(u); setTimeout(() => u.remove(), 6000); } }, svg("trash"))))); });
+          el("button", { title: "Delete", "aria-label": "Delete " + c.title, onclick: async (e) => { e.stopPropagation(); const wasOpen = S.chat === c.id; await api("/api/delete", { chat: c.id }); if (wasOpen) newChat(); loadList(); const u = el("div", { class: "toast", onclick: async () => { await api("/api/restore", { chat: c.id }); loadList(); u.remove(); if (wasOpen) openChat(c.id); } }, "Chat deleted. Undo"); document.body.append(u); centerToast(u); setTimeout(() => u.remove(), 6000); } }, svg("trash"))))); });
     } else {
       const rows = await api("/api/topics");
       if (!rows.length) list.append(el("div", { class: "empty", text: "Conversations appear after your first question." }));
@@ -213,7 +214,7 @@ async function openTopic(id) {
   S.turns = await api("/api/topic-turns?topic=" + id);
   $("#chatTitle").textContent = "Conversation"; $("#app").classList.remove("menu-open"); drawThread();
 }
-function newChat() { setTemp(false); S.chat = null; S.topic = null; S.newTopic = false; S.turns = []; $("#chatTitle").textContent = "New chat"; $("#app").classList.remove("src", "menu-open"); drawThread(); $("#q").focus(); }
+function newChat() { setTemp(false); S.chat = null; S.topic = null; S.newTopic = false; S.turns = []; $("#chatTitle").textContent = "New chat"; $("#app").classList.remove("src", "menu-open"); drawThread(); loadList(); $("#q").focus(); }
 
 let aborter = null;
 async function stream(body, onEvent) {
@@ -252,7 +253,7 @@ async function send() {
     if (Object.keys(result.source_errors || {}).length) toast("Some sources were unavailable: " + Object.keys(result.source_errors).join(", "));
     if (S.turns.length === 1 && !S.temp) $("#chatTitle").textContent = q.slice(0, 60);
   } else {
-    const u = el("div", { class: "toast", onclick: () => { u.remove(); $("#q").value = q; send(); } }, (err || "Something went wrong") + ". Click to retry");
+    const u = el("div", { class: "toast", onclick: () => { u.remove(); $("#q").value = q; send(); } }, (err || "Something went wrong") + ". Click to retry"); centerToast(u);
     document.body.append(u); setTimeout(() => u.remove(), 7000);
   }
   S.busy = false; applyIcons(); $("#send").setAttribute("aria-label", "Send"); drawThread(); loadList(); $("#q").focus();
