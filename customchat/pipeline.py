@@ -211,6 +211,7 @@ class Engine:
             return "".join("[%d]" % n for n in nums) if nums else m.group(0)
         answer = re.sub(r"\[(\d+(?:\s*[,\-\u2013]\s*\d+)+)\]", expand, answer)
         answer = re.sub(r"(?<=[.!?:;,])(?=\[\d+\])", " ", answer)
+        answer = re.sub(r"\s*((?:\[\d+\]\s*)+)\*\*", lambda m: "** " + m.group(1).strip(), answer)  # citations go outside bold
         order = []
         for m in re.findall(r"\[(\d+)\]", answer):
             m = int(m)
@@ -267,7 +268,7 @@ class Engine:
     def ledger(answer, evidence, asked=""):
         valid = {e["n"] for e in evidence}
         out = []
-        for sent in re.split(r"(?<=[.!?])\s+(?!\[\d+\])|(?<=[.!?]\*\*)\s+|(?<=\])\s+(?=[A-Z0-9*])", answer):
+        for sent in re.split(r"(?<=[.!?])\s+(?!\[\d+\])|(?<=[.!?]\*\*)\s+(?!\[\d+\])|(?<=\])\s+(?=[A-Z0-9*])", answer):
             cites = [int(n) for n in re.findall(r"\[(\d+)\]", sent)]
             if sent.strip():
                 claim = re.sub(r"\s*\[\d+\]", "", sent).strip()
@@ -277,7 +278,8 @@ class Engine:
                 vague = "regain" in claim.lower() and "fat" not in claim.lower() and "fat mass regain" in blob
                 animal = bool(good) and re.search(r"\b(rats?|mice|mouse|murine|rodents?|mouse|monkeys?|zebrafish)\b", blob) is not None and re.search(r"\b(rats?|mice|mouse|murine|rodents?|animals?|preclinical|monkeys?|zebrafish)\b", claim.lower()) is None
                 weak = [c for c in good if len(good) > 1 and Engine.support(claim, [c], evidence) < 0.34]
-                out.append({"weak_cites": weak, "claim": claim, "overlap": Engine.support(claim, good, evidence), "cites": good, "bad_numbers": bad,
+                uncited = not cites and len(re.findall(r"[A-Za-z]{3,}", claim)) >= 6 and not claim.lower().startswith(("i could not", "i couldn"))
+                out.append({"uncited": uncited, "weak_cites": weak, "claim": claim, "overlap": Engine.support(claim, good, evidence), "cites": good, "bad_numbers": bad,
                             "invalid": [c for c in cites if c not in valid], "supported": bool(cites) and all(c in valid for c in cites) and not bad and not vague and not animal, "vague_regain": vague, "animal_unmarked": animal})
         if out:
             lead = re.sub(r"[*_\s]", "", out[0]["claim"].lower())
