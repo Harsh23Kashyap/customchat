@@ -127,3 +127,17 @@
     }, true);
   } catch (e) { /* decoration only */ }
 })();
+
+// slider values ease instead of snapping: the number brightens as it changes
+(function () {
+  try {
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var timers = new WeakMap();
+    document.addEventListener("input", function (e) {
+      var t = e.target; if (reduce || !t || t.type !== "range") return;
+      var o = t.closest("label,.rangerow,.row2,div"); o = o && o.querySelector("output"); if (!o) return;
+      o.classList.remove("tick"); void o.offsetWidth; o.classList.add("tick");
+      clearTimeout(timers.get(o)); timers.set(o, setTimeout(function () { o.classList.remove("tick"); }, 160));
+    }, true);
+  } catch (e) { /* decoration only */ }
+})();

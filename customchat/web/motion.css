@@ -187,3 +187,5 @@ html[data-sidebar=hidden] .side{transition:transform .28s var(--ease)}
   .keystate.swap,.testres.swap{animation:m-in .18s var(--ease)}
   .tile.jump-in{animation:m-up .22s var(--ease) both}
 }
+@keyframes m-num{from{opacity:.55}to{opacity:1}}
+@media(prefers-reduced-motion:no-preference){output.tick{animation:m-num .1s ease-out}}
