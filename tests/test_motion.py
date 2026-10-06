@@ -63,6 +63,14 @@ class Motion(unittest.TestCase):
         self.assertIn("output.tick", rd("motion.css"))
         self.assertIn('t.type !== "range"', rd("motion.js"))
 
+    def test_spacing_sheet_icons(self):
+        css = rd("motion.css")
+        self.assertIn("@property --dens", css)
+        self.assertIn("--dens .26s", css)
+        self.assertIn("m-sheet", css)
+        self.assertIn(".ic:hover{transform:scale(1.04)}", css)
+        self.assertIn("overrides Full", rd("settings.js"))
+
 
 if __name__ == "__main__":
     unittest.main()
