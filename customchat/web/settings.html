@@ -18,8 +18,8 @@
         <div class="help">A preset changes colors, fonts, background and shape in one click. You can still adjust anything afterwards. Nothing is kept until you press <b>Save look</b>.</div>
         <div class="presets" id="presets"></div>
         <div class="two">
-          <div class="sub"><b>Save current state</b><small>Stores the model settings under a name</small><input id="sname" placeholder="Enter state name" aria-label="State name"><button class="go green" id="save">Save state</button></div>
-          <div class="sub"><b>Load saved state</b><small>Brings back a model setup you saved</small><select id="states" aria-label="Saved states"></select><div class="row2"><button class="go blue" id="load">Load</button><button class="go ghost" id="del">Delete</button></div></div>
+          <div class="sub"><b>Save current look</b><small>Name it, then save it</small><input id="sname" placeholder="Look name" aria-label="State name"><button class="go green" id="save">Save look</button></div>
+          <div class="sub"><b>Load a saved look</b><small>Pick one to bring it back</small><select id="states" aria-label="Saved states"></select><div class="row2"><button class="go blue" id="load">Load</button><button class="go ghost" id="del">Delete</button></div></div>
         </div>
         <div class="row2"><button class="go ghost" id="exp">Export look (file)</button><label class="go ghost filebtn" for="imp">Import look<input id="imp" type="file" accept="application/json,.json" hidden></label></div>
       </section>
@@ -46,7 +46,7 @@
       <p class="msg" id="msg" role="status" aria-live="polite"></p>
     </div>
     <aside class="preview" id="pvbox" aria-label="Live preview">
-      <div class="pvhead"><b>Live preview</b><div class="seg mini" id="pvmode" role="radiogroup" aria-label="Preview as"><button type="button" data-m="light" aria-checked="true">Light</button><button type="button" data-m="dark" aria-checked="false">Dark</button></div></div>
+      <div class="pvhead"><b>Live preview</b><span class="livetag">Updates as you edit</span><div class="seg mini" id="pvmode" role="radiogroup" aria-label="Preview as"><button type="button" data-m="light" aria-checked="true">Light</button><button type="button" data-m="dark" aria-checked="false">Dark</button></div></div>
       <div class="pvmodel" id="pvmodel" hidden aria-live="polite"></div>
       <iframe id="pv" src="/?preview=1" title="Preview of the chat" loading="eager"></iframe>
       <small class="pvnote" id="pvcap"></small><small class="pvnote">This is the real chat with sample messages.</small>

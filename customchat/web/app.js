@@ -109,6 +109,10 @@ function turnView(t, prev) {
   if (prev && prev.chat !== t.chat) nodes.push(el("div", { class: "divider", text: "Earlier chat" }));
   nodes.push(el("div", { class: "row u" }, avatar("you"), el("div", { class: "bubble ub", text: t.question })));
   const bub = el("div", { class: "bubble bb" + (t.evidence.length ? "" : " none") }, renderAnswer(t.answer, t.evidence));
+  if (!t.evidence.length) {
+    bub.prepend(el("div", { class: "nf-h", text: "No evidence found" }));
+    bub.append(el("ul", { class: "nf-tips" }, el("li", { text: "Try asking about a different topic" }), el("li", { text: "Check the sources this chat is set up with" }), el("li", { text: "Rephrase with words from your documents" })));
+  }
   const srcs = !t.evidence.length ? null : (el("div", { class: "srcs" }, t.evidence.slice(0, 5).map((e) => el("button", { class: "s", title: e.title, onclick: () => showSources(t.evidence, e.n) }, el("span", { class: "n", text: "[" + e.n + "]" }), el("span", { class: "st", text: e.title })))));
   nodes.push(el("div", { class: "row" }, avatar("bot"), bub));
   const meta = el("div", { class: "meta" });
