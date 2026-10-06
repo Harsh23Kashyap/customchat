@@ -625,3 +625,10 @@ input[id^=f-emoji]{width:64px!important;min-width:0;text-align:center;font-size:
 input[type=text],input[type=password],input:not([type]),select,.cs-btn{min-height:44px;padding-left:16px;border-radius:8px!important}
 .tile .head{margin-bottom:12px}
 .tile .head .ic{background:none!important;color:#173f35;width:auto;height:auto}
+
+/* round 19 */
+@media(max-width:760px){h1#h{font-size:26px;margin-bottom:8px}.modebar{margin:16px 0 24px}#cfgmode{width:100%;max-width:none}#cfgmode button{flex:1}}
+.preset{min-height:56px;width:100%}
+.presets{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.check,label.check{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px}
+.seg.mini{background:rgba(23,63,53,.07)}.seg.mini button[aria-checked=true]{background:#fff!important;color:#173f35!important;box-shadow:0 1px 3px rgba(0,0,0,.15)!important}

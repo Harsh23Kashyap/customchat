@@ -489,3 +489,13 @@ html.preview .bar .title{font-size:13px!important}
 /* round 18 */
 .box{border-radius:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 :root{--cream:#f6f1e4}
+
+/* round 19 */
+:root[data-theme=dark] .bubble.none,:root[data-theme=dark] .bubble.none *,:root[data-theme=dark] .nf,:root[data-theme=dark] .nf *{color:#c9d5ce!important}
+:root[data-theme=dark] .nf-h{color:#e8efe9!important}
+@media(prefers-color-scheme:dark){:root[data-theme=auto] .bubble.none,:root[data-theme=auto] .bubble.none *{color:#c9d5ce!important}}
+.row.u{margin-bottom:32px}
+.a sup,.cite{background:rgba(23,63,53,.08);border-radius:4px;padding:0 4px;margin:0 1px}
+:root[data-theme=dark] .a sup,:root[data-theme=dark] .cite{background:rgba(255,255,255,.1)}
+.bar,header.bar{padding-left:20px;padding-right:20px}
+.ex button{align-items:center}
