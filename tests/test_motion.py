@@ -80,6 +80,13 @@ class Motion(unittest.TestCase):
         # the picture is still hidden afterwards, so removing never leaves it stuck visible
         self.assertIn("prev.hidden = true; prev.classList.remove(\"leave\")", st)
 
+    def test_menu_radius_typeprev(self):
+        css, js = rd("motion.css"), rd("motion.js")
+        self.assertIn(".app.menu-open #menu>*{transform:rotate(90deg)}", css)
+        self.assertIn("@property --rs", css)
+        self.assertIn("--rs .26s", css)
+        self.assertIn("typeprev", js)
+
 
 if __name__ == "__main__":
     unittest.main()
