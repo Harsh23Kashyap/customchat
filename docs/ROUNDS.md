@@ -461,3 +461,11 @@ Reviewer text used as design input only. Skipped: left borders, resting pills.
 - Simple / Advanced switch on the config page, saved in the browser, Simple by default. Simple hides Prompts, Code helpers, pattern controls, line spacing, animation speed, sidebar width, image link and Ollama/guide boxes (10 sections, 10 menu items). Advanced shows all (12 and 12).
 Pages that exist: chat (/) and configuration (/settings.html). There is no About or Contact page.
 Not done: one sticky save bar instead of per-section Save and Reset, preview rebuilt from the production chat component, wider desktop sidebar.
+
+## Pass 69 (apply remaining reviewer items)
+- Sliders show their range ("0% to 160%") under the value; slider hit area 44px at 390.
+- Delete look: muted red text and a confirm dialog. Export look wording shortened; Apply replaces "Apply model settings".
+- Provider choice is a 2-column grid of 44px buttons.
+- Remove-background checkbox starts unchecked and disabled until a logo exists. Copy: "Choose a picture", "Stays on this computer", "Fonts" tab name, motion and corner roundness help, editor hint "Press Esc, then Tab, to move past the editor."
+- 390: smaller title (26px), lead 14px, export/import full width.
+Still open from the reviews: one sticky save bar, preview from the real chat component, wider desktop sidebar, row chevrons on prompt rows, collapse generated code until written, background-style swatch picker, font previews inside the font selects, layout previews, micro-animations pass.
