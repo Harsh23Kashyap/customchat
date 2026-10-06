@@ -169,3 +169,11 @@ input[type=range]::-moz-range-thumb{transition:transform var(--m-hover) var(--ea
 @media(prefers-reduced-motion:no-preference) and (min-width:861px){.app{transition:grid-template-columns var(--m-layout) var(--ease)}}
 @keyframes m-soft{from{opacity:.55}to{opacity:1}}
 @media(prefers-reduced-motion:no-preference){.preview.fade-soft{animation:m-soft .24s ease-out}}
+
+/* hidden-sidebar layout uses the same drawer and scrim as the phone */
+html[data-sidebar=hidden] .app::after{content:"";position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:24;transition:opacity .28s var(--ease)}
+html[data-sidebar=hidden] .app.menu-open::after{opacity:.35}
+html[data-sidebar=hidden] .side{transition:transform .28s var(--ease)}
+/* a no-evidence answer dims once a new question is sent; picking a motion level shows it on the preview */
+.row.stale{opacity:.55;transition:opacity .16s ease-out}
+@media(prefers-reduced-motion:no-preference){html:not([data-motion=none]) .preview.demo>*{animation:m-up .24s var(--ease) both}}

@@ -91,3 +91,21 @@
     }, true);
   } catch (e) { /* decoration only */ }
 })();
+
+// dim the old no-evidence answer when a new question arrives; demo the chosen motion level on the preview
+(function () {
+  try {
+    var th = document.getElementById("thread");
+    if (th) new MutationObserver(function (ms) {
+      ms.forEach(function (m) { m.addedNodes.forEach(function (n) {
+        if (!(n.classList && n.classList.contains("row") && n.classList.contains("u"))) return;
+        th.querySelectorAll(".row:not(.u)").forEach(function (r) { if (r.querySelector(".nf-tips")) r.classList.add("stale"); });
+      }); });
+    }).observe(th, { childList: true });
+    document.addEventListener("change", function (e) {
+      var f = e.target && e.target.closest && e.target.closest("[data-k=motion]"); if (!f) return;
+      var pv = document.querySelector(".preview"); if (!pv) return;
+      setTimeout(function () { pv.classList.remove("demo"); void pv.offsetWidth; pv.classList.add("demo"); setTimeout(function () { pv.classList.remove("demo"); }, 500); }, 60);
+    }, true);
+  } catch (e) { /* decoration only */ }
+})();
