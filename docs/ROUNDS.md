@@ -566,3 +566,4 @@ Copy button confirms in place (tick, "Copied" for 1.6 s, plus the toast), send b
 ## Pass 97 and track 5
 - Pass 97: one motion system (motion.css): entrance staggers, send readiness, preview pulse, press and hover tokens; only new rows animate. Subtle/None and reduced motion honored.
 - setup_and_run.py: WSL browser open, venv failure hint, port auto-pick, readiness wait before opening the browser, content-hash requirements stamp, pip errors shown, --host. Tested on Linux only; real WSL and Windows runs untested.
+- Pass 98 (user feedback): desktop chat column widened (980px, 24px side padding; Wide 1200px); error pages for 404, 413 and 500 (error.html, JSON kept for API clients); 413 now returned for oversize bodies; no-evidence state gets an SVG illustration; settings: neutral toolbar (no blue), one-colour preset swatches aligned, 2-up presets on phones, quieter Preview button, clearer switch.
