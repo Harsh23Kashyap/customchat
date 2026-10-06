@@ -59,6 +59,10 @@ class Motion(unittest.TestCase):
         self.assertIn("jump-in", css)
         self.assertIn("jump-in", js)
 
+    def test_slider_value_tick(self):
+        self.assertIn("output.tick", rd("motion.css"))
+        self.assertIn('t.type !== "range"', rd("motion.js"))
+
 
 if __name__ == "__main__":
     unittest.main()
