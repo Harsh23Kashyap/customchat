@@ -1,0 +1,14 @@
+[Unit]
+Description=CustomChat
+After=network-online.target mysql.service
+
+[Service]
+User=ubuntu
+WorkingDirectory=/opt/customchat
+EnvironmentFile=/etc/customchat.env
+ExecStart=/usr/bin/python3 setup_and_run.py --app apps/dietchat/app.yaml --lock-config --no-browser --no-key-prompt --host 127.0.0.1 --port 8100
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
