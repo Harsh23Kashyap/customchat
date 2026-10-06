@@ -519,3 +519,6 @@ Auto-save (1.5 s after the last change), merged Saved looks section with quiet E
 
 ## Pass 84 (round 16)
 Mobile toolbar reserves room for the Preview button, section tabs wrap instead of clipping, 13.5px helper text, 64px emoji fields, lighter dark send button, 780px desktop chat column, softer composer shadow, more safe-area padding.
+
+## Pass 85 (round 17)
+Provider selector is a 3-column grid on desktop (was clipping at 398px, scrollWidth 443), composer placeholder no longer wraps (padding-right 56px to 12px), sources stack on phones, disabled controls readable, tighter radii, dark RELATED contrast.
