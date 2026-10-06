@@ -540,3 +540,6 @@ Code-helper rows compacted, Load more as quiet text, 44px aligned key row, 20px 
 
 ## Pass 91 (round 23)
 Two-column groups and row buttons stack at 390, Preview button 44px with safe-area top, more space above group headers, dark footer text lifted, empty-state suggestions get a hairline border and 44px height.
+
+## Pass 92 (micro-animations)
+Transform/opacity-only micro-animations: staggered suggestion entrance with chevron nudge, send button hover/press, composer focus ring, citation and source hover lift, sidebar item shift, settings tiles fade-up, preset lift, button press, slider thumb grow, accordion content fade, saved-tick, custom select open. Disabled by Motion = none and prefers-reduced-motion.
