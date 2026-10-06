@@ -12,6 +12,8 @@ python3 setup_and_run.py
 
 It creates a private environment, installs what is needed, asks which AI provider you use and for its API key (typed hidden, kept only on this computer), then starts the app in your browser. Skip the key to try the offline Demo.
 
+Windows users: run it inside WSL (Ubuntu) from the Linux home folder, not from /mnt/c. If it says the environment cannot be created, run `sudo apt install python3-venv python3-pip` first. The browser opens on the Windows side. Options: `--port 8080`, `--host 0.0.0.0`, `--no-browser`. If the port is busy it picks the next free one.
+
 ## Quick start
 
 ```bash
