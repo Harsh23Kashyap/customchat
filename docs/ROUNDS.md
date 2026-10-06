@@ -368,3 +368,7 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 
 ## Pass 56
 - Code editor: wrapped rows have a 20 px hanging indent. Measured on the 260-character line: first row starts at x=170, continuation rows at x=190. Narrow check at 480 px wide: no horizontal scroll, the long line wraps to 175 px tall.
+
+## Pass 57
+- Hanging indent now follows each line's own indent: wrapped rows start 20 px right of where that line's code starts (leading spaces counted, a tab = 4). Measured at 1100 px: line with 8 leading spaces: code starts ~227, continuation 247; line with 4 spaces: ~197 and 217. The earlier fixed offset (pass 56) was replaced.
+- A first attempt did not show because CodeMirror reset the style after each update; the styles are re-applied when that happens.
