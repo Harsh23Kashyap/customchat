@@ -401,8 +401,8 @@ function buildMenu() {
   const items = [["presets", "Presets and states"], ["model", "Model"]].concat(SECTIONS.map((s) => [s.id, s.title]));
   items.forEach(([id, t]) => m.append(el("a", { href: "#sec-" + id, text: t })));
   const links = [...m.children]; links[0].classList.add("on");
-  const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) { activeSec = e.target.id.replace("sec-", ""); pvFollow(); links.forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id)); } }, { rootMargin: "-20% 0px -70% 0px" });
-  items.forEach(([id]) => { const n = document.getElementById("sec-" + id); if (n) io.observe(n); });
+  const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) { activeSec = e.target.id.replace("sec-", ""); pvFollow(); document.querySelectorAll("#menu a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id)); } }, { rootMargin: "-20% 0px -70% 0px" });
+  const watch = () => document.querySelectorAll("section.tile[id^=sec-]").forEach((n) => io.observe(n)); watch(); setTimeout(watch, 800); setTimeout(watch, 2500);
 }
 function buildPresets() {
   const box = $("#presets"); box.replaceChildren();
