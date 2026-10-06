@@ -97,7 +97,7 @@ def make_handler(cfg, engine):
         def _body(self):
             n = int(self.headers.get("Content-Length") or 0)
             if n > 11_500_000:
-                raise ValueError("Request too large")
+                raise OverflowError("Request too large")
             return json.loads(self.rfile.read(n) or b"{}")
 
         def _route(self, method):
@@ -406,11 +406,21 @@ def make_handler(cfg, engine):
                                   {"Content-Disposition": 'attachment; filename="answer.pdf"'})
             return self._send(404, {"error": "Not found"})
 
+        def _error_page(self, code):
+            """Branded HTML error page for browsers; JSON for everything else."""
+            if "text/html" not in (self.headers.get("Accept") or ""):
+                return self._send(code, {"error": ERR_PAGES.get(code, ERR_PAGES[500])[0]})
+            title, msg, art = ERR_PAGES.get(code, ERR_PAGES[500])
+            page = open(os.path.join(WEB, "error.html"), encoding="utf-8").read()
+            for k, v in (("{{CODE}}", str(code)), ("{{TITLE}}", title), ("{{MSG}}", msg), ("{{ART}}", art)):
+                page = page.replace(k, v)
+            self._send(code, page.encode(), "text/html; charset=utf-8")
+
         def _static(self, path):
             name = "index.html" if path in ("/", "") else path.lstrip("/")
             full = os.path.normpath(os.path.join(WEB, name))
             if not full.startswith(WEB + os.sep) or not os.path.isfile(full):
-                return self._send(404, {"error": "Not found"})
+                return self._error_page(404)
             ctype = mimetypes.guess_type(full)[0] or "application/octet-stream"
             data = open(full, "rb").read()
             if name == "index.html":
@@ -423,6 +433,8 @@ def make_handler(cfg, engine):
                 self._route(method)
             except PermissionError as e:
                 self._send(401 if "Sign in" in str(e) else 404, {"error": str(e)})
+            except OverflowError:
+                self._send(413, {"error": "That file is too large. The limit is 8 MB for a PDF."})
             except (ValueError, KeyError, json.JSONDecodeError) as e:
                 self._send(400, {"error": str(e) or "Bad request"})
             except providers.ProviderError as e:
@@ -433,6 +445,14 @@ def make_handler(cfg, engine):
         def do_GET(self): self._guard("GET")
         def do_POST(self): self._guard("POST")
     return H
+
+
+_DOC = '<path d="M42 24h46l20 20v82H42z"/><path d="M88 24v22h20"/><path d="M54 62h40M54 76h40M54 90h26" opacity=".55"/>'
+ERR_PAGES = {
+    404: ("Page not found", "That page does not exist. It may have moved, or the link has a typo.", _DOC + '<circle cx="96" cy="100" r="18" fill="var(--bg)"/><path d="m109 113 16 16"/>'),
+    413: ("That file is too big", "The upload is larger than the limit. PDFs can be up to 8 MB and pasted text up to 150,000 characters.", _DOC + '<path d="M75 138v-30m-12 12 12-12 12 12" stroke-width="4"/>'),
+    500: ("Something went wrong", "The server hit an unexpected problem. Nothing was lost. Try again in a moment.", _DOC + '<path d="M75 58v26M75 98v2" stroke-width="5"/>'),
+}
 
 
 def _esc(s):
