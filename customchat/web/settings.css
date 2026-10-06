@@ -585,3 +585,18 @@ details.helper>*:not(summary){margin-left:16px;margin-right:16px}details.helper>
 .cmhost .cm-activeLine,.cmhost .cm-activeLineGutter{background:rgba(255,255,255,.05)!important}
 .cmhost:not(.filled)::after{color:#8fa699}
 .cmhost .cm-selectionBackground{background:rgba(127,209,170,.28)!important}
+
+/* round 16 */
+@media(max-width:1000px){
+ .toolbar{padding-right:120px;min-height:56px;align-items:center}
+ nav.menu{flex-direction:row;flex-wrap:wrap;overflow:visible!important;-webkit-mask-image:none;mask-image:none;padding-right:0;gap:6px;position:static}
+ nav.menu a{padding:8px 12px;font-size:14px;min-height:36px;display:inline-flex;align-items:center;border:1px solid rgba(23,63,53,.14);border-radius:10px}
+}
+.tile .head small,.h,.help,.field small{font-size:13.5px;line-height:1.5}
+.tile .head small{color:#5a6a61}
+input[data-k=emoji],input[maxlength="2"],input[maxlength="4"],input.emoji{width:64px!important;text-align:center;font-size:22px}
+.mini.reset,.tile .rst,.resetgrp{align-self:center}
+.tile .head{align-items:center}
+input[type=text],input[type=password],textarea,.cs-btn,select{border-color:rgba(23,63,53,.16)!important}
+.box{box-shadow:0 1px 3px rgba(0,0,0,.05),0 6px 20px rgba(0,0,0,.04)}
+input[id^=f-emoji]{width:64px!important;min-width:0;text-align:center;font-size:22px;padding:0}

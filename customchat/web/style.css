@@ -470,3 +470,12 @@ html.preview .bar .title{font-size:13px!important}
 .meta.fu .chip{font-size:calc(14px*var(--fs,1))}
 .bubble.none strong,.bubble.none b,.nf-h{font-size:calc(16px*var(--fs,1));font-weight:600}
 @media(max-width:760px){.ans,.bubble .a{font-size:15.5px;line-height:1.6}}
+
+/* round 16 */
+:root[data-theme=dark] .send{background:#cfe9db!important;color:#0b1511!important}
+@media(prefers-color-scheme:dark){:root[data-theme=auto] .send{background:#cfe9db;color:#0b1511}}
+:root[data-theme=dark] .box{box-shadow:none}
+@media(min-width:1000px){.thread,.composer{max-width:780px}.ans,.bubble .a{font-size:calc(16.5px*var(--fs,1))}.side .list .item{font-size:calc(14.5px*var(--fs,1))}}
+.cmeta{font-size:calc(12.5px*var(--fs,1))}
+.cite,.a sup{font-size:.72em;opacity:.85}
+.composer{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 24px)}
