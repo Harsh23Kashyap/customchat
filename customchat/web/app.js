@@ -504,3 +504,4 @@ function tour() {
 })();
 
 document.getElementById("sideClose")?.addEventListener("click", () => document.getElementById("app").classList.remove("menu-open"));
+(() => { const c = document.querySelector(".composer"); if (!c) return; const set = () => document.documentElement.style.setProperty("--composer-h", Math.ceil(c.getBoundingClientRect().height + (window.innerHeight - c.getBoundingClientRect().bottom)) + "px"); set(); window.addEventListener("resize", set); if (window.ResizeObserver) new ResizeObserver(set).observe(c); })();

@@ -268,3 +268,4 @@ html[data-theme=dark] .meta .chip:not(.on){border-color:transparent;background:t
 .side-close{display:none;position:absolute;top:12px;right:12px;width:44px;height:44px;font-size:24px;line-height:1;border:0;background:transparent;color:var(--brand);border-radius:50%}
 .app.menu-open .side-close{display:inline-grid;place-items:center}
 .toast{cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.toast{bottom:calc(var(--composer-h,110px) + 16px + env(safe-area-inset-bottom,0px))}
