@@ -546,3 +546,6 @@ Transform/opacity-only micro-animations: staggered suggestion entrance with chev
 
 ## Pass 93 (R23 leftovers + Harsh note)
 Chat column centred in the main area (was left-anchored at 1440, leaving a gap on the right), empty state capped at 640px, slider value readouts aligned and no-wrap, provider buttons share one baseline, desktop preview 560px, settings content flush-left, 20px phone padding.
+
+## Pass 94 (UX pass 2, round 1)
+Copy button confirms in place (tick, "Copied" for 1.6 s, plus the toast), send button dims when the box is empty, slider inputs get accessible names, focus-visible ring on all controls. Audit at 1280: 0 unnamed controls in chat, 2 on settings (fixed).
