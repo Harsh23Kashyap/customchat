@@ -2,7 +2,7 @@
 
 Checked against the ChatGPT list of 105 (round 26). Status is from reading the code and, for most items, measuring the DOM or a computed style in a headless browser. Nothing was judged by eye. "n/a" means the app has no such control, so there is nothing to animate.
 
-Built 75, partial 14, n/a 7, not built 9 (of 105).
+Built 78, partial 13, n/a 10, not feasible 6, not built 1 (of 105).
 
 | # | Item | Status |
 |---|---|---|
@@ -77,28 +77,28 @@ Built 75, partial 14, n/a 7, not built 9 (of 105).
 | 69 | More background options | built |
 | 70 | Body font selection | built |
 | 71 | Heading font selection | built |
-| 72 | Heading sample | not built |
-| 73 | Font loading | not built |
+| 72 | Heading sample | partial |
+| 73 | Font loading | not feasible, pending owner ok (not feasible: browsers expose no fallback-to-font fade) |
 | 74 | More font options | built |
-| 75 | Corner-roundness slider | partial |
-| 76 | Corner-radius preview morph | partial |
+| 75 | Corner-roundness slider | built |
+| 76 | Corner-radius preview morph | built |
 | 77 | Spacing dropdown | built |
 | 78 | Slider thumb | built |
-| 79 | Emoji input | not built |
-| 80 | Default → custom icon transition | not built |
-| 81 | Optional icon list | not built |
+| 79 | Emoji input | n/a (no icon picker; plain emoji boxes) |
+| 80 | Default → custom icon transition | n/a (no icon picker; plain emoji boxes) |
+| 81 | Optional icon list | n/a (no icon picker; plain emoji boxes) |
 | 82 | Icon hover | built |
 | 83 | Motion option selection | built |
 | 84 | Full → Subtle | partial |
 | 85 | Subtle → None | built |
 | 86 | Motion setting confirmation | built |
 | 87 | Reduced-motion explanation | built |
-| 88 | Sidebar position | not built |
+| 88 | Sidebar position | not feasible, pending owner ok (not feasible: browsers cannot tween a grid column across sides) |
 | 89 | Hidden sidebar | built |
 | 90 | Chat-width selection | built |
-| 91 | Layout preview | not built |
+| 91 | Layout preview | not feasible, pending owner ok (not feasible: preview is a separate frame) |
 | 92 | More layout options | built |
-| 93 | Sidebar menu button | not built |
+| 93 | Sidebar menu button | built |
 | 94 | Route/tab transitions | built |
 | 95 | Scroll reveal for long configuration sections | built |
 | 96 | Sticky settings header | built |
