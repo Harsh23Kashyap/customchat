@@ -342,3 +342,10 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - The uncited flag now also goes through the rewrite ("every sentence that states a finding needs its own [n]"). Live check, 3 runs of the long-term question: leads cited in 3 of 3 (before the change: lead uncited in 2 of 3 saved ledgers); uncited sentences left: 0, 6 and 0 (of 8, 15 and 10).
 - NCBI 429: unit test forces two 429 answers then success (3 calls) and checks that a third 429 raises.
 - Clause check of "compared fasting and calorie-restricted approaches alongside exercise" against 40749646: supported; "does not establish a general long-term advantage" understates the passage, which says the IF approach "may be superior for weight maintenance" at 6 and 12 months.
+
+## Pass 50
+- A sentence that carries a number but no [n] is now dropped from the answer after the rewrite (kept in `dropped`). 3 live runs of the weight question: uncited sentences with numbers 0, 0, 0; uncited sentences 0 of 7, 0 of 9, 0 of 7.
+- Toast is centred on the chat panel, not the window. Measured centre x vs panel centre x: 675 vs 675 at 1100 px wide, 845 vs 845 at 1440 px wide (offset 0; before the change the window centre was 550 at 1100 px, 125 px left of the panel).
+- Bug: "New chat" left the last open row shaded, because the list was not redrawn. It redraws now. Check: with New chat open and the mouse on a row the row is plain+hover; after the mouse moves away it is plain.
+- Nutrition prompt: carry the authors' lean next to "does not establish a long-term advantage"; put a number only in a sentence with its own [n].
+- NCBI 429: test with 5 straight 429s: 3 calls in all (cap), waits of 1 s then 2 s, then HTTPError.
