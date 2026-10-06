@@ -537,3 +537,6 @@ Motion preview dot removed, solid circular send button, RELATED in sentence case
 
 ## Pass 90 (round 22)
 Code-helper rows compacted, Load more as quiet text, 44px aligned key row, 20px phone padding, answer line height 1.65, hanging-indent source rows, centred send arrow, no-evidence bullet spacing. Left-border audit: 0 found (light and dark).
+
+## Pass 91 (round 23)
+Two-column groups and row buttons stack at 390, Preview button 44px with safe-area top, more space above group headers, dark footer text lifted, empty-state suggestions get a hairline border and 44px height.
