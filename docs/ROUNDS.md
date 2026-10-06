@@ -513,3 +513,6 @@ Mobile Preview button moved into the header row (no fixed bottom bar, no overlay
 
 ## Pass 82 (round 14)
 Custom range sliders with filled track, code helpers as collapsed accordions, quieter presets, chat line height 1.6, composer safe area and send-button padding, sources wrap to two lines, 44px rows.
+
+## Pass 83 (round 15)
+Auto-save (1.5 s after the last change), merged Saved looks section with quiet Export/Import/Reset, 4 presets shown by default, 520px desktop preview, live typography/layout/motion previews, Prompts grouped in three stages, calmer provider selector, dark code editor.
