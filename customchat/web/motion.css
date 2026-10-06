@@ -89,3 +89,7 @@ html[data-motion=none] *,html[data-motion=none] *::before,html[data-motion=none]
 .think .dot{animation:m-dot .9s var(--ease) infinite!important}.think .dot:nth-child(2){animation-delay:.12s!important}.think .dot:nth-child(3){animation-delay:.24s!important}
 .tk{animation:m-in .06s linear both}.a#live{white-space:pre-wrap}
 @media(max-width:760px){.tk{animation-duration:.04s}}
+/* R26 Gemini items that checked out: slightly stronger header icons, chevron on the Details row */
+.bar .icon,.toolbar .icon{color:#47554d}:root[data-theme=dark] .bar .icon{color:inherit}
+.more summary::after{content:"";display:inline-block;width:6px;height:6px;margin-left:8px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;transform:rotate(45deg) translateY(-2px);opacity:.6;transition:transform .18s var(--ease)}
+.more[open] summary::after{transform:rotate(-135deg) translate(-1px,-1px)}
