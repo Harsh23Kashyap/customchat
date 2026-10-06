@@ -10,11 +10,13 @@ class WebSearch:
         self.id, self.label, self.b = block["id"], block["label"], block
         ps = block.get("providers") or ([block["provider"]] if block.get("provider") else [])
         self.providers = [p for p in ps if p in websearch.PROVIDERS]
+        self._errs = {}
 
     def _one(self, pid, query, k):
         try:
             return pid, websearch.search(pid, query, k)
-        except Exception:
+        except Exception as e:
+            self._errs[pid] = str(e)[:160]
             return pid, []
 
     def search(self, query, k=6):
@@ -22,6 +24,10 @@ class WebSearch:
             return []
         with ThreadPoolExecutor(max_workers=len(self.providers)) as ex:
             results = list(ex.map(lambda p: self._one(p, query, k), self.providers))
+        if not any(items for _, items in results) and self._errs and all(p in self._errs for p in self.providers):
+            # every provider failed: say so (the other sources still answer), instead of looking like "no results"
+            raise websearch.SearchError("; ".join(self._errs.values()))
+        self._errs = {}
         out, seen = [], set()
         for rank in range(k):  # interleave so every provider is represented
             for pid, items in results:
