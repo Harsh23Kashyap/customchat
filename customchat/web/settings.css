@@ -385,3 +385,8 @@ input[type=color]::-webkit-color-swatch-wrapper{padding:0}input[type=color]::-we
 #cfgmode{background:rgba(23,63,53,.08)}#cfgmode button{padding:5px 14px;min-height:32px;font-size:13px}
 @media(max-width:1000px){body{padding-bottom:180px!important}main.card{margin-bottom:96px}#pvfab{bottom:max(20px,env(safe-area-inset-bottom))}}
 @media(max-width:560px){#cfgmode button{min-height:40px}}
+
+/* round 3 */
+.keyrow input,.keyrow select,.keyrow button{height:40px;box-sizing:border-box}
+#cfgmode{padding:2px}
+#cfgmode [aria-checked=true]{box-shadow:0 2px 4px rgba(0,0,0,.12)}
