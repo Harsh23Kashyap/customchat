@@ -6,7 +6,7 @@ HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 COLOR_KEYS = ["brand", "accent", "bg", "surface", "ink", "muted", "line", "sidebar", "bot", "you", "danger"]
 
 LIGHT = {"brand": "#173f35", "accent": "#d7ef72", "bg": "#f8f4e9", "surface": "#fffdf7", "ink": "#17231f", "muted": "#63736c",
-         "line": "#d9e1dc", "sidebar": "#e9eee5", "bot": "#f2f3eb", "you": "#e6deca", "danger": "#a8493c"}
+         "line": "#d9e1dc", "sidebar": "#e9eee5", "bot": "#f2f3eb", "you": "#efe9d8", "danger": "#a8493c"}
 DARK = {"brand": "#8fd0b4", "accent": "#d7ef72", "bg": "#0d1613", "surface": "#121d19", "ink": "#e8efe9", "muted": "#93a39b",
         "line": "#25352f", "sidebar": "#16231e", "bot": "#1a2823", "you": "#2d3a33", "danger": "#e08a7d"}
 
