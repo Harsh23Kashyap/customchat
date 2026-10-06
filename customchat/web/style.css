@@ -262,10 +262,11 @@ html[data-theme=dark] .meta .chip:not(.on){border-color:transparent;background:t
 .meta.fu .chip:focus-visible{outline-offset:3px;border-radius:8px}
 @media(max-width:760px){.cmeta span:last-child{display:inline!important}.cmeta{flex-wrap:wrap;justify-content:center;gap:0 6px;line-height:1.4}.meta.fu .chip+.chip{border-top:1px solid var(--line)}.meta.fu{gap:0}}
 @media(max-width:760px){.meta.fu .chip,.meta.fu .chip:focus-visible{border-radius:0}}
-@media(pointer:coarse){.item .pinned{display:none}.item{min-height:52px}.item .acts{display:flex}.item .tm{display:none}.acts button{min-width:44px;min-height:44px;justify-content:center;align-items:center}}
+@media(pointer:coarse){.item .pinned{display:none}.item{min-height:52px;padding-top:4px;padding-bottom:4px}.item .acts{display:flex}.item .tm{display:none}.acts button{min-width:44px;min-height:44px;justify-content:center;align-items:center}}
 
 .acts button.is-pinned svg,.pinned svg{fill:currentColor}.acts button.is-pinned{opacity:1}
 .side-close{display:none;position:absolute;top:12px;right:12px;width:44px;height:44px;font-size:24px;line-height:1;border:0;background:transparent;color:var(--brand);border-radius:50%}
 .app.menu-open .side-close{display:inline-grid;place-items:center}
 .toast{cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .toast{bottom:calc(var(--composer-h,110px) + 16px + env(safe-area-inset-bottom,0px))}
+@media(max-width:760px){.bar .title{margin-right:6px}}
