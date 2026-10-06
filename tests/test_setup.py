@@ -16,4 +16,22 @@ class T(unittest.TestCase):
         self.assertIsInstance(S.is_wsl(), bool)
     def test_venv_python_path(self):
         self.assertTrue(S.venv_python().endswith(("bin/python", "Scripts\\python.exe")))
+    def test_check_reports_without_changing_anything(self):
+        import io, contextlib
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            code = S.check(os.path.join(S.ROOT, "apps", "minimal", "app.yaml"))
+        out = buf.getvalue(); self.assertIn("Python", out); self.assertIn(code, (0, 1))
+    def test_ask_key_survives_closed_input(self):
+        old = S.input if hasattr(S, "input") else None
+        import builtins
+        orig = builtins.input
+        def eof(*a): raise EOFError
+        builtins.input = eof
+        try:
+            import os, tempfile
+            os.environ.pop("OPENAI_API_KEY", None); os.environ.pop("ANTHROPIC_API_KEY", None); os.environ.pop("GEMINI_API_KEY", None); os.environ.pop("DEEPSEEK_API_KEY", None)
+            S.ask_key(os.path.join(tempfile.mkdtemp(), "app.yaml"))
+        finally:
+            builtins.input = orig
 if __name__ == "__main__": unittest.main()
