@@ -510,3 +510,6 @@ SVG chevrons replace arrow characters, citation chips lose resting fill (hover o
 
 ## Pass 81 (round 13)
 Mobile Preview button moved into the header row (no fixed bottom bar, no overlay), save bar only when dirty, 20px mobile margins, 40px buttons, Export/Import as quiet text, Temperature/Sources side by side on desktop, dark composer border.
+
+## Pass 82 (round 14)
+Custom range sliders with filled track, code helpers as collapsed accordions, quieter presets, chat line height 1.6, composer safe area and send-button padding, sources wrap to two lines, 44px rows.
