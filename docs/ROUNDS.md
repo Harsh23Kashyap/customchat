@@ -362,3 +362,6 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 
 ## Pass 54
 - Compare box: long JSON lines wrap instead of being cut (no horizontal scroll at 1100 px: scrollWidth <= clientWidth in both blocks); box edge at x=583, text blocks end at 552. Code editor lines wrap (pre-wrap). "Raw" and "Normalized" labels darker and bold. Shot with the raw box filled and full page height.
+
+## Pass 55
+- Code editor now wraps long lines with the editor's own line wrapping (the CSS-only wrap in pass 54 did not show in pixels). Check with a 260-character comment line: that line is 105 px tall (several rows), the other long lines 35 and 53 px, no horizontal scroll.
