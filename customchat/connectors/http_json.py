@@ -28,7 +28,12 @@ class HttpJson:
             if os.environ.get(env):
                 headers[h] = os.environ[env]
         with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=self.b.get("timeout", 20)) as r:
-            data = json.loads(r.read().decode())
+            raw = r.read().decode("utf-8", "replace")
+        try:
+            data = json.loads(raw)
+        except ValueError:
+            # Broken or non-JSON reply: keep it as one text passage so the model can still read it.
+            return [Evidence(self.b.get("name", "Source reply"), raw[:4000], url, [], "", "", self.id, 1.0)] if raw.strip() else []
         f = self.b.get("fields", {})
         out = []
         for i, item in enumerate(dig(data, self.b.get("results_path", "")) or []):
