@@ -234,7 +234,13 @@ function pushPreview() {
   const w = $("#pv").contentWindow; if (w) w.postMessage({ ccTheme: t }, location.origin);
   const w2 = $("#pv").contentWindow; if (w2 && w2.CCTheme) { /* same-origin: also apply the wording/emoji source */ w2.CCTheme.value = t; }
 }
+function updateVis() {
+  if (!theme) return; const st = theme.bg_style, pt = theme.pattern;
+  const show = { bg_color2: st === "gradient", bg_angle: st === "gradient", bg_image: st === "image", pattern_color: !!pt && pt !== "none", pattern_opacity: !!pt && pt !== "none", pattern_size: !!pt && pt !== "none" };
+  document.querySelectorAll("[data-k]").forEach((e) => { if (e.dataset.k in show) e.hidden = !show[e.dataset.k]; });
+}
 function changed() {
+  updateVis();
   clearTimeout(sendTimer); sendTimer = setTimeout(pushPreview, 40); pvExtra(); setTimeout(pvExtra, 350);
   const dirty = JSON.stringify(theme) !== JSON.stringify(saved);
   $("#dirty").textContent = dirty ? "Unsaved changes" : "No unsaved changes"; $("#dirty").className = dirty ? "dirty" : ""; $("#savebar").classList.toggle("clean", !dirty);
@@ -383,7 +389,7 @@ function drawLook() {
       const used = new Set();
       for (const [title, keys, collapsed] of gs) {
         const fs = keys.map((k) => byKey[k]).filter(Boolean); if (!fs.length) continue; fs.forEach((f) => used.add(f.key));
-        const grid = el("div", { class: "fields" + (fs.every((f) => f.type === "color") ? " colorlist" : "") }); fs.forEach((f) => grid.append(control(f)));
+        const grid = el("div", { class: "fields" + (fs.every((f) => f.type === "color") ? " colorlist" : "") }); fs.forEach((f) => { const c = control(f); if (c && c.dataset) c.dataset.k = f.key; grid.append(c); });
         if (collapsed) { const d = el("details", { class: "grp" }, el("summary", { text: title }), grid); sec.append(d); }
         else sec.append(el("div", { class: "grp" }, el("h4", { text: title }), grid));
       }
@@ -447,5 +453,6 @@ async function init() {
   $("#exp").addEventListener("click", () => { const a = el("a", { href: URL.createObjectURL(new Blob([JSON.stringify(theme, null, 1)], { type: "application/json" })), download: "customchat-look.json" }); document.body.append(a); a.click(); a.remove(); });
   $("#imp").addEventListener("change", async (e) => { const f = e.target.files[0]; if (!f) return; try { const j = JSON.parse(await f.text()); const t = Object.assign(clone(meta.default), j); t.light = Object.assign(clone(meta.default.light), j.light || {}); t.dark = Object.assign(clone(meta.default.dark), j.dark || {}); theme = t; drawLook(); changed(); say("Look imported into the preview. Press Save look to keep it."); } catch (x) { say("That file is not a CustomChat look file", true); } e.target.value = ""; });
 }
-init().catch((e) => say(e.message, true));
+init().then(() => { updateVis(); setTimeout(updateVis, 500); }).catch((e) => say(e.message, true));
 })();
+

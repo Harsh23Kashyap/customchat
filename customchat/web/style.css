@@ -316,3 +316,7 @@ html.preview .bar .title{font-size:13px!important}
 .composer{padding-bottom:max(12px,env(safe-area-inset-bottom,12px))}
 .empty p,.empty .sub,.hero p{margin-top:12px}
 .nf-h{margin-top:0}
+/* pass 68 */
+:root[data-theme=dark]{--mut:#a3b3ab}
+@media(max-width:760px){.box{min-height:48px;padding:6px 8px}.box .icon,.send{min-width:44px;min-height:44px}.box textarea{min-height:44px;padding-top:12px;padding-bottom:12px}.ex button,.chips .chip,.empty .chip{min-height:36px;font-size:13px;padding:8px 12px}.cmeta{margin-top:8px}.thread{padding-bottom:24px}}
+.nf-tips{padding-left:16px}.nf-h{font-size:14px}

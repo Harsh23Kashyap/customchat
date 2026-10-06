@@ -10,7 +10,8 @@
 <nav class="toolbar"><a href="/">Chat</a><a href="/settings.html" class="on">Configuration</a></nav>
 <main class="card">
   <h1 id="h">Configuration</h1>
-  <p class="lead" id="lead">Everything here is explained in plain words, and the live preview shows each change as you make it. Keys are never shown or stored here: they come from environment variables.</p>
+  <p class="lead" id="lead">Everything here is explained in plain words, and the live preview shows each change as you make it. Keys stay on the computer running CustomChat. Use an environment variable, or paste one on the Model tab to save it in a private local file. It is never shown again.</p>
+  <div class="modebar"><div class="seg" id="cfgmode" role="radiogroup" aria-label="Settings level"><button type="button" role="radio" data-m="simple">Simple</button><button type="button" role="radio" data-m="advanced">Advanced</button></div><span id="modehelp"></span></div>
   <div class="layout">
     <nav class="menu" id="menu" aria-label="Sections"></nav>
     <div class="col" id="col">
@@ -24,7 +25,7 @@
         <div class="row2"><button class="go ghost" id="exp">Export look (file)</button><label class="go ghost filebtn" for="imp">Import look<input id="imp" type="file" accept="application/json,.json" hidden></label></div>
       </section>
       <section class="tile" id="sec-model"><div class="head"><span class="ic purple">&#9881;</span><div><b>Model</b><small>Where the answers come from</small></div></div>
-        <div class="help">Choose the AI that writes answers. <b>Demo</b> works offline with no key. Paste your key below. It stays on this computer.</div>
+        <div class="help">Choose the AI that writes answers. <b>Demo</b> works offline with no key. Paste your key below. It is saved in a private file on this computer and never shown again.</div>
         <div class="seg" id="seg" role="radiogroup" aria-label="Provider"></div>
         <div class="ollamabox" id="ollamabox" hidden></div>
         <div class="keybox" id="keybox"><label for="apikey">API key<span class="h" id="keyh"></span></label>
@@ -58,5 +59,10 @@
 <script src="/settings.js"></script><script src="/codeeditor.js" defer></script><script src="/pipeline.js" defer></script><script src="/panels.js" defer></script>
 <button type="button" id="pvfab" aria-label="Show live preview" hidden>Preview</button>
 <script>(function(){var b=document.getElementById("pvfab");if(!b)return;b.hidden=false;b.addEventListener("click",function(){var o=document.body.classList.toggle("pvopen");b.textContent=o?"Close preview":"Preview";b.setAttribute("aria-label",o?"Close live preview":"Show live preview")})})()</script>
+<script>(function(){var K="cc_cfg_mode",bar=document.getElementById("cfgmode"),help=document.getElementById("modehelp");if(!bar)return;
+function set(m){document.body.classList.toggle("simple",m==="simple");[].forEach.call(bar.querySelectorAll("button"),function(b){var on=b.dataset.m===m;b.setAttribute("aria-checked",on?"true":"false");b.classList.toggle("on",on)});
+help.textContent=m==="simple"?"The everyday settings, in plain words.":"Adds prompts, code helpers and fine controls.";try{localStorage.setItem(K,m)}catch(e){}}
+var m="simple";try{m=localStorage.getItem(K)||"simple"}catch(e){}set(m);
+bar.addEventListener("click",function(e){var b=e.target.closest("button");if(b)set(b.dataset.m)})})()</script>
 </body>
 </html>

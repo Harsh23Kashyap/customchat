@@ -1,6 +1,6 @@
 /* Mirrors CustomNerd's Configuration page: pale blue page, one big white card, icon tiles, gradient buttons, segmented provider switch. */
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Roboto,"Open Sans",-apple-system,"Segoe UI",sans-serif;background:#f0f8ff;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 20px 60px;color:#1a202c}
+body{font-family:Roboto,"Open Sans",-apple-system,"Segoe UI",sans-serif;background:#f5f1e8;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 20px 60px;color:#1a202c}
 .toolbar{align-self:flex-end;display:flex;gap:8px;margin-bottom:24px}
 .toolbar a{color:#1a202c;text-decoration:none;padding:12px 20px;border:1px solid rgba(255,255,255,.7);border-radius:12px;background:rgba(255,255,255,.7);font-weight:500;font-size:14px;box-shadow:0 4px 16px rgba(0,0,0,.08);transition:.3s}
 .toolbar a:hover,.toolbar a.on{color:#173f35;transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.12)}
@@ -338,5 +338,25 @@ textarea[id*=code],textarea.code,.sbody textarea{font-family:ui-monospace,SFMono
 @media(max-width:560px){
  body{padding-left:12px;padding-right:12px}main.card{padding:20px 16px}
  input,select,.go,button.mini,.seg button{min-height:44px}.secfoot .go,.savebar .go{min-height:48px}
- #pvmodel,.pvm-apply,#applyModel{min-height:48px}
+ .pvm-apply,#applyModel{min-height:48px}
 }
+@media(max-width:1000px){body.pvopen .preview>*{flex:none}body.pvopen #pv{min-height:300px}}
+
+.field[hidden]{display:none!important}
+@media(max-width:1000px){
+ .menu{display:flex!important;flex-direction:row;gap:6px;overflow-x:auto;white-space:nowrap;position:sticky;top:0;z-index:40;background:#f5f1e8;padding:8px 0;margin:0 -4px;scrollbar-width:none}
+ .menu::-webkit-scrollbar{display:none}
+ .menu a{min-height:44px;display:inline-flex;align-items:center;padding:0 16px;border:1px solid #dde2da;border-radius:999px;background:#fffdf8;flex:none}
+ .layout{width:100%}
+}
+
+/* pass 68: Simple / Advanced */
+.modebar{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:0 auto 18px}
+#cfgmode{display:inline-flex;background:#ece7d8;border-radius:999px;padding:3px;gap:2px}
+#cfgmode button{border:0;background:transparent;border-radius:999px;padding:7px 18px;font:500 14px "DM Sans",sans-serif;color:#4f6158;cursor:pointer;min-height:36px;transition:background-color .2s,color .2s,box-shadow .2s}
+#cfgmode button.on{background:#fffdf8;color:#173f35;font-weight:600;box-shadow:0 1px 3px rgba(23,63,53,.15)}
+#modehelp{font-size:13px;color:#6f8077}
+body.simple #sec-prompts,body.simple #sec-code,body.simple #menu a[href="#sec-prompts"],body.simple #menu a[href="#sec-code"],
+body.simple [data-k=pattern],body.simple [data-k=pattern_color],body.simple [data-k=pattern_opacity],body.simple [data-k=pattern_size],body.simple [data-k=bg_angle],
+body.simple [data-k=line_height],body.simple [data-k=speed],body.simple [data-k=sidebar_width],body.simple [data-k=bg_image],body.simple .ollamabox,body.simple .guidebox{display:none!important}
+@media(max-width:560px){#cfgmode button{min-height:44px}}
