@@ -520,3 +520,10 @@ html.preview .bar .title{font-size:13px!important}
 .srcs button.s .st{flex:1;min-width:0}
 .send{display:inline-flex;align-items:center;justify-content:center;padding:0}
 .bubble.none li::before,.nf li::before{left:0}.bubble.none li,.nf li{padding-left:20px;margin-bottom:8px}
+
+/* round 23 */
+:root[data-theme=dark] .cmeta,:root[data-theme=dark] .cmeta span,:root[data-theme=dark] .disc{color:#c2cec7!important;opacity:1}
+@media(prefers-color-scheme:dark){:root[data-theme=auto] .cmeta,:root[data-theme=auto] .cmeta span{color:#c2cec7!important}}
+.ex button{border:1px solid rgba(23,63,53,.14);border-radius:12px;padding:12px 16px;min-height:44px;background:none;text-align:left}
+.ex button:hover{background:rgba(23,63,53,.06)}
+:root[data-theme=dark] .ex button{border-color:rgba(255,255,255,.16)}

@@ -663,3 +663,14 @@ details.helper>summary small{display:block;line-height:1.4}
 .field.color,.crow{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .keyrow{align-items:stretch}.keyrow .go,.keyrow input,.keyrow .cs-btn{height:44px;min-height:44px;box-sizing:border-box}
 @media(max-width:760px){.tile,.col .tile,.card{padding-left:20px!important;padding-right:20px!important}.modebar,h1#h,.lead{padding-left:20px;padding-right:20px}}
+
+/* round 23 */
+@media(max-width:760px){
+ .two,.grid2,.pair,.cols2,.fields .row,.fgrid{display:grid!important;grid-template-columns:1fr!important;gap:16px}
+ .row2:not(.quiet){flex-direction:column;align-items:stretch}.row2:not(.quiet)>*{width:100%}
+ .fields>*{min-width:0}
+ #pvfab{min-height:44px!important;height:44px!important;top:calc(8px + env(safe-area-inset-top))!important}
+ .toolbar{padding-top:env(safe-area-inset-top)}
+}
+.pgroup{margin:36px 0 8px}.tile .head{margin-bottom:16px}.tile h3,.sub-h,.grp{margin:32px 0 8px}
+.tile>.help{margin-bottom:20px}
