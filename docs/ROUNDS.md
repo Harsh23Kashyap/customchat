@@ -480,3 +480,6 @@ Still open: custom select popovers, toggle switches on prompt rows, row chevrons
 
 ## Pass 71: UI round 2 fixes (part 1)
 Chat column 700px centred with composer to match. Quieter sidebar, top bar controls without pills, composer radius 18 and 1px border, 38px send, source rows without borders, 32px action targets (44px on phones), tighter phone composer and disclaimer, 32/28px empty heading, dark palette with readable secondary text, equal-height key input and save button, segmented control thumb shadow. Not done yet: custom select popovers, toggles on prompt rows, sticky save bar, real-chat preview.
+
+## Pass 72: UI round 3 fixes (part 2)
+Preview is a full-width bottom bar under 1000px (no overlap measured with visible controls). Sources are plain rows with a hover tint, example questions are text rows with an arrow, composer border softened, dark palette split into canvas #07130F, surface #0B1C16, elevated #10261E, 20px side padding and 14.5px answer text on phones. Audit: no coloured left borders, no dark borders and no resting backgrounds on action links found in the DOM at 390 chat, 390 settings, 1440 settings (composer border was dark green, now softened).
