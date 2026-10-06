@@ -22,7 +22,7 @@
           <div class="sub"><b>Save current look</b><small>Name it, then save it</small><input id="sname" placeholder="Look name" aria-label="State name"><button class="go green" id="save">Save look</button></div>
           <div class="sub"><b>Load a saved look</b><small>Pick one to bring it back</small><select id="states" aria-label="Saved states"></select><div class="row2"><button class="go blue" id="load">Load</button><button class="go ghost" id="del">Delete</button></div></div>
         </div>
-        <div class="row2"><button class="go ghost" id="exp">Export look (file)</button><label class="go ghost filebtn" for="imp">Import look<input id="imp" type="file" accept="application/json,.json" hidden></label></div>
+        <div class="row2"><button class="go ghost" id="exp">Export look</button><label class="go ghost filebtn" for="imp">Import look<input id="imp" type="file" accept="application/json,.json" hidden></label></div>
       </section>
       <section class="tile" id="sec-model"><div class="head"><span class="ic purple">&#9881;</span><div><b>Model</b><small>Where the answers come from</small></div></div>
         <div class="help">Choose the AI that writes answers. <b>Demo</b> works offline with no key. Paste your key below. It is saved in a private file on this computer and never shown again.</div>
@@ -41,7 +41,7 @@
           <label>Sources per answer <output id="kv"></output><span class="h">How many passages are shown to the model for each question.</span><input id="topk" type="range" min="1" max="20" step="1"></label>
         </div>
         <label class="check"><input id="rewrite" type="checkbox"> Rewrite follow-up questions before searching</label>
-        <button class="go blue big" id="apply">Apply model settings</button>
+        <button class="go blue big" id="apply">Apply</button>
       </section>
       <div id="look"></div>
       <p class="msg" id="msg" role="status" aria-live="polite"></p>

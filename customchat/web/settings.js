@@ -125,7 +125,7 @@ async function states() {
 const C = (k, label, help) => ({ key: k, label, help, type: "color", colors: true });
 const SECTIONS = [
   { id: "wording", icon: "Aa", tone: "green", title: "Wording", sub: "The words people read", help: "Leave a box empty to keep the default text from the app file.", fields: [
-    { key: "logo", label: "Logo", help: "Optional. Drop a picture; it blends into the page.", type: "logo" },
+    { key: "logo", label: "Logo", help: "Optional. Choose a picture; it blends into the page.", type: "logo" },
     { key: "txt_title", label: "App name", help: "Shown in the top bar, the welcome screen and the browser tab.", type: "text", ph: "Blank uses the app default" },
     { key: "txt_tagline", label: "Welcome line", help: "The sentence under the name on an empty chat.", type: "text", ph: "Blank uses the app default" },
     { key: "txt_examples", label: "Example questions", help: "One per line (up to 8). They appear as buttons on an empty chat.", type: "area" },
@@ -156,14 +156,14 @@ const SECTIONS = [
     { key: "pattern_color", label: "Pattern color", help: "Leave on automatic to use the text color.", type: "color", clearable: true },
     { key: "pattern_opacity", label: "Pattern strength", help: "How visible the pattern is.", type: "range", unit: "%" },
     { key: "pattern_size", label: "Pattern size", help: "Spacing of the pattern in pixels.", type: "range", unit: "px" } ] },
-  { id: "fonts", icon: "T", tone: "green", title: "Fonts and text size", sub: "How words look", help: "Fonts load from Google Fonts. Offline, the fallback is a similar system font.", fields: [
+  { id: "fonts", icon: "T", tone: "green", title: "Fonts", sub: "How words look", help: "Fonts load from Google Fonts. Offline, the fallback is a similar system font.", fields: [
     { key: "font", label: "Body font", help: "Used for messages and buttons.", type: "select", fonts: true },
     { key: "heading_font", label: "Heading font", help: "Used for titles and the welcome name.", type: "select", fonts: true },
     { key: "custom_font", label: "Custom Google font name", help: "Type a family name exactly as on fonts.google.com, then choose Custom above.", type: "text", ph: "e.g. Merriweather" },
     { key: "font_size", label: "Text size", help: "Makes all text larger or smaller.", type: "range", unit: "%" },
     { key: "line_height", label: "Line spacing", help: "Space between lines of text.", type: "range", unit: "%" } ] },
   { id: "shape", icon: "\u25A2", tone: "blue", title: "Shape and spacing", sub: "Corners, shadows, message style", help: "Small changes here make the whole app feel different.", fields: [
-    { key: "radius", label: "Corner roundness", help: "0 is sharp corners. 100 is the default. Higher is rounder.", type: "range", unit: "%" },
+    { key: "radius", label: "Corner roundness", help: "0 is sharp. 100 is the default. Up to 160 is rounder.", type: "range", unit: "%" },
     { key: "density", label: "Spacing", help: "Compact fits more on screen. Roomy is airy.", type: "select" },
     { key: "shadow", label: "Shadow", help: "Depth of the main panel.", type: "select" },
     { key: "bubble", label: "Message style", help: "Soft: filled bubbles. Flat: no bubble for answers. Outline: thin borders.", type: "select" } ] },
@@ -174,7 +174,7 @@ const SECTIONS = [
     { key: "emoji_send", label: "Send button", help: "Replaces the arrow.", type: "emoji", ph: "Optional" },
     { key: "emoji_attach", label: "Attach button", help: "Replaces the paperclip.", type: "emoji", ph: "Optional" },
     { key: "emoji_temp", label: "Temporary chat button", help: "Replaces the clock icon.", type: "emoji", ph: "Optional" } ] },
-  { id: "motion", icon: "\u21BB", tone: "green", title: "Motion", sub: "Animations and speed", help: "Turn animation down if it feels busy. People who ask their device for less motion always get none.", fields: [
+  { id: "motion", icon: "\u21BB", tone: "green", title: "Motion", sub: "Animations and speed", help: "Turn animation down if it feels busy. Visitors whose device asks for less motion always get none.", fields: [
     { key: "motion", label: "Amount of motion", help: "Full: all effects. Subtle: quick and quiet. None: nothing moves.", type: "select" },
     { key: "entrance", label: "New message effect", help: "How messages appear.", type: "select" },
     { key: "speed", label: "Animation speed", help: "100 is normal. Higher is faster.", type: "range", unit: "%" },
@@ -257,8 +257,8 @@ function logoControl(f, current) {
   const stage = el("div", { class: "logostage", hidden: current ? undefined : "" }, el("figure", {}, before, el("figcaption", { text: "Original" })), el("figure", {}, prev, el("figcaption", { text: "After blending" })), el("figure", {}, onpage, el("figcaption", { text: "In your app" })));
   const file = el("input", { type: "file", accept: "image/png,image/jpeg,image/webp,image/gif", id: "f-logo-file", "aria-label": "Choose a logo picture" });
   const fe = el("input", { type: "range", min: "0", max: "50", value: "25", "aria-label": "Edge softness", disabled: "" });
-  const rb = el("input", { type: "checkbox", checked: "", disabled: "" });
-  const note = el("div", { class: "h", text: current ? "Choose a new picture to adjust it." : "PNG, JPG, WebP or GIF. Kept on this computer." });
+  const rb = el("input", { type: "checkbox", disabled: "" });
+  const note = el("div", { class: "h", text: current ? "Choose a new picture to adjust it." : "PNG, JPG, WebP or GIF. Stays on this computer." });
   const rm = el("button", { type: "button", class: "mini", hidden: current ? undefined : "" }, "Remove");
   function render() {
     if (!orig) return; const max = 256, k = Math.min(1, max / Math.max(orig.width, orig.height));
@@ -306,7 +306,7 @@ function control(f) {
     input.value = v; input.addEventListener("change", () => { setv(f, input.value); if (f.key === "mode" && input.value !== "auto") { editMode = input.value; setPvMode(editMode); drawLook(); } });
   } else if (f.type === "range") {
     const [lo, hi] = meta.ranges[f.key], out = el("output", { text: v + (f.unit || "") });
-    input = el("div", { class: "rangerow" }, el("input", { type: "range", id, min: lo, max: hi, value: v, "aria-label": f.label }), out);
+    input = el("div", { class: "rangerow" }, el("input", { type: "range", id, min: lo, max: hi, value: v, "aria-label": f.label }), out, el("small", { class: "rng", text: lo + (f.unit || "") + " to " + hi + (f.unit || "") }));
     input.firstChild.addEventListener("input", (e) => { out.textContent = e.target.value + (f.unit || ""); setv(f, +e.target.value); });
   } else if (f.type === "toggle") {
     input = el("label", { class: "check" }, el("input", { type: "checkbox", id }), "On"); input.firstChild.checked = !!v; input.firstChild.addEventListener("change", (e) => setv(f, e.target.checked));
@@ -447,7 +447,7 @@ async function init() {
   $("#apply").addEventListener("click", async () => { try { cur = (await api("/api/settings", { settings: read() })).settings; draw(); say("Applied. New questions use these settings."); } catch (e) { say(e.message, true); } });
   $("#save").addEventListener("click", async () => { try { const n = (await api("/api/states/save", { name: $("#sname").value })).name; await states(); say("Saved as \u201c" + n + "\u201d."); } catch (e) { say(e.message, true); } });
   $("#load").addEventListener("click", async () => { const n = $("#states").value; if (!n) return say("Choose a saved state first", true); try { cur = (await api("/api/states/load", { name: n })).settings; draw(); say("Loaded \u201c" + n + "\u201d."); } catch (e) { say(e.message, true); } });
-  $("#del").addEventListener("click", async () => { const n = $("#states").value; if (!n) return say("Choose a saved state first", true); await api("/api/states/delete", { name: n }); await states(); say("Deleted."); });
+  $("#del").addEventListener("click", async () => { const n = $("#states").value; if (!n) return say("Choose a saved look first", true); if (!confirm("Delete the saved look \"" + n + "\"?")) return; await api("/api/states/delete", { name: n }); await states(); say("Deleted."); });
   $("#saveLook").addEventListener("click", async () => { try { theme = (await api("/api/theme", { theme })).theme; saved = clone(theme); drawLook(); changed(); say("Look saved. The chat now uses it for everyone."); } catch (e) { say(e.message, true); } });
   $("#resetAll").addEventListener("click", () => { if (!confirm("Put every look setting back to the default? (Press Save look afterwards to keep it.)")) return; theme = clone(meta.default); drawLook(); changed(); });
   $("#exp").addEventListener("click", () => { const a = el("a", { href: URL.createObjectURL(new Blob([JSON.stringify(theme, null, 1)], { type: "application/json" })), download: "customchat-look.json" }); document.body.append(a); a.click(); a.remove(); });

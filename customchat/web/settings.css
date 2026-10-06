@@ -360,3 +360,12 @@ body.simple #sec-prompts,body.simple #sec-code,body.simple #menu a[href="#sec-pr
 body.simple [data-k=pattern],body.simple [data-k=pattern_color],body.simple [data-k=pattern_opacity],body.simple [data-k=pattern_size],body.simple [data-k=bg_angle],
 body.simple [data-k=line_height],body.simple [data-k=speed],body.simple [data-k=sidebar_width],body.simple [data-k=bg_image],body.simple .ollamabox,body.simple .guidebox{display:none!important}
 @media(max-width:560px){#cfgmode button{min-height:44px}}
+/* pass 69: remaining reviewer items */
+.rng{display:block;color:#6f8077;font-size:12px;margin-top:2px}
+#del.go.ghost,#del{color:#a4483f!important}
+#seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#seg button,#seg .chipmore{min-height:44px;justify-content:center;text-align:center}
+input[type=range]{min-height:24px}
+@media(max-width:560px){h1{font-size:26px;margin-bottom:6px}.lead{font-size:14px;line-height:1.5;margin-bottom:12px}input[type=range]{min-height:44px}.row2{flex-wrap:wrap}.row2 .go,.row2 .filebtn{flex:1 1 100%}.two .sub .row2 .go{flex:1 1 auto}}
+.secfoot .go.ghost{color:#4f6158!important}
+.pvnote:not(#pvcap),#pvcap{font-size:13px}
