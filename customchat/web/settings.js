@@ -301,7 +301,7 @@ function control(f) {
   } else if (f.type === "logo") {
     input = logoControl(f, v);
   } else if (f.type === "select") {
-    input = el("select", { id }); const opts = f.fonts ? Object.keys(meta.fonts).concat("custom") : meta.enums[f.key];
+    input = el("select", { id }); if (f.fonts) input.dataset.fonts = "1"; const opts = f.fonts ? Object.keys(meta.fonts).concat("custom") : meta.enums[f.key];
     opts.forEach((o) => input.append(el("option", { value: o, text: f.fonts ? FONTNAMES[o] || o : (LABELS[f.key] || {})[o] || o })));
     input.value = v; input.addEventListener("change", () => { setv(f, input.value); if (f.key === "mode" && input.value !== "auto") { editMode = input.value; setPvMode(editMode); drawLook(); } });
   } else if (f.type === "range") {

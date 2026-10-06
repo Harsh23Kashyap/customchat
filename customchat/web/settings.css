@@ -454,3 +454,14 @@ body.simple .colorrow .hex{display:none}
 .pipe .step{background:transparent!important;box-shadow:none}
 .savebar{padding-bottom:max(10px,env(safe-area-inset-bottom))}
 .sub input,.keyrow input,#sname,#apikey{height:40px!important;min-height:40px!important}
+
+/* round 8 */
+@media(min-width:1181px){.col{max-width:720px}}
+@media(max-width:760px){main.card{padding-left:20px;padding-right:20px}body{padding-left:0;padding-right:0}label.check{min-height:44px;display:flex;align-items:center}}
+.tile .head b{font-family:"Fraunces",Georgia,serif;font-size:19px;font-weight:600}
+.tile+.tile{margin-top:32px}
+input,select,textarea,.cs-btn{border-color:rgba(23,63,53,.2)}
+input:focus-visible,textarea:focus-visible,.cs-btn:focus-visible{outline:2px solid #173f35;outline-offset:2px}
+.preset.on,.preset[aria-pressed=true]{box-shadow:0 0 0 2px #fffdf7,0 0 0 4px #173f35}
+.go.ghost{background:transparent;border-color:transparent;color:#173f35}
+.go.ghost:hover{background:rgba(23,63,53,.07)}

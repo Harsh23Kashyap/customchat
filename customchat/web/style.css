@@ -407,3 +407,8 @@ html.preview .bar .title{font-size:13px!important}
 .meta{margin-top:12px}
 .srcs button.s .st{text-overflow:ellipsis;overflow:hidden}
 .tb-link .dot,.tb-link::after,.badge .dot{display:none}
+
+/* round 8 */
+.composer{background:linear-gradient(to bottom,color-mix(in srgb,var(--paper) 0%,transparent),color-mix(in srgb,var(--paper) 88%,transparent) 28%);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.hero h1,#empty h1,.empty h1{margin-bottom:16px}
+.nf-h,.nf p,.nf-tips{color:color-mix(in srgb,var(--ink) 72%,transparent)}
