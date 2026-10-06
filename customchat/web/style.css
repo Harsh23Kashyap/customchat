@@ -445,3 +445,16 @@ html.preview .bar .title{font-size:13px!important}
 .side .list .item{padding-top:8px;padding-bottom:8px}
 .side .list .item.on,.side .list .item.active{background:rgba(23,63,53,.1)}
 :root[data-theme=dark] .side .list .item.on,:root[data-theme=dark] .side .list .item.active{background:rgba(255,255,255,.09)}
+
+/* round 12 */
+.srcs button.s{background:none!important}
+.srcs button.s:hover{background:rgba(23,63,53,.08)!important}
+:root[data-theme=dark] .srcs button.s{background:none!important}
+:root[data-theme=dark] .srcs button.s:hover{background:rgba(255,255,255,.09)!important}
+.ex button::after,.meta.fu .chip::after{content:"";display:inline-block;width:14px;height:14px;margin-left:8px;vertical-align:-2px;background:var(--mut);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l6 6-6 6'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l6 6-6 6'/%3E%3C/svg%3E") center/contain no-repeat}
+.ex button{display:inline-flex;align-items:center;justify-content:space-between}
+.fu-label{margin-top:24px;margin-bottom:10px}.meta.fu .chip{line-height:1.4;margin-bottom:8px}
+.a sup,.cite{font-size:.8em;color:var(--brand)}
+.bubble.none li,.nf li{margin-bottom:8px}
+.meta button{margin-right:8px;min-height:40px;padding:0 12px}
+:root[data-theme=dark] .hero p,:root[data-theme=dark] .empty p,:root[data-theme=dark] .sub{color:#c2cec7}

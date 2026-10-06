@@ -510,3 +510,18 @@ textarea.code,textarea[class*=code],.codebox textarea{font-family:"JetBrains Mon
 :root[data-theme=dark] .help,:root[data-theme=dark] .tile .head small,:root[data-theme=dark] small{color:#b6c4bc}
 select,.cs-btn{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23597066' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:38px;appearance:none;-webkit-appearance:none}
 .cs-btn{border-color:rgba(23,63,53,.22)!important}
+
+/* round 12 */
+#cfgmode{max-width:240px;height:36px;padding:3px;border-radius:10px!important;background:rgba(23,63,53,.07);box-shadow:none}
+#cfgmode button{min-height:30px!important;padding:0 12px;border-radius:8px!important;font-size:13px}
+#cfgmode button[aria-checked=true]{background:#fff!important;color:#173f35!important;box-shadow:0 1px 3px rgba(0,0,0,.14)!important}
+#cfgmode button[aria-checked=false]{background:none!important;color:#5d6d64!important}
+input[type=range]::-webkit-slider-thumb{background:#fff;border:2px solid var(--cfg-accent,#173f35);box-shadow:0 1px 4px rgba(0,0,0,.25)}
+input[type=range]::-moz-range-thumb{background:#fff;border:2px solid var(--cfg-accent,#173f35)}
+#seg .chipmore{grid-column:1/-1;width:100%;text-align:center;margin-top:8px}
+#prompts .steps,#steps,[role=list].steps{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+#prompts .step{white-space:nowrap;display:block}
+:root[data-theme=dark] .tile small,.dk small{color:#b6c4bc}
+.pipe{display:flex;flex-direction:column;align-items:flex-start;gap:2px;counter-reset:st}
+.pipe .step{counter-increment:st;white-space:nowrap;padding:8px 12px;display:flex;gap:10px;background:none;border:0}
+.pipe .step::before{content:counter(st);min-width:22px;height:22px;border-radius:50%;background:rgba(23,63,53,.08);font-size:12px;display:inline-flex;align-items:center;justify-content:center}
