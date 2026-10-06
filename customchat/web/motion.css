@@ -177,3 +177,13 @@ html[data-sidebar=hidden] .side{transition:transform .28s var(--ease)}
 /* a no-evidence answer dims once a new question is sent; picking a motion level shows it on the preview */
 .row.stale{opacity:.55;transition:opacity .16s ease-out}
 @media(prefers-reduced-motion:no-preference){html:not([data-motion=none]) .preview.demo>*{animation:m-up .24s var(--ease) both}}
+
+/* tip underline grows, provider mark settles, key status and jumped-to section ease in */
+@keyframes m-mark{from{opacity:.4;transform:scale(.96)}to{opacity:1;transform:none}}
+.nf-tips .tip>span:first-child{background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .16s var(--ease)}
+.nf-tips .tip:hover>span:first-child,.nf-tips .tip:focus-visible>span:first-child{background-size:100% 1px}
+@media(prefers-reduced-motion:no-preference){
+  .seg button[data-p][aria-checked=true]>:first-child{animation:m-mark .16s var(--ease)}
+  .keystate.swap,.testres.swap{animation:m-in .18s var(--ease)}
+  .tile.jump-in{animation:m-up .22s var(--ease) both}
+}

@@ -109,3 +109,21 @@
     }, true);
   } catch (e) { /* decoration only */ }
 })();
+
+// key status text eases in when it changes; the section you jump to from the menu settles in
+(function () {
+  try {
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var restart = function (el, cls, ms) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(function () { el.classList.remove(cls); }, ms); };
+    var ks = document.getElementById("keystate");
+    if (ks && !reduce) {
+      var last = ks.textContent;
+      new MutationObserver(function () { if (ks.textContent !== last) { last = ks.textContent; restart(ks, "swap", 300); } }).observe(ks, { childList: true, characterData: true, subtree: true });
+    }
+    document.addEventListener("click", function (e) {
+      if (reduce || !e.target.closest) return;
+      var a = e.target.closest("#menu a[href^='#']"); if (!a) return;
+      var t = document.getElementById(a.getAttribute("href").slice(1)); if (t) restart(t, "jump-in", 400);
+    }, true);
+  } catch (e) { /* decoration only */ }
+})();
