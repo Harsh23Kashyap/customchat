@@ -105,6 +105,8 @@ def make_handler(cfg, engine):
             path, qs = u.path, {k: v[0] for k, v in parse_qs(u.query).items()}
             if path == "/favicon.ico":
                 return self._send(204, b"", "image/x-icon")
+            if LOCKED and (path in LOCKED_PAGES or path.startswith(LOCKED_API)):
+                return self._error_page(404) if method == "GET" and not path.startswith("/api/") else self._send(404, {"error": "Not found"})
             if method == "GET" and not path.startswith("/api/"):
                 return self._static(path)
             if path == "/api/health":
@@ -144,6 +146,8 @@ def make_handler(cfg, engine):
                 return self._send(404, {"error": "Not found"})
             o = self._owner()
             b = self._body() if method == "POST" else {}
+            if LOCKED and path == "/api/theme" and method == "POST":
+                return self._send(404, {"error": "Not found"})
             if path == "/api/theme" and method == "POST":
                 if not can_edit(self):
                     return self._send(403, {"error": "The look can only be changed from this computer or by the admin"})
@@ -426,6 +430,8 @@ def make_handler(cfg, engine):
             if name == "index.html":
                 a = cfg["app"]
                 data = data.decode().replace("{{THEME_JSON}}", json.dumps(themestore.value).replace("<", "\\u003c")).replace("{{TITLE}}", _esc(a["title"])).replace("{{ACCENT}}", _esc(a["accent"])).replace("{{ACCENT2}}", _esc(a.get("accent2", "#d7ef72"))).replace("{{THEME}}", _esc(a["theme"])).encode()
+            if name == "index.html" and LOCKED:
+                data = data.replace(b'<a class="tb-link" href="/settings.html">Configuration</a>', b"")
             self._send(200, data, ctype + ("; charset=utf-8" if ctype.startswith("text") or "javascript" in ctype else ""))
 
         def _guard(self, method):
@@ -453,6 +459,12 @@ ERR_PAGES = {
     413: ("That file is too big", "The upload is larger than the limit. PDFs can be up to 8 MB and pasted text up to 150,000 characters.", _DOC + '<path d="M75 138v-30m-12 12 12-12 12 12" stroke-width="4"/>'),
     500: ("Something went wrong", "The server hit an unexpected problem. Nothing was lost. Try again in a moment.", _DOC + '<path d="M75 58v26M75 98v2" stroke-width="5"/>'),
 }
+
+
+# Config lock: CUSTOMCHAT_CONFIG=off serves the chat only. No settings page, no config or key endpoints.
+LOCKED = os.environ.get("CUSTOMCHAT_CONFIG", "").strip().lower() in ("off", "0", "false", "locked", "disabled")
+LOCKED_PAGES = {"/settings.html", "/settings.js", "/settings.css", "/panels.js", "/pipeline.js", "/codeeditor.js", "/codeeditor.LICENSE.txt"}
+LOCKED_API = ("/api/settings", "/api/provider", "/api/hardware", "/api/prompts", "/api/codegen", "/api/websearch", "/api/catalog", "/api/ollama", "/api/states")
 
 
 def _esc(s):
