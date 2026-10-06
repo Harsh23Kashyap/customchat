@@ -166,3 +166,6 @@ input[type=range]::-moz-range-thumb{transition:transform var(--m-hover) var(--ea
 }
 @media(max-width:860px) and (prefers-reduced-motion:reduce){.app::after,.side{transition:opacity .1s}}
 @media(prefers-reduced-motion:no-preference){.chip.copy.done{animation:m-in .16s var(--ease)}}
+@media(prefers-reduced-motion:no-preference) and (min-width:861px){.app{transition:grid-template-columns var(--m-layout) var(--ease)}}
+@keyframes m-soft{from{opacity:.55}to{opacity:1}}
+@media(prefers-reduced-motion:no-preference){.preview.fade-soft{animation:m-soft .24s ease-out}}

@@ -75,3 +75,19 @@
     }, true);
   } catch (e) { /* decoration only */ }
 })();
+
+// fonts, background and pattern choices cannot interpolate, so the preview eases in from slightly faded
+(function () {
+  try {
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    document.addEventListener("change", function (e) {
+      if (reduce || !e.target || !e.target.closest) return;
+      var f = e.target.closest("[data-k]"); if (!f) return;
+      var k = f.dataset.k || "";
+      if (!/font|^bg|background|pattern|emoji|icon/.test(k)) return;
+      var pv = document.querySelector(".preview"); if (!pv) return;
+      pv.classList.remove("fade-soft"); void pv.offsetWidth; pv.classList.add("fade-soft");
+      setTimeout(function () { pv.classList.remove("fade-soft"); }, 400);
+    }, true);
+  } catch (e) { /* decoration only */ }
+})();
