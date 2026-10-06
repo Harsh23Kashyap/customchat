@@ -504,3 +504,6 @@ Serif 22px panel headings, prompt statuses right aligned, preset padding 16px, o
 
 ## Pass 79 (round 11)
 Mobile provider chips become a 2-column grid, tab menu fades at the edge, stage rows 48px, monospace padded code boxes, SVG select chevrons, source chips tinted, dark muted text lifted, sidebar active row stronger.
+
+## Pass 80 (round 12)
+SVG chevrons replace arrow characters, citation chips lose resting fill (hover only), Simple/Advanced is a 240px segmented control, white slider thumb with accent ring, numbered vertical step list, spacing above RELATED, no-evidence list rhythm, dark subtext lifted.
