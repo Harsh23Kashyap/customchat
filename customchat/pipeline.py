@@ -447,7 +447,7 @@ class Engine:
                 self._summarize(owner, topic)
             if self.store.chat(owner, chat)["title"] == "New chat":
                 self.store.rename_chat(owner, chat, q[:60])
-        fu = self.followups(q, answer, evidence)
+        fu = self.followups(q, answer, evidence, [t.get("question", "") for t in history[-6:]])
         yield "done", {"seconds": round(time.time() - t0, 1), "followups": fu, "id": tid, "chat": chat, "topic": topic, "question": q, "standalone": standalone, "answer": answer,
                        "evidence": evidence, "ledger": ledger, "style": style, "source_errors": errors, "temporary": temporary}
 
@@ -520,18 +520,61 @@ class Engine:
         self._cache.clear()
         return self.retrieve(q, sources, owner)
 
-    def followups(self, question, answer, evidence):
-        """Up to three short follow-up questions. Model-written when a model is configured, else from evidence titles."""
+    _STOP = set("what which when where does about this that with from your have into tell more than then them they their there were will would could should the and for are how why who is it of to in on a an do did can".split())
+
+    @staticmethod
+    def _words(text):
+        return {(w[:-1] if len(w) > 4 and w.endswith("s") else w) for w in re.findall(r"[a-z0-9]{3,}", (text or "").lower()) if w not in Engine._STOP}
+
+    @staticmethod
+    def pick_followups(cands, question, asked, evidence, n=3):
+        """Keep suggestions that are new, short, answerable from the evidence and different from each other."""
+        corpus = Engine._words(" ".join((e.get("title", "") + " " + e.get("text", "")) for e in evidence))
+        seen = [Engine._words(question)] + [Engine._words(a) for a in (asked or [])]
+        out, outw = [], []
+        for c in cands:
+            c = " ".join(str(c).split()).strip(" -*")
+            if not (12 <= len(c) <= 110) or "?" not in c:
+                continue
+            w = Engine._words(c)
+            if not w:
+                continue
+            if any(len(w & x) / max(len(w | x), 1) >= 0.6 for x in seen + outw):
+                continue  # already asked, or nearly the same as one we are showing
+            if corpus and len(w & corpus) / len(w) < 0.25:
+                continue  # the sources could not answer it
+            out.append(c); outw.append(w)
+            if len(out) == n:
+                break
+        return out
+
+    def followups(self, question, answer, evidence, asked=None):
+        """Up to three short follow-up questions that are new and answerable from the evidence."""
+        cands = []
         if self.cfg["provider"]["type"] != "mock" and evidence:
             try:
                 out = self.provider.complete([{"role": "system", "content": self.prompts.text("followups")},
                                               {"role": "user", "content": "Question: %s\nAnswer: %s\n\nSuggest only NEW questions that these passages can answer and that the answer above does not already cover. Ask about the topic itself, never about the wording of an example:\n%s" % (question, answer[:800], "\n".join("- %s. %s" % (e["title"][:80], e["text"][:200]) for e in evidence[:4]))}])
-                qs = [re.sub(r"^[-*\d.)\s]+", "", l.replace("`", "").replace("**", "")).strip() for l in out.splitlines() if "?" in l]
-                if qs:
-                    return qs[:3]
+                cands = [re.sub(r"^[-*\d.)\s]+", "", l.replace("`", "").replace("**", "")).strip() for l in out.splitlines() if "?" in l]
             except providers.ProviderError:
                 pass
-        return ["Tell me more about %s" % e["title"].rstrip(".")[:70] for e in evidence[1:4]]
+        picked = self.pick_followups(cands, question, asked, evidence)
+        if len(picked) >= 3:
+            return picked
+        # fill from the sources: ask about titles the answer and the question have not touched, with varied wording
+        used = self._words(question + " " + answer)
+        forms = ["What does the source say about %s?", "How is %s explained?", "What else is covered under %s?"]
+        for i, e in enumerate(evidence[1:] + evidence[:1]):
+            t = e["title"].rstrip(".")[:70]
+            tw = self._words(t)
+            if not tw or len(tw & used) / len(tw) >= 0.6:
+                continue
+            c = forms[len(picked) % 3] % t
+            if c not in picked and self.pick_followups([c], question, list(asked or []) + picked, []):
+                picked.append(c)
+            if len(picked) == 3:
+                break
+        return picked
 
     # (6) rolling summary
     def _summarize(self, owner, topic):
