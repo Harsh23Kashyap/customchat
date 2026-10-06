@@ -40,4 +40,16 @@ class T(unittest.TestCase):
         providers._DOWN["http://x.invalid/a"] = __import__("time").time() + 20
         with self.assertRaises(providers.ProviderError): providers._post("http://x.invalid/a", {}, {}, 5)
         providers._DOWN.clear()
+
+    def test_followups_are_new_short_and_answerable(self):
+        ev = [{"title": "Refund policy", "text": "Refunds within 30 days of purchase"}, {"title": "Store credit", "text": "Store credit after 30 days"}]
+        cands = ["What is the refund policy?", "How long do I have to get a refund?", "How long do I have to get a refund today?",
+                 "Who won the world cup final?", "Tell me", "Can I get store credit after 30 days?"]
+        out = Engine.pick_followups(cands, "What is the refund policy?", ["Is there store credit?"], ev)
+        self.assertEqual(out, ["How long do I have to get a refund?", "Can I get store credit after 30 days?"])
+    def test_followups_fallback_varies_and_skips_covered_titles(self):
+        eng = Engine.__new__(Engine); eng.cfg = {"provider": {"type": "mock"}}
+        ev = [{"title": "Refund policy", "text": "x"}, {"title": "Store credit", "text": "y"}, {"title": "Shipping times", "text": "z"}]
+        out = eng.followups("What is the refund policy?", "Refunds within 30 days.", ev)
+        self.assertEqual(len(out), 2); self.assertTrue(all("Refund policy" not in o for o in out)); self.assertNotEqual(out[0].split(" ")[0:3], out[1].split(" ")[0:3])
 if __name__ == "__main__": unittest.main()
