@@ -56,3 +56,22 @@
     }).observe(document.body, { attributes: true, attributeFilter: ["class"] });
   } catch (e) { /* decoration only */ }
 })();
+
+// small confirmations: fields tint briefly (reset, saved looks list), pictures settle in once loaded
+(function () {
+  try {
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.ccPulse = function (el) {
+      if (!el || reduce) return;
+      el.classList.remove("pulse-soft"); void el.offsetWidth; el.classList.add("pulse-soft");
+      setTimeout(function () { el.classList.remove("pulse-soft"); }, 700);
+    };
+    var st = document.getElementById("states");
+    if (st) { var first = true; new MutationObserver(function () { if (first) { first = false; return; } window.ccPulse(st); }).observe(st, { childList: true }); }
+    document.addEventListener("load", function (e) {
+      var t = e.target; if (!reduce && t && t.tagName === "IMG" && t.classList && t.classList.contains("logoprev")) {
+        t.classList.remove("pop"); void t.offsetWidth; t.classList.add("pop");
+      }
+    }, true);
+  } catch (e) { /* decoration only */ }
+})();

@@ -150,3 +150,10 @@ details[open]::details-content{block-size:auto}
 input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.08)}input[type=range]:active::-webkit-slider-thumb{transform:scale(1.12)}
 input[type=range]:hover::-moz-range-thumb{transform:scale(1.08)}input[type=range]:active::-moz-range-thumb{transform:scale(1.12)}
 input[type=range]::-moz-range-thumb{transition:transform var(--m-hover) var(--ease)}
+
+@keyframes m-fillc{from{background-color:color-mix(in srgb,var(--cfg-accent,#173f35) 14%,transparent)}}
+@keyframes m-img{from{opacity:0;transform:scale(.98)}}
+@media(prefers-reduced-motion:no-preference){
+  select.pulse-soft,.pulse-soft input,.pulse-soft select,.pulse-soft .cs-btn{animation:m-fillc .5s ease-out}
+  .logoprev.pop{animation:m-img .24s var(--ease)}
+}

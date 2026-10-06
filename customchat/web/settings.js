@@ -409,7 +409,7 @@ function drawLook() {
   }
   buildMenu();
 }
-function resetGroup(s) { const d = meta.default; for (const f of s.fields) { if (f.colors) theme[editMode][f.key] = d[editMode][f.key]; else theme[f.key] = d[f.key]; } drawLook(); changed(); }
+function resetGroup(s) { const d = meta.default; for (const f of s.fields) { if (f.colors) theme[editMode][f.key] = d[editMode][f.key]; else theme[f.key] = d[f.key]; } drawLook(); changed(); try { window.ccPulse && window.ccPulse(document.getElementById("sec-" + s.id)); } catch (e) {} }
 function setPvMode(m) { document.querySelectorAll("#pvmode button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.m === m))); }
 function buildMenu() {
   const m = $("#menu"); m.replaceChildren();
