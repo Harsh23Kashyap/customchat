@@ -2,7 +2,7 @@
 
 Checked against the ChatGPT list of 105 (round 26). Status is from reading the code and, for most items, measuring the DOM or a computed style in a headless browser. Nothing was judged by eye. "n/a" means the app has no such control, so there is nothing to animate.
 
-Built 78, partial 13, n/a 10, not feasible 6, not built 1 (of 105).
+Built 78, partial 13, n/a 10, not feasible 3, not built 1 (of 105).
 
 | # | Item | Status |
 |---|---|---|
