@@ -255,7 +255,7 @@ function logoControl(f, current) {
   const paintPage = () => { const c = theme.light || {}; onpage.style.background = c.bg || "#f8f4e9"; onpage.style.color = c.ink || "#222"; pgname.textContent = theme.txt_title || "Your app"; };
   paintPage();
   const stage = el("div", { class: "logostage", hidden: current ? undefined : "" }, el("figure", {}, before, el("figcaption", { text: "Original" })), el("figure", {}, prev, el("figcaption", { text: "After blending" })), el("figure", {}, onpage, el("figcaption", { text: "In your app" })));
-  const file = el("input", { type: "file", accept: "image/png,image/jpeg,image/webp,image/gif", id: "f-logo-file", "aria-label": "Choose a logo picture" });
+  const file = el("input", { type: "file", accept: "image/png,image/jpeg,image/webp,image/gif", id: "f-logo-file", "aria-label": "Choose a logo picture" }); file.style.cssText = "position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"; const fileBtn = el("label", { class: "go ghost filebtn", for: "f-logo-file" }, "Choose a picture");
   const fe = el("input", { type: "range", min: "0", max: "50", value: "25", "aria-label": "Edge softness", disabled: "" });
   const rb = el("input", { type: "checkbox", disabled: "" });
   const note = el("div", { class: "h", text: current ? "Choose a new picture to adjust it." : "PNG, JPG, WebP or GIF. Stays on this computer." });
@@ -288,7 +288,7 @@ function logoControl(f, current) {
   fe.addEventListener("input", () => { st.feather = +fe.value; render(); });
   rb.addEventListener("change", () => { st.strip = rb.checked; render(); });
   rm.addEventListener("click", () => { orig = null; prev.hidden = true; before.hidden = true; onpage.hidden = true; rm.hidden = true; fe.disabled = rb.disabled = true; file.value = ""; setv(f, ""); });
-  return el("div", { class: "logobox" }, stage, el("div", { class: "logoctl" }, file, el("label", { class: "check" }, rb, "Remove plain background"), el("label", { class: "h" }, "Edge softness", fe), note, rm));
+  return el("div", { class: "logobox" }, stage, el("div", { class: "logoctl" }, fileBtn, file, el("label", { class: "check" }, rb, "Remove plain background"), el("label", { class: "h" }, "Edge softness", fe), note, rm));
 }
 function control(f) {
   const id = "f-" + f.key; let input;

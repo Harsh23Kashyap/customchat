@@ -429,3 +429,28 @@ textarea,.cm-editor textarea{resize:none!important}
 body.simple .colorrow .hex{display:none}
 .colorrow input[type=color]{width:36px;height:36px;border-radius:50%}
 .tile .head small{font-size:12.5px}
+
+/* round 7: phone settings are a plain scrolling page, 40px controls, no overlays */
+.keyrow input,.keyrow select,.keyrow button,.keyrow .cs-btn,.sub input,.sub button,.sub .cs-btn,.go{min-height:40px;box-sizing:border-box}
+.cs-btn{min-height:40px}
+.colorrow input[type=color]{width:24px;height:24px;border:1px solid #e5e5e5;border-radius:50%;padding:0}
+.tile>.fields>*,.tile h3,.sec-h{margin-top:0}
+.fields .lab,.fields h4,.group-h{margin-top:28px;margin-bottom:12px}
+@media(max-width:760px){
+.menu{position:static!important;top:auto!important;display:flex!important;flex-direction:row;overflow-x:auto;gap:18px;scrollbar-width:none;margin:0 -12px 8px;padding:0 12px;z-index:1}
+.menu::-webkit-scrollbar{display:none}
+.menu a{flex:none;white-space:nowrap}
+.lead,#modehelp{display:none}
+#cfgmode{min-height:32px}#cfgmode button{min-height:32px;padding:4px 14px}
+#seg{display:flex;flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;gap:8px}
+#seg::-webkit-scrollbar{display:none}
+#seg>*{flex:none;scroll-snap-align:start}
+.pipe{display:flex;flex-direction:column;align-items:stretch;gap:0}
+.pipe .arrow{display:none}
+.pipe .step{background:transparent!important;border:0;border-bottom:1px solid rgba(23,63,53,.10);border-radius:0;padding:12px 0;display:block;text-align:left}
+.pipe .step::before{content:counter(st);counter-increment:st;display:inline-block;width:22px;color:#6b7a72}
+.pipe{counter-reset:st}
+}
+.pipe .step{background:transparent!important;box-shadow:none}
+.savebar{padding-bottom:max(10px,env(safe-area-inset-bottom))}
+.sub input,.keyrow input,#sname,#apikey{height:40px!important;min-height:40px!important}

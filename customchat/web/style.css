@@ -398,3 +398,12 @@ html.preview .bar .title{font-size:13px!important}
 .cmeta #hint{display:none}
 .bar{backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(23,63,53,.08)}
 }
+
+/* round 7 */
+.box{border-color:rgba(23,63,53,.12);box-shadow:0 4px 12px rgba(23,63,53,.05)}
+.box:focus-within{border-color:var(--brand)}
+.composer{padding-bottom:calc(max(12px,env(safe-area-inset-bottom,0px)) + 8px)}
+@media(min-width:761px){.ans,.bubble{font-size:calc(15.5px*var(--fs,1))}}
+.meta{margin-top:12px}
+.srcs button.s .st{text-overflow:ellipsis;overflow:hidden}
+.tb-link .dot,.tb-link::after,.badge .dot{display:none}
