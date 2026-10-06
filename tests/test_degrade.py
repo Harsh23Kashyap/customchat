@@ -94,4 +94,25 @@ class T(unittest.TestCase):
         finally:
             srv.shutdown(); providers._DOWN.clear()
 
+    def test_read_only_data_folder_keeps_working(self):
+        if os.geteuid() == 0: self.skipTest("root ignores file permissions")
+        import stat
+        d = tempfile.mkdtemp()
+        try:
+            s = Store(os.path.join(d, "x.db"))
+            cid = s.new_chat("o", "first")  # saved normally
+            self.assertEqual(s.degraded, "")
+            os.chmod(os.path.join(d, "x.db"), 0o444); os.chmod(d, 0o555)
+            s2 = Store(os.path.join(d, "x.db"))
+            new = s2.new_chat("o", "second")  # write fails -> memory, no exception
+            self.assertTrue(s2.degraded)
+            self.assertEqual(s2.chat("o", new)["title"], "second")
+            # a folder that cannot be created at all
+            s3 = Store(os.path.join(d, "sub", "y.db"))
+            self.assertTrue(s3.degraded)
+            self.assertTrue(s3.new_chat("o", "third"))
+        finally:
+            os.chmod(d, 0o755)
+            for f in os.listdir(d): os.chmod(os.path.join(d, f), 0o644)
+
 if __name__ == "__main__": unittest.main()
