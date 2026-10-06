@@ -525,3 +525,6 @@ Provider selector is a 3-column grid on desktop (was clipping at 398px, scrollWi
 
 ## Pass 86 (round 18)
 Settings sections lose their card boxes and use hairline dividers, presets are a full-width list on phones, inputs 44px with 8px radius, lighter composer, no icon chips in headings.
+
+## Pass 87 (round 19)
+Dark no-evidence text lightened, citation markers get a 4px tint, 32px under user rows, mobile heading 26px and full-width Simple/Advanced, equal-size preset tiles, switch rows label-left, Light/Dark control iOS style.
