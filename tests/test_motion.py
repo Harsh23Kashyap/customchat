@@ -43,6 +43,14 @@ class Motion(unittest.TestCase):
         self.assertIn("prefers-reduced-motion:no-preference", css[max(0, i - 80):i])
         self.assertIn("grid-template-columns var(--m-layout)", css)
 
+    def test_hidden_sidebar_stale_and_demo(self):
+        css, js = rd("motion.css"), rd("motion.js")
+        self.assertIn("html[data-sidebar=hidden] .app.menu-open::after", css)
+        self.assertIn(".row.stale", css)
+        self.assertIn("stale", js)
+        self.assertIn(".preview.demo", css)
+        self.assertIn("data-k=motion", js)
+
 
 if __name__ == "__main__":
     unittest.main()
