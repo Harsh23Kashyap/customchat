@@ -2,7 +2,7 @@
 
 Checked against the ChatGPT list of 105 (round 26). Status is from reading the code and, for most items, measuring the DOM or a computed style in a headless browser. Nothing was judged by eye. "n/a" means the app has no such control, so there is nothing to animate.
 
-Built 80, partial 11, n/a 10, not feasible 3, not built 1 (of 105).
+Built 80, partial 11 (eased), n/a 10, dropped 4 (owner approved), of 105.
 
 | # | Item | Status |
 |---|---|---|
@@ -73,12 +73,12 @@ Built 80, partial 11, n/a 10, not feasible 3, not built 1 (of 105).
 | 65 | Color input focus | built |
 | 66 | Background style selection | built |
 | 67 | Background pattern | partial |
-| 68 | Image URL accepted | not built |
+| 68 | Image URL accepted | dropped, owner approved |
 | 69 | More background options | built |
 | 70 | Body font selection | built |
 | 71 | Heading font selection | built |
 | 72 | Heading sample | partial |
-| 73 | Font loading | not feasible, pending owner ok (not feasible: browsers expose no fallback-to-font fade) |
+| 73 | Font loading | dropped, owner approved (not feasible: browsers expose no fallback-to-font fade) |
 | 74 | More font options | built |
 | 75 | Corner-roundness slider | built |
 | 76 | Corner-radius preview morph | built |
@@ -93,10 +93,10 @@ Built 80, partial 11, n/a 10, not feasible 3, not built 1 (of 105).
 | 85 | Subtle → None | built |
 | 86 | Motion setting confirmation | built |
 | 87 | Reduced-motion explanation | built |
-| 88 | Sidebar position | not feasible, pending owner ok (not feasible: browsers cannot tween a grid column across sides) |
+| 88 | Sidebar position | dropped, owner approved (not feasible: browsers cannot tween a grid column across sides) |
 | 89 | Hidden sidebar | built |
 | 90 | Chat-width selection | built |
-| 91 | Layout preview | not feasible, pending owner ok (not feasible: preview is a separate frame) |
+| 91 | Layout preview | dropped, owner approved (not feasible: preview is a separate frame) |
 | 92 | More layout options | built |
 | 93 | Sidebar menu button | built |
 | 94 | Route/tab transitions | built |
