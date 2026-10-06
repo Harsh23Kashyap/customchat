@@ -157,3 +157,12 @@ input[type=range]::-moz-range-thumb{transition:transform var(--m-hover) var(--ea
   select.pulse-soft,.pulse-soft input,.pulse-soft select,.pulse-soft .cs-btn{animation:m-fillc .5s ease-out}
   .logoprev.pop{animation:m-img .24s var(--ease)}
 }
+
+/* phone drawer: scrim fades with the drawer; the drawer itself moves, not the page */
+@media(max-width:860px){
+  .app::after{content:"";position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:24;transition:opacity .28s var(--ease)}
+  .app.menu-open::after{opacity:.35}
+  .side{transition:transform .28s var(--ease)}
+}
+@media(max-width:860px) and (prefers-reduced-motion:reduce){.app::after,.side{transition:opacity .1s}}
+@media(prefers-reduced-motion:no-preference){.chip.copy.done{animation:m-in .16s var(--ease)}}
