@@ -439,3 +439,12 @@ Not done: full spacing scale and type scale audit; superscript citation numbers 
 
 ## Pass 66 (settings at 390)
 My late grid override (170px / 1fr / 400px) sat after the responsive rules in settings.css, so at 390 the cards column collapsed to 0px and the page was 580px wide. Responsive rules re-added at the end of the file: single column under 1000px, nav hidden under 1180px, card and toolbar full width, tighter card padding under 560px, code-helper buttons wrap. Measured at 390: document width 390, no section wider than its box (n=12 sections). Section captures are now full panels (19KB to 78KB each), plus a full-page capture.
+
+## Pass 67 (Gemini fresh full-set review, 42/100)
+Reviewer text used as design input only. Not done on purpose: white cards, dashed dropzone, resting pills, left borders.
+- Mobile config: floating Preview button opens the live preview as a bottom sheet (62vh); closed by default under 1000px. Measured at 390: doc width 390, FAB 48px high, sheet 374x523.
+- Logo picker: native file button restyled (outline, 44px, 12px radius, no "No file chosen" text).
+- Intro max-width 60ch; form fields max 640px; focus-visible ring (2px deep green); checkbox top aligned; colour swatch border; slider track 4px with thumb shadow; select chevron 12px from edge and 32px right padding; disabled opacity .5; mono font in code boxes; export/import/reset borders; preview panel shadow.
+- Chat: 24px gap before a user turn after an answer; bullets 1.6 line height; 16px action gaps; dark disclaimer #a9b7b0; user bubble padding 12px 16px; tab shadow; safe-area bottom padding; header icon gap 12px.
+- Mobile settings: 20px side padding (card 16px), inputs, selects and buttons 44px, section and save buttons 48px.
+Not done: font previews inside options, radius slider cap, stepper scroll, provider icon audit, icon stroke audit, user bubble colour change (kept #efe9d8, matches theme.py).
