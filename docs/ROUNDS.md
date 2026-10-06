@@ -570,3 +570,4 @@ Copy button confirms in place (tick, "Copied" for 1.6 s, plus the toast), send b
 - Fallback: http_json connector keeps a broken or non-JSON reply as one text passage instead of failing (tests/test_fallbacks.py, 3 tests).
 - Deploy: CUSTOMCHAT_CONFIG=off locks the app to chat only (no settings page or config endpoints); render.yaml blueprint; Dockerfile honors PORT and APP. Tested locally (tests/test_lock.py), real Render deploy not run.
 - Pass 99: streamed tokens fade in per chunk, typing dots use the shared timing, feedback chip pops once on selection.
+- Pass 100 (R26 Gemini 58 list, verified before applying): applied header icon contrast and the Details chevron. Rejected after DOM check: green left border on sources (computed 0px none), send arrow off-centre (offset 0,0), black Refresh list border (rgb 183,198,187), emoji input outline (filled by design), preset active state (presets apply a look, not a selection), seg track (7% tint, light).
