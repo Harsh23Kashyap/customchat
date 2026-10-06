@@ -112,7 +112,7 @@ function turnView(t, prev) {
   if (!t.evidence.length) {
     bub.prepend(el("div", { class: "nf-h", text: "No evidence found" }));
     const tip = (txt, fn) => el("button", { class: "tip", onclick: fn }, el("span", { text: txt }), el("span", { class: "go", "aria-hidden": "true", text: "\u203a" }));
-    bub.append(el("div", { class: "nf-tips" }, tip("Try a different question", () => { $("#q").focus(); }), tip("Use words from your documents", () => { $("#q").focus(); }), tip("See what this chat is set up with", () => { location.href = "/settings.html"; })));
+    bub.append(el("div", { class: "nf-tips" }, tip("Try a different question", () => { $("#q").focus(); }), tip("Use words from your documents", () => { $("#q").focus(); }), tip("See which documents this chat uses", () => { location.href = "/settings.html"; })));
   }
   const srcLabel = (e) => (S.cfg.sources.find((x) => x.id === e.source) || {}).label || e.source || "";
   const srcs = !t.evidence.length ? null : (el("div", { class: "srcs" }, el("div", { class: "srcs-h", text: "Sources" }), t.evidence.slice(0, 5).map((e) => el("button", { class: "s", title: e.title, onclick: () => showSources(t.evidence, e.n) }, el("span", { class: "n", text: "[" + e.n + "]" }), el("span", { class: "sx" }, el("span", { class: "st", text: e.title }), el("span", { class: "sm", text: [srcLabel(e), e.year].filter(Boolean).join(" \u00b7 ") })), el("span", { class: "go", "aria-hidden": "true", text: "\u203a" })))));
@@ -142,7 +142,7 @@ function turnView(t, prev) {
     const u = el("div", { class: "toast", onclick: async () => { await api("/api/restore-turn", { turn: t.id }); S.turns = await api("/api/turns?chat=" + S.chat); drawThread(); u.remove(); } }, "Answer deleted. Click to undo"); centerToast(u);
     document.body.append(u); setTimeout(() => u.remove(), 6000); } }, "Delete"));
   const more = [...meta.querySelectorAll("[data-more]")];
-  if (more.length) { const d = el("details", { class: "more" }, el("summary", { class: "chip", title: "More actions" }, "More")); const box = el("div", { class: "more-box" }); more.forEach((b) => box.append(b)); d.append(box); meta.append(d); }
+  if (more.length) { const d = el("details", { class: "more" }, el("summary", { class: "chip", title: "More actions" }, t.evidence.length ? "More" : "Details")); const box = el("div", { class: "more-box" }); more.forEach((b) => box.append(b)); d.append(box); meta.append(d); }
   return nodes;
 }
 async function download(path, name) {
