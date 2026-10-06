@@ -382,3 +382,6 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 ## Pass 59
 - Regression from pass 58 fixed: the break-word override stopped the editor from wrapping, so long lines were cut at the right edge. Removed. Checks now include clipping: at 480 px and 1100 px the editor has no horizontal scroll, content right edge equals the scroller right edge, and 0 lines extend past it. Gutter offsets are 0 for all lines at both widths (line 8 is 140 px tall at 480 px, 88 px at 1100 px).
 - Settings at 900 px: the blank space under the stacked preview was a 90 px bottom margin meant for the side layout; it is 12 px now (gap from the preview to its caption was 100 px).
+- Editor: a long line starting with spaces had a blank first row (8 spaces on a row alone, then the text). Wrapping may now break anywhere, so the text starts on the first row. Measured rows at 480 px: before ["        ", "urllib...", ...], after ["        urllib.request.urlopen(\"htt", "ps://example...", ...]. The cost is a break inside "https" at narrow width. No clipping (0 lines past the edge) at 480 and 1100 px; gutter offsets 0.
+- Settings intro says "live preview", not "preview on the right" (it can sit above the form now).
+- Footer: the separator dot moved from the first text to the second, so it disappears with it (820 px wide: no trailing dot).
