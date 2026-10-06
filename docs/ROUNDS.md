@@ -393,3 +393,24 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Docs app on a real corpus (README, DESIGN, SCHEMA, 8.4 KB), 6 questions, real model: 6 of 6 answered from the files with citations; 5 of 6 had every sentence supported (the API-key answer had 2 of 3), none uncited. One 8099 port clash showed a stale server first; re-run on its own port.
 - Nutrition prompt: no em dashes.
 - The two similar rows in the nutrition sidebar were two chats (different ids), made by my test asking the same question at two widths; not a duplicate row.
+
+## Pass 62 (design review round 1, 8 items)
+- Settings page recoloured from blue to the deep green of the chat (buttons, toggle, top nav, focus rings, links, "More" link, summary links, editor text) and the blue-tinted greys replaced with green-greys. Check: a script that scans every visible element's colours for blue found 42 elements before and 0 after, on the settings page at 1440 px.
+- Sidebar: the active chat is now a light green fill with dark green bold text; New chat keeps the dark green fill (measured: New chat rgb(23,63,53), active row about rgb(230,232,226)).
+- Answer actions: 12 px between Copy, Helpful, Not helpful and More (measured 12 and 12).
+- Settings intro: 600 px wide. Code helper buttons: 8 px gap, 12 px radius. Success banner lighter, with a soft border.
+- Preview card: layered soft shadow. Donut to legend gap 24 px.
+- Docs at 390 px: the style select is 96 px wide (title box 100 px); user bubble cream lightened from #e6deca to #efe9d8 (theme default; apps that set their own colour keep it).
+- Not done on purpose: green left borders on cards (owner rule); the code editor wrap at 480 px (kept, see pass 59).
+
+## Pass 63 (Gemini round 2, 78/100): 8 items
+Gemini text used as design input only. Skipped the left-border advice (house rule: no accent bars).
+- Settings h1 in the serif heading font (Fraunces now loaded on settings.html).
+- Settings layout max-width 1180px, centred, so the nav sits next to the cards (nav left 210, 1600px viewport).
+- Reference card numbers bold deep green (#173f35, 700), same as inline citations.
+- Answer actions separated by a faint middle dot, no pill chrome. Touch targets 44px high (Copy 44x44, More 51x44 at 390).
+- Null answer ("no evidence") styled muted and italic (class none, set when evidence is empty).
+- Dashed borders replaced by solid light (#cfd9d1); blue-ish ctx chipmore recoloured to deep green.
+- Save/Load state cards equal height (243 and 243) and equal padding.
+- Chat header Configuration link weight 500.
+Open: nothing new. Checks are DOM and computed-style numbers (p64.cjs), not pixels.
