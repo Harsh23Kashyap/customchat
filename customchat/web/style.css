@@ -562,3 +562,21 @@ html.preview .bar .title{font-size:13px!important}
 .meta .chip.copy.done::before{content:"";display:inline-block;width:12px;height:12px;margin-right:6px;vertical-align:-1px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5 9-10'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5 9-10'/%3E%3C/svg%3E") center/contain no-repeat}
 :focus-visible{outline:2px solid var(--brand,#173f35);outline-offset:2px}
 .box textarea:focus-visible{outline:0}
+
+/* UX pass 95: sources as rows, action rows for no-evidence */
+.srcs{display:block;margin:10px 0 2px;padding:0;border:0}
+.srcs-h{font:600 12px/1 var(--sans,inherit);letter-spacing:.04em;text-transform:uppercase;color:var(--mut);margin:0 0 4px}
+.srcs button.s{display:flex;align-items:flex-start;gap:8px;width:100%;border:0;border-top:1px solid var(--line);border-radius:0;background:none;padding:9px 2px;min-height:44px;text-align:left;color:var(--ink)}
+.srcs button.s:first-of-type{border-top:0}
+.srcs button.s .sx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.srcs button.s .st{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;font-size:calc(13.5px*var(--fs,1))}
+.srcs button.s .sm{font-size:calc(12px*var(--fs,1));color:var(--mut)}
+.srcs button.s .go,.nf-tips .go{color:var(--mut);font-size:18px;line-height:1.2;transition:transform .18s ease}
+.srcs button.s:hover .go,.nf-tips .tip:hover .go{transform:translateX(3px)}
+.srcs button.s:hover{background:var(--soft);text-decoration:none}
+.nf-tips{display:flex;flex-direction:column;margin-top:8px}
+.nf-tips .tip{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;border:0;border-top:1px solid var(--line);background:none;padding:11px 2px;min-height:44px;text-align:left;color:var(--ink);font:inherit}
+.nf-tips .tip:hover{background:var(--soft)}
+@media (max-width:700px){.meta{gap:10px 14px}.meta .chip{min-height:36px;padding-inline:12px}}
+@media (prefers-reduced-motion:reduce){.srcs button.s .go,.nf-tips .go{transition:none}}
+.nf-tips{padding-left:0 !important;margin:8px 0 0;list-style:none}.bubble.none .nf-tips .tip{text-align:left}

@@ -111,9 +111,11 @@ function turnView(t, prev) {
   const bub = el("div", { class: "bubble bb" + (t.evidence.length ? "" : " none") }, renderAnswer(t.answer, t.evidence));
   if (!t.evidence.length) {
     bub.prepend(el("div", { class: "nf-h", text: "No evidence found" }));
-    bub.append(el("ul", { class: "nf-tips" }, el("li", { text: "Try asking about a different topic" }), el("li", { text: "Check the sources this chat is set up with" }), el("li", { text: "Rephrase with words from your documents" })));
+    const tip = (txt, fn) => el("button", { class: "tip", onclick: fn }, el("span", { text: txt }), el("span", { class: "go", "aria-hidden": "true", text: "\u203a" }));
+    bub.append(el("div", { class: "nf-tips" }, tip("Try a different question", () => { $("#q").focus(); }), tip("Use words from your documents", () => { $("#q").focus(); }), tip("See what this chat is set up with", () => { location.href = "/settings.html"; })));
   }
-  const srcs = !t.evidence.length ? null : (el("div", { class: "srcs" }, t.evidence.slice(0, 5).map((e) => el("button", { class: "s", title: e.title, onclick: () => showSources(t.evidence, e.n) }, el("span", { class: "n", text: "[" + e.n + "]" }), el("span", { class: "st", text: e.title })))));
+  const srcLabel = (e) => (S.cfg.sources.find((x) => x.id === e.source) || {}).label || e.source || "";
+  const srcs = !t.evidence.length ? null : (el("div", { class: "srcs" }, el("div", { class: "srcs-h", text: "Sources" }), t.evidence.slice(0, 5).map((e) => el("button", { class: "s", title: e.title, onclick: () => showSources(t.evidence, e.n) }, el("span", { class: "n", text: "[" + e.n + "]" }), el("span", { class: "sx" }, el("span", { class: "st", text: e.title }), el("span", { class: "sm", text: [srcLabel(e), e.year].filter(Boolean).join(" \u00b7 ") })), el("span", { class: "go", "aria-hidden": "true", text: "\u203a" })))));
   nodes.push(el("div", { class: "row" }, avatar("bot"), bub));
   const meta = el("div", { class: "meta" });
   const weak = (t.ledger || []).filter((l) => !l.supported || (l.overlap !== undefined && l.overlap < 0.35));
@@ -121,7 +123,7 @@ function turnView(t, prev) {
   if (t.seconds !== undefined) meta.append(el("span", { "data-more": "1", class: "chip", title: "Time to answer" }, t.seconds < 1 ? "<1s" : t.seconds + "s"));
   if (t.standalone && t.standalone !== t.question) meta.append(el("span", { class: "chip", title: "Understood as" }, "Understood as: " + t.standalone));
   meta.append(el("button", { "data-more": "1", class: "chip", title: "How this answer was built", onclick: () => contextDialog(t) }, "Context"));
-  meta.append(el("button", { class: "chip copy", onclick: (ev) => { const b = ev.currentTarget; navigator.clipboard.writeText(t.answer).then(() => { toast("Copied"); b.textContent = "Copied"; b.classList.add("done"); setTimeout(() => { b.textContent = "Copy"; b.classList.remove("done"); }, 1600); }); } }, "Copy"));
+  if (t.evidence.length) meta.append(el("button", { class: "chip copy", onclick: (ev) => { const b = ev.currentTarget; navigator.clipboard.writeText(t.answer).then(() => { toast("Copied"); b.textContent = "Copied"; b.classList.add("done"); setTimeout(() => { b.textContent = "Copy"; b.classList.remove("done"); }, 1600); }); } }, "Copy"));
   if (t.evidence.length) {
     for (const v of [1, -1]) meta.append(el("button", { class: "chip" + (S.ratings[t.id] === v ? " on" : ""), "aria-pressed": String(S.ratings[t.id] === v), onclick: async () => { const r = S.ratings[t.id] === v ? 0 : v; try { await api("/api/rate", { turn: t.id, rating: r }); if (r) S.ratings[t.id] = r; else delete S.ratings[t.id]; drawThread(); } catch (e) { toast(e.message); } } }, v > 0 ? "Helpful" : "Not helpful"));
     meta.append(el("button", { "data-more": "1", class: "chip", onclick: () => download("/api/bibtex?turn=" + t.id, "references.bib") }, "BibTeX"));
