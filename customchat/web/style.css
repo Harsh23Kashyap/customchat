@@ -513,3 +513,10 @@ html.preview .bar .title{font-size:13px!important}
 .meta{gap:0 16px}
 @media(max-width:760px){.ans,.bubble .a{font-size:15.5px}.srcs button.s .st{font-size:14px;white-space:normal}.cmeta{font-size:12.5px}}
 :root[data-theme=dark] .srcs button.s,:root[data-theme=dark] .cmeta,:root[data-theme=dark] .srcs button.s .st{color:#c7d3cc}
+
+/* round 22 */
+.ans,.bubble .a{line-height:1.65}
+.srcs button.s{display:flex;align-items:flex-start;gap:8px;text-align:left}
+.srcs button.s .st{flex:1;min-width:0}
+.send{display:inline-flex;align-items:center;justify-content:center;padding:0}
+.bubble.none li::before,.nf li::before{left:0}.bubble.none li,.nf li{padding-left:20px;margin-bottom:8px}

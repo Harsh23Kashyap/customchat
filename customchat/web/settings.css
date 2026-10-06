@@ -654,3 +654,12 @@ input[type=range]::-webkit-slider-thumb{width:20px;height:20px;margin-top:-8px}
 #motprev{display:none!important}
 @media(max-width:760px){.stage summary{min-height:48px}.stage summary b{font-size:14.5px}}
 .typeprev{border:1px solid rgba(23,63,53,.1)}
+
+/* round 22 */
+details.helper>summary{min-height:0;padding:12px 44px 12px 16px}
+details.helper>summary small{display:block;line-height:1.4}
+.presets .chipmore,.presets>.more,.preset.more{background:none!important;border:0!important;text-decoration:underline;justify-content:center;color:#4f6158;min-height:44px;grid-column:1/-1}
+.pgroup,.tile .head b{text-transform:none}
+.field.color,.crow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.keyrow{align-items:stretch}.keyrow .go,.keyrow input,.keyrow .cs-btn{height:44px;min-height:44px;box-sizing:border-box}
+@media(max-width:760px){.tile,.col .tile,.card{padding-left:20px!important;padding-right:20px!important}.modebar,h1#h,.lead{padding-left:20px;padding-right:20px}}
