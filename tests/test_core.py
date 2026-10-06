@@ -502,7 +502,7 @@ class SettingsApi(Http):
         self.assertEqual(self.post("/api/states/load", {"name": "missing"})[0], 400)
 
     def test_settings_page_served(self):
-        self.assertIn(b"Save current look", self.call("/settings.html")[1])
+        self.assertIn(b"Saved looks", self.call("/settings.html")[1])
 
 
 def test_accounts():
