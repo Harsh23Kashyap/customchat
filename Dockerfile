@@ -5,4 +5,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8080
-CMD ["python", "-m", "customchat", "run", "apps/minimal/app.yaml", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["sh", "-c", "python -m customchat run ${APP:-apps/minimal/app.yaml} --host 0.0.0.0 --port ${PORT:-8080}"]
