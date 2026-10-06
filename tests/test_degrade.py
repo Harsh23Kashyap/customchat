@@ -52,4 +52,46 @@ class T(unittest.TestCase):
         ev = [{"title": "Refund policy", "text": "x"}, {"title": "Store credit", "text": "y"}, {"title": "Shipping times", "text": "z"}]
         out = eng.followups("What is the refund policy?", "Refunds within 30 days.", ev)
         self.assertEqual(len(out), 2); self.assertTrue(all("Refund policy" not in o for o in out)); self.assertNotEqual(out[0].split(" ")[0:3], out[1].split(" ")[0:3])
+    def test_model_stream_faults_become_plain_errors(self):
+        import threading, http.server, socket, json as _j
+        from customchat import providers
+        class H(http.server.BaseHTTPRequestHandler):
+            protocol_version = "HTTP/1.1"
+            def log_message(self, *a): pass
+            def do_POST(self):
+                self.rfile.read(int(self.headers.get("Content-Length", 0)))
+                m = self.path
+                def body(code, ct, b):
+                    self.send_response(code); self.send_header("Content-Type", ct); self.send_header("Content-Length", str(len(b))); self.end_headers(); self.wfile.write(b)
+                if m.startswith("/cut"):
+                    self.send_response(200); self.send_header("Content-Type", "text/event-stream"); self.send_header("Transfer-Encoding", "chunked"); self.end_headers()
+                    for w in ("Hello ", "world "):
+                        d = ("data: " + _j.dumps({"choices": [{"delta": {"content": w}}]}) + "\n\n").encode()
+                        self.wfile.write(b"%x\r\n" % len(d) + d + b"\r\n"); self.wfile.flush()
+                    self.connection.shutdown(socket.SHUT_RDWR); return
+                if m.startswith("/e429"): return body(429, "application/json", b'{"error":{"message":"Rate limit"}}')
+                if m.startswith("/html500"): return body(500, "text/html", b"<html>Bad gateway</html>")
+                if m.startswith("/empty"): return body(200, "application/json", b"")
+                if m.startswith("/gem"): return body(400, "application/json", b'{"error":{"code":400,"message":"API key not valid","status":"INVALID_ARGUMENT"}}')
+                if m.startswith("/ssee"):
+                    self.send_response(200); self.send_header("Content-Type", "text/event-stream"); self.send_header("Connection", "close"); self.end_headers()
+                    self.wfile.write(b'data: {"choices":[{"delta":{"content":"Hi "}}]}\n\ndata: {"error":{"message":"overloaded"}}\n\n'); self.wfile.flush(); return
+                body(200, "application/json", b'{"choices":[{"message":{"content":"ok"}}]}')
+        srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), H); port = srv.server_address[1]
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        os.environ["CC_TEST_KEY"] = "sk-x"
+        def mk(path): return providers.OpenAICompatible({"provider": {"type": "openai_compatible", "base_url": "http://127.0.0.1:%d%s" % (port, path), "model": "m", "timeout": 5, "temperature": 0.2, "api_key_env": "CC_TEST_KEY"}})
+        try:
+            for path, text in (("/cut", "ended early"), ("/ssee", "overloaded"), ("/empty", "empty reply"), ("/e429", "rate limiting"), ("/html500", "HTTP 500"), ("/gem", "rejected")):
+                got = []
+                with self.assertRaises(providers.ProviderError) as c:
+                    for piece in mk(path).stream([{"role": "user", "content": "x"}]): got.append(piece)
+                self.assertIn(text, str(c.exception), path)
+                if path in ("/cut", "/ssee"): self.assertTrue(got, "text before the cut is kept")
+            with self.assertRaises(providers.ProviderError) as c: mk("/cut").complete([{"role": "user", "content": "x"}])
+            self.assertIn("dropped", str(c.exception))
+            self.assertEqual(mk("/fine").complete([{"role": "user", "content": "x"}]), "ok")
+        finally:
+            srv.shutdown(); providers._DOWN.clear()
+
 if __name__ == "__main__": unittest.main()
