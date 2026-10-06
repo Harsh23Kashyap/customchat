@@ -691,3 +691,13 @@ nav.menu a{transition:background .2s,color .2s,transform .15s}nav.menu a:active{
 #pvfab{transition:transform .15s}#pvfab:active{transform:scale(.96)}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 html[data-motion=none] *{animation:none!important;transition:none!important}
+
+/* round 24 */
+.tile>*,.tile .fields>*{margin-left:0}
+.tile{padding-left:0!important;padding-right:0!important}
+.field output,label output,#tv,#kv{display:inline-block;white-space:nowrap;margin-left:auto;font-variant-numeric:tabular-nums;color:#4f6158;font-size:13px}
+label:has(>input[type=range]){display:grid;grid-template-columns:1fr auto;align-items:baseline;column-gap:12px}
+label:has(>input[type=range])>input[type=range],label:has(>input[type=range])>.h,label:has(>input[type=range])>.help{grid-column:1/-1}
+#seg button{display:flex;align-items:center;gap:10px;justify-content:flex-start;padding:0 14px}
+#seg .plogo,#seg .pm{flex:none;margin:0}
+@media(min-width:1181px){.layout{grid-template-columns:168px minmax(0,1fr) 560px!important}}

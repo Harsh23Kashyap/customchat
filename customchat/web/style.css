@@ -549,3 +549,8 @@ html.preview .bar .title{font-size:13px!important}
 .jump,.cmeta{transition:opacity .2s}
 @media(hover:none){.ex button:hover,.srcs button.s:hover,.side .list .item:hover,.send:hover{transform:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* round 24 */
+.thread,.composer{margin-left:auto;margin-right:auto;width:100%}
+@media(min-width:1000px){:root{--side-w:232px}.hero,#empty,.empty{max-width:640px;margin-left:auto;margin-right:auto}}
+@media(max-width:760px){.thread,.composer{padding-left:20px;padding-right:20px}.thread{padding-top:20px;scroll-padding-top:72px}}
