@@ -846,6 +846,20 @@ class CiteFormat(unittest.TestCase):
         led = Engine.ledger("**Mixed: fasting results differ across the rat groups studied.** [1] More text here about rats and fasting results. [1]", ev)
         self.assertEqual(len(led), 2); self.assertEqual(led[0]["cites"], [1]); self.assertFalse(led[0]["uncited"])
 
+    def test_uncited_sentences_are_rewritten_with_fewer_flags(self):
+        ev = [{"n": 1, "title": "t", "text": "fasting results matter in obese adults and long term outcomes"}]
+        bad = "**Mixed: fasting results matter in obese adults and long term outcomes.** Fasting results matter in obese adults. [1]"
+        led = Engine.ledger(bad, ev)
+        self.assertTrue(led[0]["uncited"])
+        class P:
+            def complete(self, m): return "**Mixed: fasting results matter in obese adults and long term outcomes.** [1] Fasting results matter in obese adults. [1]"
+        class Pr:
+            def text(self, k, f=""): return "revise"
+        from customchat.pipeline import Engine as E
+        e = object.__new__(E); e.cfg = {"provider": {"type": "openai"}}; e.provider = P(); e.prompts = Pr()
+        out = e.correct(bad, ev, led)
+        self.assertIn("outcomes.** [1]", out)
+
     def test_uncited_sentence_is_flagged(self):
         ev = [{"n": 1, "title": "t", "text": "fasting results"}]
         led = Engine.ledger("Overall the sources are limited and mixed on fasting. Fasting results matter. [1]", ev)
@@ -853,6 +867,30 @@ class CiteFormat(unittest.TestCase):
 
 
 class PubMedQuery(unittest.TestCase):
+    def test_429_is_retried_then_succeeds(self):
+        import io, urllib.error
+        from customchat.connectors import pubmed
+        calls = []
+        class R:
+            def __enter__(s): return s
+            def __exit__(s, *a): pass
+            def read(s): return b"ok"
+        def fake_open(url, timeout=0):
+            calls.append(url)
+            if len(calls) < 3: raise urllib.error.HTTPError(url, 429, "Too Many Requests", {}, io.BytesIO(b""))
+            return R()
+        old_open, old_sleep = pubmed.urllib.request.urlopen, pubmed.time.sleep
+        pubmed.urllib.request.urlopen, pubmed.time.sleep = fake_open, lambda s: None
+        try:
+            self.assertEqual(pubmed._get("esearch.fcgi", term="x"), b"ok")
+            self.assertEqual(len(calls), 3)
+            calls.clear()
+            def always(url, timeout=0): raise urllib.error.HTTPError(url, 429, "x", {}, io.BytesIO(b""))
+            pubmed.urllib.request.urlopen = always
+            with self.assertRaises(urllib.error.HTTPError): pubmed._get("esearch.fcgi", term="x")
+        finally:
+            pubmed.urllib.request.urlopen, pubmed.time.sleep = old_open, old_sleep
+
     def test_keywords_drop_question_words(self):
         from customchat.connectors.pubmed import keywords
         self.assertEqual(keywords("Does intermittent fasting beat continuous calorie restriction for type 2 diabetes?"),
@@ -903,6 +941,15 @@ class NumberCheck(unittest.TestCase):
 
     RAT = [{"n": 1, "title": "Differential weight loss with intermittent fasting or daily calorie restriction in low- and high-fitness phenotypes.",
             "text": "Intermittent fasting is effective for weight loss in rats with low fitness. In a separate experiment using intermittent fasting in male HCR and LCR rats, alternate-day fasting induced significantly greater loss of weight and fat mass in LCR compared with HCR rats."}]
+
+    def test_rewrite_with_fewer_flags_is_kept(self):
+        from customchat.pipeline import Engine
+        bad = "Fasting caused greater loss in low-fitness groups. [1] A direct comparison is warranted for energy expenditure effects. [1]"
+        led = Engine.ledger(bad, self.RAT)
+        self.assertEqual(sum(1 for l in led if l["animal_unmarked"]), 2)
+        part = "In rats, fasting caused greater loss in low-fitness groups. [1] A direct comparison is warranted for energy expenditure effects. [1]"
+        self.assertEqual(self._engine(part).correct(bad, self.RAT, led), part)   # 2 flags down to 1: kept
+        self.assertEqual(self._engine(bad).correct(bad, self.RAT, led), bad)      # no improvement: original stays
 
     def test_pmid_34086376_unmarked_animal_sentence_is_flagged_and_rewrite_names_rats(self):
         # real PMID 34086376 passage text (verbatim sentences); the model output is a fake string
