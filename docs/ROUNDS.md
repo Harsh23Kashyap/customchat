@@ -562,3 +562,7 @@ Copy button confirms in place (tick, "Copied" for 1.6 s, plus the toast), send b
 - No-evidence action row reads "See which documents this chat uses".
 - The collapsed actions button reads "Details" when there is no answer to act on (was "More").
 - Not changed: Simple already hides Prompts and Code. Model stays visible in Simple because the key and provider are first-run needs.
+
+## Pass 97 and track 5
+- Pass 97: one motion system (motion.css): entrance staggers, send readiness, preview pulse, press and hover tokens; only new rows animate. Subtle/None and reduced motion honored.
+- setup_and_run.py: WSL browser open, venv failure hint, port auto-pick, readiness wait before opening the browser, content-hash requirements stamp, pip errors shown, --host. Tested on Linux only; real WSL and Windows runs untested.
