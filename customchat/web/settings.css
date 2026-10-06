@@ -299,3 +299,8 @@ label.check:has(input:disabled){color:#8a95a5}
 .menu{gap:2px}.menu a{padding:9px 14px}
 h1{margin-top:0!important}
 .preset.more{border-color:#dfe6e1;font-weight:500;color:#4f6158}
+@media(max-width:1180px){.layout{grid-template-columns:minmax(0,1fr) 380px}.menu{display:none}}
+@media(max-width:1000px){.layout{grid-template-columns:minmax(0,1fr);width:100%}.preview{position:static;order:-1}#pv{height:420px}.fields{grid-template-columns:1fr}main.card,.toolbar{width:100%;box-sizing:border-box}.two{grid-template-columns:1fr}}
+@media(max-width:560px){body{padding:12px 8px 120px}main.card{padding:16px 12px}.layout{gap:16px}}
+@media(max-width:560px){#sec-code .row2,#sec-code .keyrow,#sec-code .btns{flex-wrap:wrap}#sec-code .go{max-width:100%;white-space:normal}}
+@media(max-width:560px){.secfoot{flex-wrap:wrap;justify-content:stretch}.secfoot .go{flex:1 1 100%;width:100%;min-width:0;box-sizing:border-box;white-space:normal;margin:0;padding:12px 14px}.savebar{flex-wrap:wrap;width:100%;box-sizing:border-box;margin-left:0;margin-right:0}.savebar span{flex:1 1 100%}.savebar .go{flex:1 1 auto;min-width:0;white-space:nowrap;padding:10px 12px}}
