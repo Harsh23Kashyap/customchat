@@ -31,6 +31,11 @@ class Motion(unittest.TestCase):
         i = css.index("select.pulse-soft")
         self.assertIn("prefers-reduced-motion:no-preference", css[max(0, i - 120):i])
 
+    def test_drawer_scrim(self):
+        css = rd("motion.css")
+        self.assertIn(".app.menu-open::after{opacity:.35}", css)
+        self.assertIn("pointer-events:none", css[css.index(".app::after"):css.index(".app::after") + 200])
+
 
 if __name__ == "__main__":
     unittest.main()
