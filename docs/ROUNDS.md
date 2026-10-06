@@ -354,3 +354,8 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Bug (found by the reviewer in a screenshot): after deleting a chat the sidebar showed two TODAY groups and duplicate rows. Cause: pass 50 made New chat redraw the list, and delete also redraws it; the two requests both appended. Now only the newest request draws. DOM count on desktop, 2 chats: start 1 header / 2 rows; after delete before the fix 2 headers / 2 rows (one chat was left, shown twice); after the fix 1 header / 1 row; after undo 1 header / 2 rows; New chat with the mouse away 1 header / 2 rows, none selected.
 - Status dot: 6 px more room before the title.
 - Phone 390 px, long title: title box ends at x=179, select starts at 181, title is cut with an ellipsis.
+
+## Pass 53
+- Code panel: after "Try it" on a search connector, a "Compare raw and normalized" box shows what the code returned as the chat receives it (JSON), and the raw response from the box above when one is filled. Browser check with a small test function: it opened and showed the normalized item (year 2021 became the text "2021"). The raw side was not exercised.
+- Phone: drawer rows 60 px -> 52 px (touch buttons stay 44 px); title-to-select gap 2 px -> 8 px (box edges).
+- Not reproduced: a grey first suggestion chip. Computed background of both chips is transparent, neither focused nor hovered, on desktop and phone.
