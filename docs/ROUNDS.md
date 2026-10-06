@@ -522,3 +522,6 @@ Mobile toolbar reserves room for the Preview button, section tabs wrap instead o
 
 ## Pass 85 (round 17)
 Provider selector is a 3-column grid on desktop (was clipping at 398px, scrollWidth 443), composer placeholder no longer wraps (padding-right 56px to 12px), sources stack on phones, disabled controls readable, tighter radii, dark RELATED contrast.
+
+## Pass 86 (round 18)
+Settings sections lose their card boxes and use hairline dividers, presets are a full-width list on phones, inputs 44px with 8px radius, lighter composer, no icon chips in headings.
