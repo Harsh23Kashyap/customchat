@@ -516,3 +516,6 @@ Custom range sliders with filled track, code helpers as collapsed accordions, qu
 
 ## Pass 83 (round 15)
 Auto-save (1.5 s after the last change), merged Saved looks section with quiet Export/Import/Reset, 4 presets shown by default, 520px desktop preview, live typography/layout/motion previews, Prompts grouped in three stages, calmer provider selector, dark code editor.
+
+## Pass 84 (round 16)
+Mobile toolbar reserves room for the Preview button, section tabs wrap instead of clipping, 13.5px helper text, 64px emoji fields, lighter dark send button, 780px desktop chat column, softer composer shadow, more safe-area padding.
