@@ -336,3 +336,9 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - PubMed: the relaxed search made several requests at once and NCBI answered 429 (HTTPError, no evidence). Added a 0.4 s pause between relaxed tries and a short wait and retry on 429.
 - Live animal run with a question that retrieves 34086376 naturally (it names the study's topic): cited in 5 of 5 runs, and every lead says "in male rats". The guard was not needed live. Four more natural questions about fitness and fasting did not retrieve it at all.
 - Undo log now hashes every message text (8 of 8 identical, phone and desktop).
+
+## Pass 49
+- Rewrite is kept when it has fewer flags than the original (before: only when it had none). Live finding: in an animal-study run, 3 sentences did not name rats and the all-or-nothing rule kept them.
+- The uncited flag now also goes through the rewrite ("every sentence that states a finding needs its own [n]"). Live check, 3 runs of the long-term question: leads cited in 3 of 3 (before the change: lead uncited in 2 of 3 saved ledgers); uncited sentences left: 0, 6 and 0 (of 8, 15 and 10).
+- NCBI 429: unit test forces two 429 answers then success (3 calls) and checks that a third 429 raises.
+- Clause check of "compared fasting and calorie-restricted approaches alongside exercise" against 40749646: supported; "does not establish a general long-term advantage" understates the passage, which says the IF approach "may be superior for weight maintenance" at 6 and 12 months.
