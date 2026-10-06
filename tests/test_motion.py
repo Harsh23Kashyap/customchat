@@ -22,6 +22,15 @@ class Motion(unittest.TestCase):
         js = rd("motion.js")
         self.assertGreaterEqual(js.count("catch (e)"), 2)
 
+    def test_pulse_and_picture_settle(self):
+        css, js, st = rd("motion.css"), rd("motion.js"), rd("settings.js")
+        self.assertIn("ccPulse", js)
+        self.assertIn("ccPulse", st)  # reset group calls it, guarded so a failure cannot break reset
+        self.assertIn(".pulse-soft", css)
+        self.assertIn("m-img", css)
+        i = css.index("select.pulse-soft")
+        self.assertIn("prefers-reduced-motion:no-preference", css[max(0, i - 120):i])
+
 
 if __name__ == "__main__":
     unittest.main()
