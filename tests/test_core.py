@@ -891,6 +891,31 @@ class PubMedQuery(unittest.TestCase):
         finally:
             pubmed.urllib.request.urlopen, pubmed.time.sleep = old_open, old_sleep
 
+    def test_429_gives_up_after_three_calls_and_waits_between(self):
+        import io, urllib.error
+        from customchat.connectors import pubmed
+        calls, waits = [], []
+        def always(url, timeout=0):
+            calls.append(url); raise urllib.error.HTTPError(url, 429, "x", {}, io.BytesIO(b""))
+        old_open, old_sleep = pubmed.urllib.request.urlopen, pubmed.time.sleep
+        pubmed.urllib.request.urlopen, pubmed.time.sleep = always, waits.append
+        try:
+            with self.assertRaises(urllib.error.HTTPError): pubmed._get("esearch.fcgi", term="x")
+        finally:
+            pubmed.urllib.request.urlopen, pubmed.time.sleep = old_open, old_sleep
+        self.assertEqual(len(calls), 3)   # retry cap: 3 calls in all, 2 waits (1 s, 2 s)
+        self.assertEqual(waits, [1.0, 2.0])
+
+    def test_uncited_sentence_with_number_is_dropped(self):
+        from customchat.pipeline import Engine
+        e = Engine.__new__(Engine)
+        ans = "**Possibly, in adults.** [1] Group A lost 4.87 kg versus 2.82 kg in group B. Other work is needed [1]."
+        ledger = [{"claim": "Group A lost 4.87 kg versus 2.82 kg in group B.", "cites": []}, {"claim": "Other work is needed [1].", "cites": [1]}]
+        e.tidy = lambda a, ev: (a, ev); e.ledger = lambda a, ev, q: [{"claim": a, "cites": [1]}]
+        out, ev, led = e._drop_uncited_numbers(ans, [{"n": 1}], ledger, "")
+        self.assertNotIn("4.87", out); self.assertIn("Other work is needed", out)
+        self.assertEqual(e.dropped, ["Group A lost 4.87 kg versus 2.82 kg in group B."])
+
     def test_keywords_drop_question_words(self):
         from customchat.connectors.pubmed import keywords
         self.assertEqual(keywords("Does intermittent fasting beat continuous calorie restriction for type 2 diabetes?"),
