@@ -616,3 +616,12 @@ input[id^=f-emoji]{width:64px!important;min-width:0;text-align:center;font-size:
 .preset{border-radius:10px!important}
 .preset .sw{border-radius:50%}
 .stage,details.helper{border-radius:10px}
+
+/* round 18 */
+.tile,.col .tile{background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;border-bottom:1px solid rgba(23,63,53,.12)!important;padding:36px 0!important}
+.col .tile:last-of-type{border-bottom:0!important}
+@media(max-width:760px){.tile,.col .tile{padding:28px 0!important}
+ #presets,.presets{display:flex!important;flex-direction:column;gap:8px}.preset{width:100%;min-height:52px;justify-content:flex-start}}
+input[type=text],input[type=password],input:not([type]),select,.cs-btn{min-height:44px;padding-left:16px;border-radius:8px!important}
+.tile .head{margin-bottom:12px}
+.tile .head .ic{background:none!important;color:#173f35;width:auto;height:auto}
