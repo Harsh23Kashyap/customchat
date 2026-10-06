@@ -362,10 +362,21 @@ class Engine:
             return "Note: the sources may not fully support this: %s" % what[:300] if what else "Note: some statements here may not be fully supported by the sources."
         return ""
 
+    @staticmethod
+    def fallback_answer(evidence, why=""):
+        """No model reachable: answer with the best passages from the sources instead of an error."""
+        lines = ["The AI model could not be reached, so here are the most relevant passages from your sources."]
+        for e in (evidence or [])[:3]:
+            t = " ".join(str(e.get("text") or "").split())
+            if len(t) > 320:
+                t = t[:320].rsplit(" ", 1)[0] + "..."
+            lines.append("- " + t + " [" + str(e.get("n")) + "]")
+        return "\n\n".join([lines[0], "\n".join(lines[1:])]) if len(lines) > 1 else lines[0]
+
     def ask_stream(self, owner, chat, question, sources=None, style="standard", topic=None, new_topic=False, use_cache=True, temporary=False, temp_history=None, use_profile=False):
         """Yield ('meta', {...}), ('token', str)..., ('done', result). Same behaviour as ask()."""
         t0 = time.time()
-        q = (question or "").strip()
+        q = str(question or "").strip()
         if not q or len(q) > 2000:
             raise ValueError("Question must be 1-2000 characters")
         mem_on = self.cfg["memory"]["enabled"]
@@ -400,17 +411,27 @@ class Engine:
             yield "token", answer
         else:
             parts = []
-            for piece in self.provider.stream(self.prompt(standalone, evidence, style, history, summary, profile)):
-                parts.append(piece)
-                yield "token", piece
+            degraded = False
+            try:
+                for piece in self.provider.stream(self.prompt(standalone, evidence, style, history, summary, profile)):
+                    parts.append(piece)
+                    yield "token", piece
+            except providers.ProviderError:
+                degraded = True
+                if parts:
+                    tail = "\n\n(The answer was cut short because the model stopped responding.)"
+                    parts.append(tail); yield "token", tail
+                else:
+                    fb = self.fallback_answer(evidence); parts.append(fb); yield "token", fb
             answer = "".join(parts).strip()
-            answer = self.revise(answer, evidence)
-            note = self.check_support(answer, evidence)
-            if note:
-                answer += "\n\n" + note
-                yield "token", "\n\n" + note
+            if not degraded:
+                answer = self.revise(answer, evidence)
+                note = self.check_support(answer, evidence)
+                if note:
+                    answer += "\n\n" + note
+                    yield "token", "\n\n" + note
         ledger = self.ledger(answer, evidence, standalone) if evidence else []
-        if evidence and self.cfg["provider"]["type"] != "mock":
+        if evidence and self.cfg["provider"]["type"] != "mock" and not locals().get("degraded"):
             # show only the sources the answer cites; a refusal cites nothing, so it shows none
             answer, evidence = self.tidy(answer, evidence)
             ledger = self.ledger(answer, evidence, standalone)
@@ -431,7 +452,7 @@ class Engine:
                        "evidence": evidence, "ledger": ledger, "style": style, "source_errors": errors, "temporary": temporary}
 
     def ask(self, owner, chat, question, sources=None, style="standard", topic=None, new_topic=False, use_cache=True):
-        q = (question or "").strip()
+        q = str(question or "").strip()
         if not q or len(q) > 2000:
             raise ValueError("Question must be 1-2000 characters")
         self.store.chat(owner, chat)
@@ -449,10 +470,16 @@ class Engine:
         if not evidence:
             answer, ledger = self.cfg["prompt"]["no_evidence"], []
         else:
-            answer = self.provider.complete(self.prompt(standalone, evidence, style, history, summary))
-            answer = self.revise(answer, evidence)
+            degraded = False
+            try:
+                answer = self.provider.complete(self.prompt(standalone, evidence, style, history, summary))
+            except providers.ProviderError:
+                degraded = True
+                answer = self.fallback_answer(evidence)
+            if not degraded:
+                answer = self.revise(answer, evidence)
             ledger = self.ledger(answer, evidence, standalone)
-            if self.cfg["provider"]["type"] != "mock":
+            if self.cfg["provider"]["type"] != "mock" and not degraded:
                 answer, evidence = self.tidy(answer, evidence)
                 ledger = self.ledger(answer, evidence, standalone)
                 answer, evidence, ledger = self._fix(answer, evidence, ledger, standalone)
