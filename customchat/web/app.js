@@ -110,7 +110,10 @@ function turnView(t, prev) {
   nodes.push(el("div", { class: "row u" }, avatar("you"), el("div", { class: "bubble ub", text: t.question })));
   const bub = el("div", { class: "bubble bb" + (t.evidence.length ? "" : " none") }, renderAnswer(t.answer, t.evidence));
   if (!t.evidence.length) {
+    const ill = document.createElementNS("http://www.w3.org/2000/svg", "svg"); ill.setAttribute("viewBox", "0 0 96 96"); ill.setAttribute("class", "nf-ill"); ill.setAttribute("aria-hidden", "true");
+    ill.innerHTML = '<g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M26 14h30l14 14v50H26z"/><path d="M56 14v15h14"/><path d="M36 42h24M36 52h18" opacity=".5"/><circle cx="58" cy="62" r="13" class="nf-lens"/><path d="m67 71 12 12"/></g>';
     bub.prepend(el("div", { class: "nf-h", text: "No evidence found" }));
+    bub.prepend(ill);
     const tip = (txt, fn) => el("button", { class: "tip", onclick: fn }, el("span", { text: txt }), el("span", { class: "go", "aria-hidden": "true", text: "\u203a" }));
     bub.append(el("div", { class: "nf-tips" }, tip("Try a different question", () => { $("#q").focus(); }), tip("Use words from your documents", () => { $("#q").focus(); }), tip("See which documents this chat uses", () => { location.href = "/settings.html"; })));
   }

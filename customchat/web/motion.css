@@ -74,3 +74,15 @@ html[data-motion=none] *,html[data-motion=none] *::before,html[data-motion=none]
 .menu{-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}}
 
 @media(max-width:640px){.menu.end{-webkit-mask-image:none;mask-image:none}}
+/* wider reading measure on desktop, smaller side padding */
+@media(min-width:861px){
+.thread{padding-left:max(24px,calc((100% - var(--chat-max,980px))/2))!important;padding-right:max(24px,calc((100% - var(--chat-max,980px))/2))!important}
+.wrap,.thread>*{max-width:none}
+.pills,.box,.cmeta{max-width:var(--chat-max,980px)}
+.composer{padding-left:24px!important;padding-right:24px!important}
+.bubble.bb{max-width:100%}
+}
+@media(min-width:861px){.thread,.composer{max-width:none!important;margin-left:0!important;margin-right:0!important;width:auto!important}}
+.nf-ill{display:block;width:84px;height:84px;margin:6px 0 10px;color:var(--brand);opacity:.85}.fresh .nf-ill{animation:m-settle .3s var(--ease) both}.nf-lens{fill:color-mix(in srgb,var(--paper) 70%,transparent)}
+.fresh .nf-ill .nf-lens{animation:m-lens 1.1s var(--ease) .3s 1 both}@keyframes m-lens{0%{transform:translate(-4px,-3px)}50%{transform:translate(3px,2px)}100%{transform:none}}.nf-ill .nf-lens{transform-box:fill-box}
+.nf-h{font-family:var(--serif);font-size:calc(20px*var(--fs,1))}
