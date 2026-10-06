@@ -71,6 +71,15 @@ class Motion(unittest.TestCase):
         self.assertIn(".ic:hover{transform:scale(1.04)}", css)
         self.assertIn("overrides Full", rd("settings.js"))
 
+    def test_code_editor_and_clear_image(self):
+        css = rd("motion.css")
+        self.assertIn(".cm-editor{animation:m-up", css)
+        self.assertIn(".logoprev.leave", css)
+        st = rd("settings.js")
+        self.assertIn('prev.classList.add("leave")', st)
+        # the picture is still hidden afterwards, so removing never leaves it stuck visible
+        self.assertIn("prev.hidden = true; prev.classList.remove(\"leave\")", st)
+
 
 if __name__ == "__main__":
     unittest.main()
