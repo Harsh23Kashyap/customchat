@@ -378,3 +378,7 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - URL break: wrapping prefers break-word, so a long line no longer splits inside "https://" when an earlier break exists.
 - Settings: under 1000 px wide the live preview stacks above the form (before: form 368 px wide at 900 px; now 772 px).
 - Keyboard: Tab inside the code editor inserted spaces, so "Try it" could not be reached (40 Tab presses, never reached). Now Esc then Tab leaves the editor; from the description box, "Try it" is reached in 6 presses at 900 and 1100 px. A hint line says so.
+
+## Pass 59
+- Regression from pass 58 fixed: the break-word override stopped the editor from wrapping, so long lines were cut at the right edge. Removed. Checks now include clipping: at 480 px and 1100 px the editor has no horizontal scroll, content right edge equals the scroller right edge, and 0 lines extend past it. Gutter offsets are 0 for all lines at both widths (line 8 is 140 px tall at 480 px, 88 px at 1100 px).
+- Settings at 900 px: the blank space under the stacked preview was a 90 px bottom margin meant for the side layout; it is 12 px now (gap from the preview to its caption was 100 px).
