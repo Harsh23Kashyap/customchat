@@ -41,7 +41,7 @@
 .side .list .item{animation:m-in .18s var(--ease) both}
 .tab{transition:background-color var(--m-state) var(--ease),color var(--m-state) var(--ease)}
 .jump{transition:opacity .2s var(--ease),transform .2s var(--ease);transform:translateY(6px)}.jump.show{transform:none}
-.toast{animation:m-up .2s var(--ease) both}
+.toast{animation:m-toast-in .2s var(--ease) both}@keyframes m-toast-in{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%)}}
 /* settings */
 .col .tile{animation:m-up .24s var(--ease) both}
 .col .tile:nth-child(2){animation-delay:.03s}.col .tile:nth-child(3){animation-delay:.06s}.col .tile:nth-child(4){animation-delay:.09s}
@@ -102,10 +102,10 @@ details[open]::details-content{block-size:auto}
 /* test connection: working, passed, failed */
 .testres.busy::before{content:"";display:inline-block;width:11px;height:11px;margin-right:8px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-1px;animation:m-spin .7s linear infinite}
 .testres.ok::before{content:"\2713";margin-right:6px;font-weight:700;display:inline-block;animation:m-pop .24s cubic-bezier(.22,1,.36,1)}
-.testres.bad{animation:m-shake .32s ease-out}
+.testres.bad{animation:m-shake2 .32s ease-out}
 @keyframes m-spin{to{transform:rotate(360deg)}}
 @keyframes m-pop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
-@keyframes m-shake{20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+@keyframes m-shake2{20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
 /* unsaved indicator breathes while changes are pending */
 .savebar span.dirty::before{content:"";display:inline-block;width:7px;height:7px;margin-right:8px;border-radius:50%;background:currentColor;vertical-align:1px;animation:m-breathe 1.2s ease-in-out infinite}
 @keyframes m-breathe{50%{opacity:.3;transform:scale(.8)}}
@@ -115,4 +115,23 @@ details[open]::details-content{block-size:auto}
 /* sections ease in the first time they scroll into view */
 .rv{transform:translateY(14px)}
 .rv.in{transform:none;transition:transform .45s cubic-bezier(.22,1,.36,1)}
+}
+
+/* theme colours glide when the look changes instead of jumping */
+@property --brand{syntax:"<color>";inherits:true;initial-value:#173f35}
+@property --ink{syntax:"<color>";inherits:true;initial-value:#1d2a24}
+@property --cream{syntax:"<color>";inherits:true;initial-value:#f6f1e7}
+@property --paper{syntax:"<color>";inherits:true;initial-value:#fffdf8}
+@property --line{syntax:"<color>";inherits:true;initial-value:#e3dccd}
+@property --mut{syntax:"<color>";inherits:true;initial-value:#66756d}
+@property --soft{syntax:"<color>";inherits:true;initial-value:#eef2ee}
+@property --lime{syntax:"<color>";inherits:true;initial-value:#d9ef6a}
+@property --on-brand{syntax:"<color>";inherits:true;initial-value:#ffffff}
+@property --on-lime{syntax:"<color>";inherits:true;initial-value:#17331b}
+@media(prefers-reduced-motion:no-preference){
+:root{transition:--brand .35s ease,--ink .35s ease,--cream .35s ease,--paper .35s ease,--line .35s ease,--mut .35s ease,--soft .35s ease,--lime .35s ease,--on-brand .35s ease,--on-lime .35s ease}
+.toast.out{animation:m-down .22s ease-in both}
+@keyframes m-down{to{opacity:0;transform:translateX(-50%) translateY(8px)}}
+@view-transition{navigation:auto}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.22s}
 }

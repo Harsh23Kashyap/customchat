@@ -49,7 +49,7 @@ async function api(path, body) {
   return d;
 }
 function centerToast(t) { const m = document.querySelector(".main"); if (m) { const r = m.getBoundingClientRect(); t.style.left = (r.left + r.width / 2) + "px"; } return t; }
-function toast(msg) { const t = el("div", { class: "toast", role: "status", "aria-live": "polite", text: msg }); document.body.append(t); centerToast(t); setTimeout(() => t.remove(), 2200); }
+function toast(msg) { document.querySelectorAll(".toast").forEach((x) => x.remove()); const t = el("div", { class: "toast", role: "status", "aria-live": "polite", text: msg }); document.body.append(t); centerToast(t); setTimeout(() => t.classList.add("out"), 2000); setTimeout(() => t.remove(), 2250); }
 
 function inline(parent, text, evidence) {
   // safe inline markdown: **bold**, `code`, and [n] citations. Everything is text nodes.
