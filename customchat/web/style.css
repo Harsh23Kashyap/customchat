@@ -479,3 +479,9 @@ html.preview .bar .title{font-size:13px!important}
 .cmeta{font-size:calc(12.5px*var(--fs,1))}
 .cite,.a sup{font-size:.72em;opacity:.85}
 .composer{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 24px)}
+
+/* round 17 */
+.box textarea{padding-right:12px!important;flex:1 1 auto;min-width:0;white-space:pre-wrap}
+.box textarea::placeholder{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:760px){.srcs{flex-direction:column!important;flex-wrap:nowrap!important;overflow:visible!important;margin-left:0!important;margin-right:0!important;padding:0!important;gap:4px}.srcs button.s{width:100%;text-align:left;min-height:44px}}
+:root[data-theme=dark] .fu-label{color:#b6c4bc}:root[data-theme=dark] .meta.fu .chip{color:#dbe6df}

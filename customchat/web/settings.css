@@ -600,3 +600,19 @@ input[data-k=emoji],input[maxlength="2"],input[maxlength="4"],input.emoji{width:
 input[type=text],input[type=password],textarea,.cs-btn,select{border-color:rgba(23,63,53,.16)!important}
 .box{box-shadow:0 1px 3px rgba(0,0,0,.05),0 6px 20px rgba(0,0,0,.04)}
 input[id^=f-emoji]{width:64px!important;min-width:0;text-align:center;font-size:22px;padding:0}
+
+/* round 17 */
+#seg{display:grid!important;grid-template-columns:repeat(3,1fr)!important;grid-auto-flow:row!important;gap:8px;overflow:visible!important;background:none;box-shadow:none;padding:0}
+#seg button{min-width:0;white-space:nowrap}
+@media(max-width:760px){#seg{grid-template-columns:1fr 1fr!important}}
+#seg .chipmore{grid-column:1/-1}
+:disabled,input:disabled,select:disabled,.cs-btn:disabled{opacity:1!important;color:#74837b!important;background:rgba(23,63,53,.04)!important}
+.motprev{display:flex;flex-direction:row;align-items:center}
+.motprev i{flex:none}
+.tile,.saved{border-radius:12px}
+.card{border-radius:16px}
+.tile .head .ic{border-radius:10px}
+#pvfab{border-radius:10px!important}
+.preset{border-radius:10px!important}
+.preset .sw{border-radius:50%}
+.stage,details.helper{border-radius:10px}
