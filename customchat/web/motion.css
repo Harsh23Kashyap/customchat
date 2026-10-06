@@ -86,3 +86,6 @@ html[data-motion=none] *,html[data-motion=none] *::before,html[data-motion=none]
 .nf-ill{display:block;width:84px;height:84px;margin:6px 0 10px;color:var(--brand);opacity:.85}.fresh .nf-ill{animation:m-settle .3s var(--ease) both}.nf-lens{fill:color-mix(in srgb,var(--paper) 70%,transparent)}
 .fresh .nf-ill .nf-lens{animation:m-lens 1.1s var(--ease) .3s 1 both}@keyframes m-lens{0%{transform:translate(-4px,-3px)}50%{transform:translate(3px,2px)}100%{transform:none}}.nf-ill .nf-lens{transform-box:fill-box}
 .nf-h{font-family:var(--serif);font-size:calc(20px*var(--fs,1))}
+.think .dot{animation:m-dot .9s var(--ease) infinite!important}.think .dot:nth-child(2){animation-delay:.12s!important}.think .dot:nth-child(3){animation-delay:.24s!important}
+.tk{animation:m-in .06s linear both}.a#live{white-space:pre-wrap}
+@media(max-width:760px){.tk{animation-duration:.04s}}

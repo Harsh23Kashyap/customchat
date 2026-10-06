@@ -128,7 +128,7 @@ function turnView(t, prev) {
   meta.append(el("button", { "data-more": "1", class: "chip", title: "How this answer was built", onclick: () => contextDialog(t) }, "Context"));
   if (t.evidence.length) meta.append(el("button", { class: "chip copy", onclick: (ev) => { const b = ev.currentTarget; navigator.clipboard.writeText(t.answer).then(() => { toast("Copied"); b.textContent = "Copied"; b.classList.add("done"); setTimeout(() => { b.textContent = "Copy"; b.classList.remove("done"); }, 1600); }); } }, "Copy"));
   if (t.evidence.length) {
-    for (const v of [1, -1]) meta.append(el("button", { class: "chip" + (S.ratings[t.id] === v ? " on" : ""), "aria-pressed": String(S.ratings[t.id] === v), onclick: async () => { const r = S.ratings[t.id] === v ? 0 : v; try { await api("/api/rate", { turn: t.id, rating: r }); if (r) S.ratings[t.id] = r; else delete S.ratings[t.id]; drawThread(); } catch (e) { toast(e.message); } } }, v > 0 ? "Helpful" : "Not helpful"));
+    for (const v of [1, -1]) meta.append(el("button", { class: "chip" + (S.ratings[t.id] === v ? " on" : "") + (S.pop === t.id + ":" + v ? " pop" : ""), "aria-pressed": String(S.ratings[t.id] === v), onclick: async () => { const r = S.ratings[t.id] === v ? 0 : v; try { if (r) S.pop = t.id + ":" + v; await api("/api/rate", { turn: t.id, rating: r }); if (r) S.ratings[t.id] = r; else delete S.ratings[t.id]; drawThread(); } catch (e) { toast(e.message); } } }, v > 0 ? "Helpful" : "Not helpful"));
     meta.append(el("button", { "data-more": "1", class: "chip", onclick: () => download("/api/bibtex?turn=" + t.id, "references.bib") }, "BibTeX"));
     meta.append(el("button", { "data-more": "1", class: "chip", onclick: () => download("/api/pdf?turn=" + t.id, "answer.pdf") }, "PDF"));
     for (const s of ["quick", "deep"]) if (S.cfg.styles.includes(s)) meta.append(el("button", { "data-more": "1", class: "chip", onclick: () => regen(t.id, s) }, s === "quick" ? "Shorter" : "Deeper"));
@@ -253,7 +253,7 @@ async function send() {
   let text = "", result = null, err = null;
   try {
     await stream({ chat: S.temp ? null : S.chat, question: q, style: $("#style").value, topic: S.topic, new_topic: S.newTopic, sources: S.sources.size ? [...S.sources] : null, temporary: S.temp, history: S.temp ? S.turns.slice(-6).map((t) => ({ question: t.question, answer: t.answer })) : undefined, use_profile: S.useProfile && !S.temp }, (ev) => {
-      if (ev.type === "token") { $("#think")?.remove(); text += ev.data; live.textContent = text; th.scrollTop = th.scrollHeight; }
+      if (ev.type === "token") { $("#think")?.remove(); text += ev.data; const sp = document.createElement("span"); sp.className = "tk"; sp.textContent = ev.data; live.append(sp); th.scrollTop = th.scrollHeight; }
       else if (ev.type === "done") result = ev.data;
       else if (ev.type === "error") err = ev.data;
     });
