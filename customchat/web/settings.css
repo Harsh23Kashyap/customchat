@@ -525,3 +525,15 @@ input[type=range]::-moz-range-thumb{background:#fff;border:2px solid var(--cfg-a
 .pipe{display:flex;flex-direction:column;align-items:flex-start;gap:2px;counter-reset:st}
 .pipe .step{counter-increment:st;white-space:nowrap;padding:8px 12px;display:flex;gap:10px;background:none;border:0}
 .pipe .step::before{content:counter(st);min-width:22px;height:22px;border-radius:50%;background:rgba(23,63,53,.08);font-size:12px;display:inline-flex;align-items:center;justify-content:center}
+
+/* round 13 */
+.go{min-height:40px;padding:0 16px}
+#exp,.filebtn{background:none!important;border:0!important;color:#4f6158!important;text-decoration:underline;min-height:36px;padding:0 10px}
+@media(min-width:761px){.fields:has(#temp){display:grid;grid-template-columns:1fr 1fr;gap:24px 32px}}
+@media(max-width:1000px){
+ #pvfab{position:absolute!important;top:10px;right:16px;bottom:auto!important;left:auto!important;width:auto!important;height:40px!important;min-height:40px;padding:0 14px;border:1px solid rgba(23,63,53,.2);border-top-width:1px;border-radius:12px;background:var(--cfg-paper,#fff);color:#173f35;font-size:14px;z-index:30;backdrop-filter:none;box-shadow:none}
+ body{padding-bottom:calc(120px + env(safe-area-inset-bottom))!important}
+ .savebar{bottom:0!important;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+ body.pvopen #pvfab{position:fixed!important;top:10px}
+}
+@media(max-width:760px){.wrap,main,.page,.card{padding-left:20px;padding-right:20px}.tile{padding-left:20px;padding-right:20px;padding-top:24px;padding-bottom:24px}}

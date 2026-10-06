@@ -458,3 +458,6 @@ html.preview .bar .title{font-size:13px!important}
 .bubble.none li,.nf li{margin-bottom:8px}
 .meta button{margin-right:8px;min-height:40px;padding:0 12px}
 :root[data-theme=dark] .hero p,:root[data-theme=dark] .empty p,:root[data-theme=dark] .sub{color:#c2cec7}
+:root[data-theme=dark] .box{border:1px solid rgba(255,255,255,.15)}
+.box{box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.meta{margin-top:16px}
