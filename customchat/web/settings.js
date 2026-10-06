@@ -289,7 +289,15 @@ function logoControl(f, current) {
   fe.addEventListener("input", () => { st.feather = +fe.value; render(); });
   rb.addEventListener("change", () => { st.strip = rb.checked; render(); });
   rm.addEventListener("click", () => { orig = null; prev.hidden = true; before.hidden = true; onpage.hidden = true; rm.hidden = true; fe.disabled = rb.disabled = true; file.value = ""; setv(f, ""); });
-  return el("div", { class: "logobox" }, stage, el("div", { class: "logoctl" }, fileBtn, file, el("label", { class: "check" }, rb, "Remove plain background"), el("label", { class: "h" }, "Edge softness", fe), note, rm));
+  const box = el("div", { class: "logobox" });
+  const take = (fl) => { if (!fl || !/^image\//.test(fl.type)) { say("Drop a PNG, JPG, WebP or GIF picture.", true); return; } const dt = new DataTransfer(); dt.items.add(fl); file.files = dt.files; file.dispatchEvent(new Event("change")); };
+  let depth = 0; const over = (on) => box.classList.toggle("dragover", on);
+  box.addEventListener("dragenter", (e) => { e.preventDefault(); depth++; over(true); });
+  box.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; });
+  box.addEventListener("dragleave", () => { if (--depth <= 0) { depth = 0; over(false); } });
+  box.addEventListener("drop", (e) => { e.preventDefault(); depth = 0; over(false); take(e.dataTransfer.files[0]); });
+  box.append(stage, el("div", { class: "logoctl" }, fileBtn, el("span", { class: "h dropnote", text: "or drag a picture here" }), file, el("label", { class: "check" }, rb, "Remove plain background"), el("label", { class: "h" }, "Edge softness", fe), note, rm));
+  return box;
 }
 function control(f) {
   const id = "f-" + f.key; let input;
