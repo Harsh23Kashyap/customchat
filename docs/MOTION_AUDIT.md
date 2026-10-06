@@ -2,7 +2,7 @@
 
 Checked against the ChatGPT list of 105 (round 26). Status is from reading the code and, for most items, measuring the DOM or a computed style in a headless browser. Nothing was judged by eye. "n/a" means the app has no such control, so there is nothing to animate.
 
-Built 78, partial 13, n/a 10, not feasible 3, not built 1 (of 105).
+Built 80, partial 11, n/a 10, not feasible 3, not built 1 (of 105).
 
 | # | Item | Status |
 |---|---|---|
@@ -46,7 +46,7 @@ Built 78, partial 13, n/a 10, not feasible 3, not built 1 (of 105).
 | 38 | Save look | partial |
 | 39 | Delete saved look | partial |
 | 40 | Provider/model selection | built |
-| 41 | API key state | partial |
+| 41 | API key state | built |
 | 42 | Test connection | built |
 | 43 | Model dropdown | built |
 | 44 | Temperature slider | built |
@@ -102,7 +102,7 @@ Built 78, partial 13, n/a 10, not feasible 3, not built 1 (of 105).
 | 94 | Route/tab transitions | built |
 | 95 | Scroll reveal for long configuration sections | built |
 | 96 | Sticky settings header | built |
-| 97 | Unsaved-change indicator | partial |
+| 97 | Unsaved-change indicator | built |
 | 98 | Reset-group feedback | built |
 | 99 | Existing stagger system | built |
 | 100 | Existing hover lift | partial |
