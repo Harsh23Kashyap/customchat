@@ -469,3 +469,11 @@ Not done: one sticky save bar instead of per-section Save and Reset, preview reb
 - Remove-background checkbox starts unchecked and disabled until a logo exists. Copy: "Choose a picture", "Stays on this computer", "Fonts" tab name, motion and corner roundness help, editor hint "Press Esc, then Tab, to move past the editor."
 - 390: smaller title (26px), lead 14px, export/import full width.
 Still open from the reviews: one sticky save bar, preview from the real chat component, wider desktop sidebar, row chevrons on prompt rows, collapse generated code until written, background-style swatch picker, font previews inside the font selects, layout previews, micro-animations pass.
+
+## Pass 70 (UI round 1: Gemini 58, ChatGPT 72)
+- Form fields: border deep green at 22% opacity, 12px radius, cream fill (no dark borders). Buttons pills, inputs 12px, cards 16px.
+- Mobile config: bottom padding 180px and card margin 96px so the Preview button no longer covers Reset or the last fields.
+- Sliders: 6px track, 22px deep-green thumb with cream ring. Colour inputs: round 40px swatches.
+- Settings title 28px. Simple/Advanced switch smaller with a light green fill.
+- Chat: no-evidence block left-aligned, answer 15px/1.55, source cards 13px, action row 12.5px, empty state lower with 32px gap before suggestions, dark composer 1px light border, disclaimer safe-area padding.
+Still open: custom select popovers, toggle switches on prompt rows, row chevrons, preview from real chat component.
