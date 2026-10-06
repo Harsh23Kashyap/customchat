@@ -528,3 +528,6 @@ Settings sections lose their card boxes and use hairline dividers, presets are a
 
 ## Pass 87 (round 19)
 Dark no-evidence text lightened, citation markers get a 4px tint, 32px under user rows, mobile heading 26px and full-width Simple/Advanced, equal-size preset tiles, switch rows label-left, Light/Dark control iOS style.
+
+## Pass 88 (round 20)
+Mobile section tabs scroll in one row with edge fade (44px chips), filled borderless inputs with green focus ring, 19px section headings, quiet Reset group, smaller slider thumb, sticky desktop preview, custom no-evidence bullets, larger phone secondary text.
