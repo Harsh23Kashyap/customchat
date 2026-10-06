@@ -489,3 +489,6 @@ Settings: every select is now a custom listbox (bottom sheet on phones), checkbo
 
 ## Pass 74
 Settings desktop widens to 1360px with a 440px live preview (the preview already is the real chat page in an iframe, /?preview=1). Help text is plain muted text, not a boxed card. Hex codes show only in Advanced mode. Not done: single sticky save bar, font/colour specimens, copy cut, dark code editor page, SVG chevrons.
+
+## Pass 75: UI round 5 fixes
+Phone settings: section menu is a plain scrolling row (no sticky overlay), intro paragraph hidden, Simple/Advanced 36px, provider chips scroll with snap, prompt steps are a vertical numbered list, inputs and buttons side by side are all 40px, colour swatches 24px with a light border, logo picker uses a styled label button (native input hidden). Chat: composer border and shadow quieter (green only on focus), safe-area padding, 15.5px answers on desktop, 12px above the action row. Not done: auto-save or a single save bar replacing per-section Save, unified preset icons, kebab menu for code helper actions, SVG chevrons.
