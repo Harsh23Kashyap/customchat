@@ -329,3 +329,10 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Tested on a 4-turn chat (8 messages): same chat id after undo, same title and pinned state, 0 of 8 messages differ.
 - test_pdf now asserts the exact extracted text, so silencing the pypdf warning hides nothing.
 - Weight-loss and long-term question after the population rule, 3 runs: the long-term sentence named "obese adults" and "fasting-based strategies" in 3 of 3.
+
+## Pass 48
+- Toast sits 16 px above the composer on phone and desktop (measured: toast bottom 647, composer top 663 on phone; 615 and 631 on desktop; overlap false). It follows the composer height through a CSS variable.
+- Citations that the model puts inside the closing bold ("**lead. [1]**") are moved outside it. New ledger flag `uncited` for sentences of 6 or more words with no citation (refusals excepted).
+- PubMed: the relaxed search made several requests at once and NCBI answered 429 (HTTPError, no evidence). Added a 0.4 s pause between relaxed tries and a short wait and retry on 429.
+- Live animal run with a question that retrieves 34086376 naturally (it names the study's topic): cited in 5 of 5 runs, and every lead says "in male rats". The guard was not needed live. Four more natural questions about fitness and fasting did not retrieve it at all.
+- Undo log now hashes every message text (8 of 8 identical, phone and desktop).
