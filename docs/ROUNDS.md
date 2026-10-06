@@ -372,3 +372,9 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 ## Pass 57
 - Hanging indent now follows each line's own indent: wrapped rows start 20 px right of where that line's code starts (leading spaces counted, a tab = 4). Measured at 1100 px: line with 8 leading spaces: code starts ~227, continuation 247; line with 4 spaces: ~197 and 217. The earlier fixed offset (pass 56) was replaced.
 - A first attempt did not show because CodeMirror reset the style after each update; the styles are re-applied when that happens.
+
+## Pass 58
+- Editor gutter drift fixed: the per-line indent set by script after the editor measured the lines left line numbers off their rows. Replaced with a fixed style rule that the editor measures with. Gutter offsets at 480 px, line number top minus line top (px): before 0 0 0 0 0 -17 -17 -17 -35; after 0 for all 9 lines. Cost: the continuation indent is a fixed 20 px from the editor edge, not the line's own indent (per-line indent needs editor internals).
+- URL break: wrapping prefers break-word, so a long line no longer splits inside "https://" when an earlier break exists.
+- Settings: under 1000 px wide the live preview stacks above the form (before: form 368 px wide at 900 px; now 772 px).
+- Keyboard: Tab inside the code editor inserted spaces, so "Try it" could not be reached (40 Tab presses, never reached). Now Esc then Tab leaves the editor; from the description box, "Try it" is reached in 6 presses at 900 and 1100 px. A hint line says so.
