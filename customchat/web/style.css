@@ -9,7 +9,7 @@ body{font-family:var(--font);font-size:calc(14px*var(--fs,1));line-height:var(--
 button{font:inherit;color:inherit;cursor:pointer}a{color:var(--brand)}
 .toolbar{flex:none;height:56px;display:flex;align-items:center;gap:8px;padding:0 clamp(16px,3vw,32px);border-bottom:1px solid var(--tool)}
 .tb-brand{font-family:var(--serif);font-weight:700;font-size:calc(18px*var(--fs,1));color:var(--brand);margin-right:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.toolbar a.tb-link{color:var(--brand);font-weight:600;text-decoration:none;padding:8px 13px;border-radius:999px;transition:.2s}.toolbar a.tb-link:hover{background:var(--tool)}
+.toolbar a.tb-link{color:var(--brand);font-weight:500;text-decoration:none;padding:8px 13px;border-radius:999px;transition:.2s}.toolbar a.tb-link:hover{background:var(--tool)}
 .theme-btn{width:38px;height:30px;border-radius:999px;border:1px solid var(--line);background:var(--paper);display:grid;place-items:center;padding:0}.theme-btn i{width:14px;height:14px;border-radius:50%;background:#d79b49;box-shadow:0 0 0 4px rgba(215,155,73,.25)}
 .badge{font-size:calc(12px*var(--fs,1));color:var(--mut);border:1px solid var(--line);background:var(--paper);padding:5px 12px;border-radius:999px;white-space:nowrap}
 .app{flex:1;min-height:0;margin:14px clamp(10px,2vw,20px) clamp(10px,2vw,20px);display:grid;grid-template-columns:var(--side-w,250px) minmax(0,1fr) 0;background:var(--paper);border:1px solid rgba(23,63,53,.14);border-radius:calc(20px*var(--rs,1));box-shadow:var(--shadow);overflow:hidden;position:relative;transition:grid-template-columns .25s ease}
@@ -273,3 +273,8 @@ html[data-theme=dark] .meta .chip:not(.on){border-color:transparent;background:t
 
 .meta{gap:6px 12px}.meta .chip{margin:0}
 @media(max-width:760px){.meta{gap:0 6px}.bar #style{max-width:96px!important;min-width:0;padding-right:22px}}
+
+.srcs .n{color:var(--brand);font-weight:700}
+.meta>*+*{position:relative}.meta>*+*::before{content:"\00b7";position:absolute;left:-8px;top:50%;transform:translateY(-52%);color:var(--mut);opacity:.7;pointer-events:none;font-weight:700}
+.meta.fu>*+*::before{content:none}.meta>.more::before{left:-8px}
+.bubble.none{color:var(--mut)}.bubble.none .a,.bubble.none p{font-style:italic;color:var(--mut)}

@@ -5,7 +5,7 @@ body{font-family:Roboto,"Open Sans",-apple-system,"Segoe UI",sans-serif;backgrou
 .toolbar a{color:#1a202c;text-decoration:none;padding:12px 20px;border:1px solid rgba(255,255,255,.7);border-radius:12px;background:rgba(255,255,255,.7);font-weight:500;font-size:14px;box-shadow:0 4px 16px rgba(0,0,0,.08);transition:.3s}
 .toolbar a:hover,.toolbar a.on{color:#173f35;transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.12)}
 .card{width:min(1320px,100%);background:rgba(255,255,255,.88);border-radius:28px;padding:44px;box-shadow:0 20px 60px rgba(0,60,120,.10)}
-h1{text-align:center;font-size:34px;font-weight:700;margin-bottom:10px}
+h1{text-align:center;font-size:34px;font-weight:700;margin-bottom:10px;font-family:"Fraunces",Georgia,"Times New Roman",serif!important}
 .lead{text-align:center;color:#5b6b62;font-size:14px;margin:0 auto 28px;max-width:600px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
 .tile{background:linear-gradient(135deg,#f9fcff,#f0f6fc);border-radius:26px;padding:30px;box-shadow:0 10px 36px rgba(0,40,90,.09);display:flex;flex-direction:column;gap:16px}
@@ -100,7 +100,7 @@ body{padding-bottom:140px}
 .toolbar a:focus-visible{outline:2px solid var(--cfg-accent,#173f35)}
 .preset,.presets button,[data-p]{font-family:"DM Sans",sans-serif;font-weight:600}
 .sub{margin-bottom:20px}
-.preset.more{background:transparent;border:1px dashed var(--cfg-accent,#173f35);color:var(--cfg-accent,#173f35);font-weight:600}
+.preset.more{background:transparent;border:1px solid #cfd9d1;color:var(--cfg-accent,#173f35);font-weight:600}
 .pvwrap,.preview,#pv{margin-bottom:90px}
 .cs-btn{border-radius:12px}
 .nav a,.nav button,#nav a,#nav button{white-space:nowrap}
@@ -144,7 +144,7 @@ input[type=range]{transition:opacity .15s}
 
 .pm{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;color:#fff;font-size:10px;font-weight:700;margin-right:7px;vertical-align:-5px;letter-spacing:0}
 #seg button[aria-checked=true] .pm{box-shadow:0 0 0 2px rgba(255,255,255,.7)}
-#seg .chipmore{border-style:dashed;color:var(--cfg-accent,#173f35);font-weight:600}
+#seg .chipmore{border-style:solid;border-color:#cfd9d1;color:var(--cfg-accent,#173f35);font-weight:600}
 .ollamabox{margin:10px 0 14px;padding:14px;border:1px solid #e2e9e4;border-radius:16px;background:#fbfdfb}
 .ohead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
 .ocards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
@@ -243,7 +243,7 @@ textarea.code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px
 .picks{display:flex;flex-wrap:wrap;gap:8px 14px}.pick{font-size:13.5px;display:flex;gap:4px;align-items:center}.stage[hidden]{display:none}
 .why2{align-items:flex-start}.why2 p{margin:0}
 .ctx input[type=checkbox]{width:auto;padding:0}
-.ctx .chipmore{align-self:flex-start;background:transparent;border:1px dashed #9cb7d3;border-radius:999px;padding:7px 16px;color:#1f5fbf;font:inherit;font-weight:600;font-size:13px;cursor:pointer}
+.ctx .chipmore{align-self:flex-start;background:transparent;border:1px solid #cfd9d1;border-radius:12px;padding:7px 16px;color:#173f35;font:inherit;font-weight:600;font-size:13px;cursor:pointer}
 .ctx .picks label.pick{display:inline-flex!important;flex-direction:row!important;align-items:center;gap:6px;width:auto}
 
 body{padding-bottom:96px}
@@ -283,3 +283,6 @@ label.check:has(input:disabled){color:#8a95a5}
 .cmhost .cm-line{word-break:break-all}
 
 .lead{max-width:600px;margin-left:auto;margin-right:auto}.go,.mini{border-radius:12px}
+
+.layout{max-width:1180px;margin-left:auto;margin-right:auto}
+.two{align-items:stretch}.two .sub{display:flex;flex-direction:column;gap:8px;padding:16px;box-sizing:border-box;height:100%}.two .sub>:last-child{margin-top:auto}
