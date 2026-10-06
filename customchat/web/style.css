@@ -2,8 +2,8 @@
 :root{--brand:var(--accent);--on-brand:var(--on-accent,#fffdf7);--lime:var(--accent2,#d7ef72);--on-lime:#173f35;
 --cream:#f8f4e9;--paper:#fffdf7;--ink:#17231f;--mut:#63736c;--line:#d9e1dc;--side-bg:#e9eee5;--bot:#f2f3eb;--soft:#e9eee6;--you:#efe9d8;--danger:#a8493c;--tool:rgba(23,63,53,.1);
 --shadow:0 24px 70px rgba(23,63,53,.10);--font:"DM Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji";--serif:"Fraunces",Georgia,"Times New Roman",serif,"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji"}
-:root[data-theme=dark]{--brand:color-mix(in srgb,var(--accent) 40%,#fff);--on-brand:#0b1511;--cream:#0d1613;--paper:#121d19;--ink:#e8efe9;--mut:#93a39b;--line:#25352f;--side-bg:#16231e;--bot:#1a2823;--soft:#223029;--you:#2d3a33;--tool:rgba(232,239,233,.12);--shadow:0 24px 70px rgba(0,0,0,.4)}
-@media(prefers-color-scheme:dark){:root[data-theme=auto]{--brand:color-mix(in srgb,var(--accent) 40%,#fff);--on-brand:#0b1511;--cream:#0d1613;--paper:#121d19;--ink:#e8efe9;--mut:#93a39b;--line:#25352f;--side-bg:#16231e;--bot:#1a2823;--soft:#223029;--you:#2d3a33;--tool:rgba(232,239,233,.12);--shadow:0 24px 70px rgba(0,0,0,.4)}}
+:root[data-theme=dark]{--brand:color-mix(in srgb,var(--accent) 40%,#fff);--on-brand:#0b1511;--cream:#0d1613;--paper:#121d19;--ink:#e8efe9;--mut:#b6c4bc;--line:#25352f;--side-bg:#16231e;--bot:#1a2823;--soft:#223029;--you:#2d3a33;--tool:rgba(232,239,233,.12);--shadow:0 24px 70px rgba(0,0,0,.4)}
+@media(prefers-color-scheme:dark){:root[data-theme=auto]{--brand:color-mix(in srgb,var(--accent) 40%,#fff);--on-brand:#0b1511;--cream:#0d1613;--paper:#121d19;--ink:#e8efe9;--mut:#b6c4bc;--line:#25352f;--side-bg:#16231e;--bot:#1a2823;--soft:#223029;--you:#2d3a33;--tool:rgba(232,239,233,.12);--shadow:0 24px 70px rgba(0,0,0,.4)}}
 *{box-sizing:border-box}html,body{height:100%;margin:0}
 body{font-family:var(--font);font-size:calc(14px*var(--fs,1));line-height:var(--lh,1.5);color:var(--ink);display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;background:var(--bg-layer,var(--cream));position:relative}
 button{font:inherit;color:inherit;cursor:pointer}a{color:var(--brand)}
@@ -435,3 +435,13 @@ html.preview .bar .title{font-size:13px!important}
 .ans{font-size:calc(16.5px*var(--fs,1));line-height:1.65}
 .srcs button.s,.src{border-left-width:1px!important}
 @media(max-width:760px){.hero h1,#empty h1,.empty h1{font-size:calc(28px*var(--fs,1))}.ans{font-size:15.5px}}
+
+/* round 11 */
+.srcs button.s{background:rgba(23,63,53,.05);border-radius:12px;padding:6px 12px}
+:root[data-theme=dark] .srcs button.s{background:rgba(255,255,255,.07)}
+.cmeta span,.meta button{font-size:calc(12.5px*var(--fs,1))}.meta button{min-height:36px}
+.hero .ex,.empty .ex,#empty .ex{margin-top:32px}
+.row:not(.u) .ans,.bubble .a{font-size:calc(16px*var(--fs,1))}
+.side .list .item{padding-top:8px;padding-bottom:8px}
+.side .list .item.on,.side .list .item.active{background:rgba(23,63,53,.1)}
+:root[data-theme=dark] .side .list .item.on,:root[data-theme=dark] .side .list .item.active{background:rgba(255,255,255,.09)}

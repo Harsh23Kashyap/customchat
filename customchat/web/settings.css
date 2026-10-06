@@ -493,3 +493,20 @@ input[type=range]{height:4px}input[type=range]::-webkit-slider-runnable-track{he
 .tile+.tile{margin-top:8px}
 @media(max-width:1000px){#pvfab,.pvbar,.pv-bar,.previewbar{backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid rgba(23,63,53,.14)}}
 @media(max-width:1000px){body{padding-bottom:calc(168px + env(safe-area-inset-bottom))!important}.savebar{bottom:calc(56px + env(safe-area-inset-bottom))!important}}
+
+/* round 11 */
+nav.menu{-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent);padding-right:28px;scroll-padding:0 24px}
+@media(max-width:760px){
+#seg{display:grid!important;grid-template-columns:1fr 1fr;gap:8px;overflow:visible!important;background:none;box-shadow:none;padding:0;border-radius:0!important}
+#seg button,#seg .chipmore{min-height:48px;justify-content:center}
+#seg .chipmore{grid-column:1/-1;background:none;border:0;color:#4f6158;text-decoration:underline}
+body{padding-left:0;padding-right:0}.tile{padding-left:20px;padding-right:20px}
+}
+.stage summary{min-height:48px;padding-top:6px;padding-bottom:6px}.stage summary b{font-size:15px}
+#prompts,.stages,#stages{max-width:680px}
+textarea.code,textarea[class*=code],.codebox textarea{font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace!important;font-size:13px;line-height:1.55;padding:16px!important;border-radius:12px!important;background:rgba(23,63,53,.04)}
+.go.ghost{background:none;border:1px solid rgba(23,63,53,.2)}
+.field .row2{gap:8px}
+:root[data-theme=dark] .help,:root[data-theme=dark] .tile .head small,:root[data-theme=dark] small{color:#b6c4bc}
+select,.cs-btn{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23597066' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:38px;appearance:none;-webkit-appearance:none}
+.cs-btn{border-color:rgba(23,63,53,.22)!important}
