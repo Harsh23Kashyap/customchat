@@ -2,7 +2,7 @@
 
 Checked against the ChatGPT list of 105 (round 26). Status is from reading the code and, for most items, measuring the DOM or a computed style in a headless browser. Nothing was judged by eye. "n/a" means the app has no such control, so there is nothing to animate.
 
-Built 69, partial 13, n/a 6, not built 17 (of 105).
+Built 73, partial 13, n/a 6, not built 13 (of 105).
 
 | # | Item | Status |
 |---|---|---|
@@ -33,7 +33,7 @@ Built 69, partial 13, n/a 6, not built 17 (of 105).
 | 25 | Simple / Advanced segmented control | built |
 | 26 | Configuration content swap | built |
 | 27 | Configuration tabs | built |
-| 28 | Preview toggle | not built |
+| 28 | Preview toggle | built |
 | 29 | Header controls | built |
 | 30 | Simple-mode entrance | built |
 | 31 | Primary controls changing state | partial |
@@ -82,17 +82,17 @@ Built 69, partial 13, n/a 6, not built 17 (of 105).
 | 74 | More font options | built |
 | 75 | Corner-roundness slider | partial |
 | 76 | Corner-radius preview morph | partial |
-| 77 | Spacing dropdown | not built |
+| 77 | Spacing dropdown | built |
 | 78 | Slider thumb | built |
 | 79 | Emoji input | not built |
 | 80 | Default → custom icon transition | not built |
 | 81 | Optional icon list | not built |
-| 82 | Icon hover | not built |
+| 82 | Icon hover | built |
 | 83 | Motion option selection | built |
 | 84 | Full → Subtle | partial |
 | 85 | Subtle → None | built |
 | 86 | Motion setting confirmation | built |
-| 87 | Reduced-motion explanation | not built |
+| 87 | Reduced-motion explanation | built |
 | 88 | Sidebar position | not built |
 | 89 | Hidden sidebar | built |
 | 90 | Chat-width selection | built |
