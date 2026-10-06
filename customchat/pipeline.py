@@ -175,21 +175,22 @@ class Engine:
 
     def correct(self, answer, evidence, ledger, asked=""):
         """When a sentence is flagged as vague about regain, rewrite once with the passages and the flagged sentences, then keep the rewrite only if the flag is gone."""
-        flagged = [l["claim"] for l in ledger if l.get("vague_regain") or l.get("animal_unmarked") or l.get("unhedged_lead")]
+        flagged = [l["claim"] for l in ledger if l.get("vague_regain") or l.get("animal_unmarked") or l.get("unhedged_lead") or l.get("uncited")]
         if not flagged or self.cfg["provider"]["type"] == "mock":
             return answer
         ev = "\n".join("[%d] %s. %s" % (e["n"], e["title"], e["text"][:3000]) for e in evidence)
         try:
             out = self.provider.complete([{"role": "system", "content": self.prompts.text("revise")},
-                                          {"role": "user", "content": "These sentences are too vague: %s\nSay exactly what the passage measured (for example fat mass regain, and which group had more). If a sentence rests on an animal study, say plainly that it was in rats or mice. If the opening says Yes or Probably and the effect came with weight loss, open with Possibly or say the effect may partly come from the weight loss.\n\nAnswer:\n%s\n\nEvidence:\n%s" % (" | ".join(flagged)[:800], answer, ev)}]).strip()
+                                          {"role": "user", "content": "These sentences are too vague: %s\nSay exactly what the passage measured (for example fat mass regain, and which group had more). If a sentence rests on an animal study, say plainly that it was in rats or mice. Every sentence that states a finding needs its own [n] after it. If the opening says Yes or Probably and the effect came with weight loss, open with Possibly or say the effect may partly come from the weight loss.\n\nAnswer:\n%s\n\nEvidence:\n%s" % (" | ".join(flagged)[:800], answer, ev)}]).strip()
         except providers.ProviderError:
             return answer
         if len(out) < 0.4 * len(answer) or not re.search(r"\[\d+\]", out):
             return answer
         new, ev2 = self.tidy(out, evidence)
         led2 = self.ledger(new, ev2, asked)
-        if any(l.get("vague_regain") or l.get("animal_unmarked") or l.get("unhedged_lead") for l in led2) or any(l.get("bad_numbers") for l in led2):
-            return answer  # the rewrite must clear the flag and add no number the cited passages lack
+        n_flags = lambda led: sum(1 for l in led if l.get("vague_regain") or l.get("animal_unmarked") or l.get("unhedged_lead") or l.get("uncited"))
+        if n_flags(led2) >= n_flags(ledger) or any(l.get("bad_numbers") for l in led2):
+            return answer  # the rewrite must have fewer flags than the original and add no number the cited passages lack
         return out
 
     def _fix(self, answer, evidence, ledger, asked):
