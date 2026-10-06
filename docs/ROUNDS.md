@@ -359,3 +359,6 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Code panel: after "Try it" on a search connector, a "Compare raw and normalized" box shows what the code returned as the chat receives it (JSON), and the raw response from the box above when one is filled. Browser check with a small test function: it opened and showed the normalized item (year 2021 became the text "2021"). The raw side was not exercised.
 - Phone: drawer rows 60 px -> 52 px (touch buttons stay 44 px); title-to-select gap 2 px -> 8 px (box edges).
 - Not reproduced: a grey first suggestion chip. Computed background of both chips is transparent, neither focused nor hovered, on desktop and phone.
+
+## Pass 54
+- Compare box: long JSON lines wrap instead of being cut (no horizontal scroll at 1100 px: scrollWidth <= clientWidth in both blocks); box edge at x=583, text blocks end at 552. Code editor lines wrap (pre-wrap). "Raw" and "Normalized" labels darker and bold. Shot with the raw box filled and full page height.
