@@ -486,3 +486,6 @@ Preview is a full-width bottom bar under 1000px (no overlap measured with visibl
 
 ## Pass 73: UI round 4 fixes
 Settings: every select is now a custom listbox (bottom sheet on phones), checkboxes are switches, file input has a styled button, no textarea resize handles, section menu is text with an underline for the active item. Chat: source numbers are round badges, dots between actions removed (16px gap), phone sources are a one-line horizontal row, phone header has blur and a faint divider, phone hint line hidden (the one-line safety note stays). Not done: single sticky save bar, real-chat preview, desktop 3-column layout, font/colour specimens, copy cut, dark code editor page.
+
+## Pass 74
+Settings desktop widens to 1360px with a 440px live preview (the preview already is the real chat page in an iframe, /?preview=1). Help text is plain muted text, not a boxed card. Hex codes show only in Advanced mode. Not done: single sticky save bar, font/colour specimens, copy cut, dark code editor page, SVG chevrons.
