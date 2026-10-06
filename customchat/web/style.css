@@ -199,9 +199,9 @@ html.preview .toolbar a.tb-link{pointer-events:none}
 .bar-r #prevQ,.bar-r #nextQ{display:none}
 .note{border-top:0;padding-top:0}
 .hero{margin-top:16vh}.ex button{font-size:calc(14px*var(--fs,1));padding:12px 16px}
-.cmeta{gap:0}.cmeta span:first-child::after{content:"\00a0\00b7\00a0"}
+.cmeta{gap:0}.cmeta span+span::before{content:"\00a0\00b7\00a0"}
 .bar select{font-weight:500}
-@media(max-width:760px){.thread>.row,.thread>*{max-width:100%}.cmeta span:first-child::after{content:""}.hero{margin-top:10vh}}
+@media(max-width:760px){.thread>.row,.thread>*{max-width:100%}.cmeta span+span::before{content:""}.hero{margin-top:10vh}}
 .srcs{margin:10px auto 4px}
 /* Pass 5: contrast, alignment, rhythm, touch targets */
 :root{--you:#e9dfc9}

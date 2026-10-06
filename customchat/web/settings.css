@@ -278,5 +278,6 @@ label.check:has(input:disabled){color:#8a95a5}
 .sbody>.h{color:#3f4b5c;font-weight:600}
 .stage.inner{box-sizing:border-box;max-width:100%}
 .cmhost .cm-line{padding-left:26px!important;text-indent:-20px}
-.cmhost .cm-lineWrapping,.cmhost .cm-content.cm-lineWrapping .cm-line{overflow-wrap:break-word!important;word-break:normal}
 @media(max-width:1000px){.layout{grid-template-columns:1fr}.preview{position:static;order:-1}#pv{height:420px}.fields{grid-template-columns:1fr}}
+@media(max-width:1000px){.pvwrap,.preview,#pv{margin-bottom:12px}.preview{margin-bottom:24px}}
+.cmhost .cm-line{word-break:break-all}
