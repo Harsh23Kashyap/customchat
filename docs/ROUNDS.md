@@ -531,3 +531,6 @@ Dark no-evidence text lightened, citation markers get a 4px tint, 32px under use
 
 ## Pass 88 (round 20)
 Mobile section tabs scroll in one row with edge fade (44px chips), filled borderless inputs with green focus ring, 19px section headings, quiet Reset group, smaller slider thumb, sticky desktop preview, custom no-evidence bullets, larger phone secondary text.
+
+## Pass 89 (round 21)
+Motion preview dot removed, solid circular send button, RELATED in sentence case, fixed-width source numbers, 15.5px phone answers, 14px source titles, stronger unselected Light/Dark text, dark secondary text lifted.
