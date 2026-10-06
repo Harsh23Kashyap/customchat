@@ -385,3 +385,11 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Editor: a long line starting with spaces had a blank first row (8 spaces on a row alone, then the text). Wrapping may now break anywhere, so the text starts on the first row. Measured rows at 480 px: before ["        ", "urllib...", ...], after ["        urllib.request.urlopen(\"htt", "ps://example...", ...]. The cost is a break inside "https" at narrow width. No clipping (0 lines past the edge) at 480 and 1100 px; gutter offsets 0.
 - Settings intro says "live preview", not "preview on the right" (it can sit above the form now).
 - Footer: the separator dot moved from the first text to the second, so it disappears with it (820 px wide: no trailing dot).
+
+## Pass 61
+- Settings menu showed two active items after a click and a scroll (the Prompts and Code helpers links were added later and were not part of the scroll tracking). Now one active item at a time: after click on Code helpers 1 active; after scrolling to Shape and spacing 1 active (before: 2).
+- Answers with no evidence now keep a Copy button next to More (before: only More).
+- The "uncited" flag skips honest no-evidence sentences such as "The sources do not explain ...". Test added (77 tests OK).
+- Docs app on a real corpus (README, DESIGN, SCHEMA, 8.4 KB), 6 questions, real model: 6 of 6 answered from the files with citations; 5 of 6 had every sentence supported (the API-key answer had 2 of 3), none uncited. One 8099 port clash showed a stale server first; re-run on its own port.
+- Nutrition prompt: no em dashes.
+- The two similar rows in the nutrition sidebar were two chats (different ids), made by my test asking the same question at two widths; not a duplicate row.
