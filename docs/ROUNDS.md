@@ -436,3 +436,6 @@ Reviewer text used as design input only. Skipped: left borders, resting heavy pi
 - Citation cards smaller radius and padding, lighter border. Footer note 12px. Inactive tab darker.
 - Settings: "state" wording changed to "look" everywhere (Save look, Load a saved look); "Updates as you edit" tag on the preview; nav rows tighter.
 Not done: full spacing scale and type scale audit; superscript citation numbers in prose.
+
+## Pass 66 (settings at 390)
+My late grid override (170px / 1fr / 400px) sat after the responsive rules in settings.css, so at 390 the cards column collapsed to 0px and the page was 580px wide. Responsive rules re-added at the end of the file: single column under 1000px, nav hidden under 1180px, card and toolbar full width, tighter card padding under 560px, code-helper buttons wrap. Measured at 390: document width 390, no section wider than its box (n=12 sections). Section captures are now full panels (19KB to 78KB each), plus a full-page capture.
