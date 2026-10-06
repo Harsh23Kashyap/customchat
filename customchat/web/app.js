@@ -175,10 +175,10 @@ function dayLabel(ts) {
   if (d.getTime() >= start) return "Today"; if (d.getTime() >= start - day) return "Yesterday"; if (d.getTime() >= start - 7 * day) return "This week"; return "Earlier";
 }
 async function loadList() {
-  const list = $("#list"); list.replaceChildren();
+  const seq = (loadList.seq = (loadList.seq || 0) + 1); const list = $("#list"); list.replaceChildren();
   try {
     if (S.tab === "chats") {
-      const rows = await api("/api/chats?q=" + encodeURIComponent($("#search").value));
+      const rows = await api("/api/chats?q=" + encodeURIComponent($("#search").value)); if (seq !== loadList.seq) return;
       if (!rows.length) list.append(el("div", { class: "empty", text: "No chats yet." }));
       let lastGroup = "";
       const cnt = {}; rows.forEach((c) => { cnt[c.title] = (cnt[c.title] || 0) + 1; });
@@ -189,7 +189,7 @@ async function loadList() {
           el("button", { title: "Rename", "aria-label": "Rename " + c.title, onclick: async (e) => { e.stopPropagation(); const t = prompt("Rename chat", c.title); if (t) { await api("/api/rename", { chat: c.id, title: t }); loadList(); } } }, svg("edit")),
           el("button", { title: "Delete", "aria-label": "Delete " + c.title, onclick: async (e) => { e.stopPropagation(); const wasOpen = S.chat === c.id; await api("/api/delete", { chat: c.id }); if (wasOpen) newChat(); loadList(); const u = el("div", { class: "toast", onclick: async () => { await api("/api/restore", { chat: c.id }); loadList(); u.remove(); if (wasOpen) openChat(c.id); } }, "Chat deleted. Undo"); document.body.append(u); centerToast(u); setTimeout(() => u.remove(), 6000); } }, svg("trash"))))); });
     } else {
-      const rows = await api("/api/topics");
+      const rows = await api("/api/topics"); if (seq !== loadList.seq) return;
       if (!rows.length) list.append(el("div", { class: "empty", text: "Conversations appear after your first question." }));
       rows.forEach((t) => list.append(el("div", { class: "item" + (t.id === S.topic ? " on" : ""), onclick: () => openTopic(t.id) },
         el("span", { class: "t" }, t.title, el("span", { class: "sub", text: (t.summary ? t.summary.slice(0, 70) : t.turns + " question" + (t.turns === 1 ? "" : "s")) })),
