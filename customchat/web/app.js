@@ -161,11 +161,11 @@ function heroView() {
     el("div", { class: "ex" }, exs.map((x) => el("button", { onclick: () => { $("#q").value = x; send(); } }, x)))));
 }
 function chartCard() {
-  const parts = [["Late delivery", 46, "var(--brand)"], ["Wrong item", 31, "var(--lime)"], ["Changed mind", 23, "var(--mut)"]];
+  const parts = [["Whole grains", 46, "var(--brand)"], ["Fruit and veg", 31, "var(--lime)"], ["Beans and lentils", 23, "var(--mut)"]];
   let off = 0; const C = 2 * Math.PI * 15.9155;
   const ring = parts.map(([n, v, c]) => { const e = '<circle r="15.9155" cx="21" cy="21" fill="none" stroke="' + c + '" stroke-width="6" stroke-dasharray="' + (v * C / 100) + ' ' + C + '" stroke-dashoffset="' + (-off * C / 100) + '" transform="rotate(-90 21 21)"></circle>'; off += v; return e; }).join("");
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.setAttribute("viewBox", "0 0 42 42"); svg.setAttribute("class", "donut"); svg.setAttribute("role", "img"); svg.setAttribute("aria-label", "Refund requests by reason"); svg.innerHTML = ring;
-  return el("div", { class: "chartcard" }, el("b", { text: "Refund requests by reason" }), el("div", { class: "chartrow" }, svg, el("ul", {}, parts.map(([n, v, c]) => el("li", {}, el("i", { style: "background:" + c }), n + " " + v + "%")))));
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.setAttribute("viewBox", "0 0 42 42"); svg.setAttribute("class", "donut"); svg.setAttribute("role", "img"); svg.setAttribute("aria-label", "Sample day: fiber by food group"); svg.innerHTML = ring;
+  return el("div", { class: "chartcard" }, el("b", { text: "Sample day: fiber by food group" }), el("div", { class: "chartrow" }, svg, el("ul", {}, parts.map(([n, v, c]) => el("li", {}, el("i", { style: "background:" + c }), n + " " + v + "%")))));
 }
 function rdy() { const q = $("#q"), s = $("#send"); if (!q || !s || S.busy) return; const on = !!q.value.trim(); if (on && !s.classList.contains("on")) { s.classList.add("ready"); setTimeout(() => s.classList.remove("ready"), 200); } s.classList.toggle("on", on); }
 function drawThread() {
@@ -492,12 +492,12 @@ function pvBottom() { const t = $("#thread"); if (t) { t.style.scrollBehavior = 
 function previewMode() {
   document.documentElement.classList.add("preview");
   S.turns = [
-    { id: "p1", chat: "p", question: "What does the refund policy say?", answer: "Refunds are available within 30 days of purchase [1]. After that, store credit is offered instead [2].", evidence: [{ n: 1, title: "Refund policy", text: "" }, { n: 2, title: "Store credit FAQ", text: "" }], ledger: [], seconds: 2 },
-    { id: "p2", chat: "p", question: "And for digital items?", answer: "Digital items can be refunded within 14 days if they were not downloaded [1].", evidence: [{ n: 1, title: "Refund policy", text: "" }], ledger: [], seconds: 1 },
+    { id: "p1", chat: "p", question: "How much fiber should an adult eat each day?", answer: "What we know: adults are advised to eat about 14 g of fiber per 1,000 kcal, which works out to roughly 25 g a day for women and 38 g for men [1].\n\nWhat we don't know: the supplied sources do not say how much benefit or risk comes with eating more or less than that [1].\n\nWhat to ask a dietitian: how much fiber suits you, and which foods are the best way to reach it.", evidence: [{ n: 1, title: "Health Implications of Dietary Fiber (Academy of Nutrition and Dietetics, 2015)", text: "" }], ledger: [], seconds: 4 },
+    { id: "p2", chat: "p", question: "Which foods contain iron?", answer: "Iron is found in meat, fish, beans, lentils and fortified cereals [1]. Iron from plants is absorbed less well than iron from meat, and vitamin C eaten at the same meal helps [2].", evidence: [{ n: 1, title: "Iron fact sheet for consumers", text: "" }, { n: 2, title: "Iron absorption and diet", text: "" }], ledger: [], seconds: 3 },
   ];
-  S.chat = "p"; drawThread(); pvBottom(); $("#chatTitle").textContent = "Refund questions";
-  const list = $("#list"); list.replaceChildren(...["Refund questions", "Shipping times", "Warranty"].map((t, i) => el("div", { class: "item" + (i ? "" : " on") }, el("span", { text: t }))));
-  window.addEventListener("message", (e) => { if (e.origin === location.origin && e.data && e.data.ccTheme) { applyWording(); applyIcons(); drawThread(); pvBottom(); $("#chatTitle").textContent = "Refund questions"; } });
+  S.chat = "p"; drawThread(); pvBottom(); $("#chatTitle").textContent = "Fiber and iron";
+  const list = $("#list"); list.replaceChildren(...["Fiber and iron", "Protein needs", "Hydration"].map((t, i) => el("div", { class: "item" + (i ? "" : " on") }, el("span", { text: t }))));
+  window.addEventListener("message", (e) => { if (e.origin === location.origin && e.data && e.data.ccTheme) { applyWording(); applyIcons(); drawThread(); pvBottom(); $("#chatTitle").textContent = "Fiber and iron"; } });
 }
 function tour() {
   if (localStorage.getItem("cc_tour")) return;
