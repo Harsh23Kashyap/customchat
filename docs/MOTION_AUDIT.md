@@ -2,7 +2,7 @@
 
 Checked against the ChatGPT list of 105 (round 26). Status is from reading the code and, for most items, measuring the DOM or a computed style in a headless browser. Nothing was judged by eye. "n/a" means the app has no such control, so there is nothing to animate.
 
-Built 73, partial 13, n/a 6, not built 13 (of 105).
+Built 75, partial 14, n/a 7, not built 9 (of 105).
 
 | # | Item | Status |
 |---|---|---|
@@ -57,14 +57,14 @@ Built 73, partial 13, n/a 6, not built 13 (of 105).
 | 49 | Prompt edit/save | n/a (no edit/save mode) |
 | 50 | Search/filter prompts | n/a (no prompt search) |
 | 51 | Code helper accordion | built |
-| 52 | Code editor reveal | not built |
+| 52 | Code editor reveal | built |
 | 53 | “Try it” execution | n/a (no Try it button) |
-| 54 | Validation feedback | not built |
-| 55 | Copy code | not built |
+| 54 | Validation feedback | partial |
+| 55 | Copy code | n/a (no copy-code button exists) |
 | 56 | Text-field focus | built |
 | 57 | Live preview | partial |
 | 58 | Choose picture | built |
-| 59 | Clear/remove image | not built |
+| 59 | Clear/remove image | built |
 | 60 | Reset group | built |
 | 61 | Light/Dark editing switch | built |
 | 62 | Main-color picker | built |
