@@ -31,6 +31,22 @@ class ProviderError(RuntimeError):
         return self.code is None or self.code in RETRY_CODES
 
 
+_DOWN = {}
+
+
+def _check_down(url):
+    """After a connection failure or timeout, fail fast for a short while so each later step does not wait again."""
+    import time
+    if _DOWN.get(url, 0) > time.time():
+        raise ProviderError("The model is not responding right now")
+
+
+def _mark_down(url, e):
+    import time
+    if e.code is None:
+        _DOWN[url] = time.time() + 20
+
+
 def _http_error(e):
     ra = None
     try:
@@ -44,13 +60,21 @@ def _http_error(e):
 def _post(url, payload, headers, timeout, retries=3):
     """POST with exponential backoff and jitter. Retries only errors that can pass (timeouts, 429, 5xx)."""
     import random, time
+    _check_down(url)
+    t0, budget = time.time(), max(float(timeout) * 1.5, 30.0)
     for attempt in range(retries + 1):
         try:
-            return _post_once(url, payload, headers, timeout)
+            r = _post_once(url, payload, headers, timeout)
+            _DOWN.pop(url, None)
+            return r
         except ProviderError as e:
             if attempt == retries or not e.transient:
+                _mark_down(url, e)
                 raise
             wait = e.retry_after if e.retry_after is not None else 0.5 * (2 ** attempt)
+            if time.time() - t0 + min(wait, 8) + float(timeout) > budget:
+                _mark_down(url, e)
+                raise  # a hung model must not keep the user waiting through every retry
             time.sleep(min(wait, 8) + random.uniform(0, 0.25))
 
 
@@ -70,15 +94,19 @@ def _post_once(url, payload, headers, timeout):
 def _stream_lines(url, payload, headers, timeout, retries=2):
     """Yield lines. Retries only before the first line arrives; once text flows, errors surface."""
     import random, time
+    _check_down(url)
     for attempt in range(retries + 1):
         got = False
         try:
             for line in _stream_once(url, payload, headers, timeout):
                 got = True
                 yield line
+            _DOWN.pop(url, None)
             return
         except ProviderError as e:
             if got or attempt == retries or not e.transient:
+                if not got:
+                    _mark_down(url, e)
                 raise
             time.sleep(min(e.retry_after if e.retry_after is not None else 0.5 * (2 ** attempt), 8) + random.uniform(0, 0.25))
 
