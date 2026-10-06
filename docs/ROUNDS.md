@@ -349,3 +349,8 @@ Logo upload with in-browser plain-background removal and feathered edges (shrunk
 - Bug: "New chat" left the last open row shaded, because the list was not redrawn. It redraws now. Check: with New chat open and the mouse on a row the row is plain+hover; after the mouse moves away it is plain.
 - Nutrition prompt: carry the authors' lean next to "does not establish a long-term advantage"; put a number only in a sentence with its own [n].
 - NCBI 429: test with 5 straight 429s: 3 calls in all (cap), waits of 1 s then 2 s, then HTTPError.
+
+## Pass 52
+- Bug (found by the reviewer in a screenshot): after deleting a chat the sidebar showed two TODAY groups and duplicate rows. Cause: pass 50 made New chat redraw the list, and delete also redraws it; the two requests both appended. Now only the newest request draws. DOM count on desktop, 2 chats: start 1 header / 2 rows; after delete before the fix 2 headers / 2 rows (one chat was left, shown twice); after the fix 1 header / 1 row; after undo 1 header / 2 rows; New chat with the mouse away 1 header / 2 rows, none selected.
+- Status dot: 6 px more room before the title.
+- Phone 390 px, long title: title box ends at x=179, select starts at 181, title is cut with an ellipsis.
