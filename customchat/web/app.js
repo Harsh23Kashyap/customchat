@@ -519,3 +519,6 @@ document.getElementById("sideClose")?.addEventListener("click", () => document.g
 (() => { const c = document.querySelector(".composer"); if (!c) return; const set = () => document.documentElement.style.setProperty("--composer-h", Math.ceil(c.getBoundingClientRect().height + (window.innerHeight - c.getBoundingClientRect().bottom)) + "px"); set(); window.addEventListener("resize", set); if (window.ResizeObserver) new ResizeObserver(set).observe(c); })();
 
 (function () { const q = document.getElementById("q"), sb = document.getElementById("send"); if (!q || !sb) return; const upd = () => sb.classList.toggle("idle", !q.value.trim() && sb.getAttribute("aria-label") === "Send"); q.addEventListener("input", upd); setInterval(upd, 400); upd(); })();
+
+// if saving is not possible (disk full, read-only folder) the server keeps answering; say so once
+try { fetch("/api/health").then((r) => r.json()).then((h) => { if (h && h.degraded && typeof toast === "function") toast(h.degraded); }).catch(() => {}); } catch (e) { /* notice only */ }
