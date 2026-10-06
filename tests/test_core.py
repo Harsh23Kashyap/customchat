@@ -553,7 +553,8 @@ def test_pdf():
     c = zlib.compress(b"BT (Hello from a PDF with enough words.) Tj 0 -14 Td [(Second ) -300 (line here.)] TJ ET")
     pdf = b"%PDF-1.4\n1 0 obj<</Filter/FlateDecode>>\nstream\n" + c + b"\nendstream\nendobj\n%%EOF"
     t = pdfread.extract(pdf)
-    assert "Hello from a PDF" in t and "Second line here." in t.replace("Second  line", "Second line") or "Second" in t
+    print("pdf text:", repr(t))
+    assert "Hello from a PDF with enough words." in t and "Second" in t and "line here." in t
     for bad in (b"nope", b"%PDF-1.4 empty"):
         try: pdfread.extract(bad); assert False
         except ValueError: pass
