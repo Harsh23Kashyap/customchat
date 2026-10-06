@@ -478,3 +478,18 @@ input[type=range]::-webkit-slider-thumb{width:24px;height:24px;box-shadow:0 2px 
 .tile .head small{color:#4f5f57;font-size:13px}
 .fields>*{margin-bottom:24px}
 #prompts .step,.pstage{border-bottom:1px solid rgba(23,63,53,.08)}
+
+/* round 10 */
+.tile .head b,.tile>.head b{font-family:"Fraunces","Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif!important;font-size:22px;font-weight:600;letter-spacing:-.005em!important}
+.stage summary{display:flex;align-items:center;gap:12px}.stage summary b{flex:1}.stage summary small{margin-left:auto;text-align:right;min-width:72px;color:#6b7a72;font-size:13px}
+.preset{padding:16px;justify-content:center}
+.seg.mini{border-radius:999px!important;padding:3px;background:rgba(0,0,0,.05)}.seg.mini button{padding:8px 16px;font-size:13px;min-height:36px;border-radius:999px!important}
+.seg.mini button[aria-checked=false]{background:none!important;color:#5d6d64!important}
+input[type=range]{height:4px}input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px}
+.field>label,.field>.lbl,label{margin-bottom:8px}
+.tile>.row2,.tile .code-actions,.tile .cacts{gap:16px}
+#prompts .step,.pstage{border-bottom:1px solid rgba(23,63,53,.08)}
+.tile{padding-top:32px;padding-bottom:32px}
+.tile+.tile{margin-top:8px}
+@media(max-width:1000px){#pvfab,.pvbar,.pv-bar,.previewbar{backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid rgba(23,63,53,.14)}}
+@media(max-width:1000px){body{padding-bottom:calc(168px + env(safe-area-inset-bottom))!important}.savebar{bottom:calc(56px + env(safe-area-inset-bottom))!important}}

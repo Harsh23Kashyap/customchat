@@ -421,3 +421,17 @@ html.preview .bar .title{font-size:13px!important}
 .ans p,.nf p,.nf-h{text-wrap:balance}
 .srcs button.s{font-size:12px}
 .meta{gap:0 16px}
+
+/* round 10 */
+.bubble.none .a,.bubble.none p,.bubble.none{font-style:normal!important;color:#66756c;font-size:calc(14.5px*var(--fs,1))}
+:root[data-theme=dark] .bubble.none,:root[data-theme=dark] .bubble.none p{color:#a7b3ab}
+.hero h1,#empty h1,.empty h1{font-size:calc(34px*var(--fs,1));line-height:1.15;margin-bottom:12px}
+.hero p,.empty p{font-size:calc(16px*var(--fs,1));line-height:1.5;margin-top:0}
+.hero .ex,.empty .ex,#empty .ex{margin-top:40px}
+.side-title{font-size:calc(14px*var(--fs,1));font-weight:800;color:var(--brand)}
+.side .list .item{font-size:calc(14px*var(--fs,1));color:#1f2f27}
+.side .list .item.on,.side .list .item.active{font-weight:700}
+.side .label,.side h4,.side .sec{font-size:calc(11px*var(--fs,1));text-transform:uppercase;letter-spacing:.08em;color:#7a887f;font-weight:700}
+.ans{font-size:calc(16.5px*var(--fs,1));line-height:1.65}
+.srcs button.s,.src{border-left-width:1px!important}
+@media(max-width:760px){.hero h1,#empty h1,.empty h1{font-size:calc(28px*var(--fs,1))}.ans{font-size:15.5px}}
