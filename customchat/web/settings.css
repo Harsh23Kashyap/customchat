@@ -400,3 +400,25 @@ body{padding-bottom:96px!important}main.card{margin-bottom:0}
 }
 :root[data-theme=dark] #pvfab{background:#0d211c;color:#f3f0e7;border-top-color:rgba(255,255,255,.10)}
 @media(max-width:1000px){main.card{padding-bottom:88px}}
+
+/* round 5: custom selects, switches, file button, tabs as text, no resize handles */
+.cs{display:block;width:100%}
+.cs:has(>select[hidden]){display:none}
+.cs-btn{min-height:44px;border:1px solid #e2e9e4;border-radius:12px;background:#fff;padding:0 14px}
+.cs-btn:hover{border-color:rgba(23,63,53,.35)}
+.cs-list{border:1px solid rgba(23,63,53,.14);border-radius:12px;box-shadow:0 12px 32px rgba(23,63,53,.12);background:#fff}
+.keyrow .cs{flex:1;min-width:0}
+textarea{resize:none}
+input[type=checkbox]{appearance:none;-webkit-appearance:none;width:40px;height:24px;min-width:40px;border-radius:12px;background:rgba(23,63,53,.18);position:relative;cursor:pointer;transition:background-color .18s;border:0;padding:0;margin:0 10px 0 0;vertical-align:middle}
+input[type=checkbox]::after{content:"";position:absolute;left:2px;top:2px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .18s}
+input[type=checkbox]:checked{background:#173f35}
+input[type=checkbox]:checked::after{transform:translateX(16px)}
+input[type=file]{font:inherit;font-size:13px;color:inherit;width:100%}
+input[type=file]::file-selector-button{font:inherit;font-weight:600;font-size:13px;min-height:40px;padding:0 16px;margin-right:12px;border:0;border-radius:10px;background:#173f35;color:#fffdf7;cursor:pointer}
+input[type=file]::file-selector-button:hover{background:#0f2e26}
+#menu,.menu{gap:20px}
+#menu a,#menu button,.menu a,.menu button{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:10px 0!important;border-bottom:2px solid transparent!important;color:inherit;opacity:.65}
+#menu .on,#menu [aria-current],#menu [aria-selected=true],.menu .on,.menu [aria-current=true]{opacity:1;border-bottom-color:#173f35!important;font-weight:700}
+:root[data-theme=dark] input[type=checkbox]{background:rgba(255,255,255,.18)}
+textarea,.cm-editor textarea{resize:none!important}
+@media(max-width:760px){.cs.open .cs-list{position:fixed!important;left:12px!important;right:12px!important;top:auto!important;bottom:72px!important;width:auto!important;max-height:50vh;overflow:auto;z-index:80}}
