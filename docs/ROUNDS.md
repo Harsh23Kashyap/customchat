@@ -507,3 +507,6 @@ Mobile provider chips become a 2-column grid, tab menu fades at the edge, stage 
 
 ## Pass 80 (round 12)
 SVG chevrons replace arrow characters, citation chips lose resting fill (hover only), Simple/Advanced is a 240px segmented control, white slider thumb with accent ring, numbered vertical step list, spacing above RELATED, no-evidence list rhythm, dark subtext lifted.
+
+## Pass 81 (round 13)
+Mobile Preview button moved into the header row (no fixed bottom bar, no overlay), save bar only when dirty, 20px mobile margins, 40px buttons, Export/Import as quiet text, Temperature/Sources side by side on desktop, dark composer border.
