@@ -5,3 +5,4 @@ data/
 .env
 .venv/
 node_modules/
+deploy/publish.env
