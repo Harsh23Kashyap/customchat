@@ -549,3 +549,10 @@ Chat column centred in the main area (was left-anchored at 1440, leaving a gap o
 
 ## Pass 94 (UX pass 2, round 1)
 Copy button confirms in place (tick, "Copied" for 1.6 s, plus the toast), send button dims when the box is empty, slider inputs get accessible names, focus-visible ring on all controls. Audit at 1280: 0 unnamed controls in chat, 2 on settings (fixed).
+
+## Pass 95 (UX round 2, from R24 reviews)
+- Sources are now a labelled list: "Sources" heading, one row per source (title up to 2 lines, source and year underneath, trailing chevron, 44px rows, hairline dividers).
+- No-evidence tips are three action rows (try a different question, use words from your documents, see what this chat is set up with) instead of a bullet list.
+- Copy is hidden when there is no answer to copy.
+- Mobile answer actions have wider spacing and 36px targets.
+- Skipped on purpose: borders on inputs (house rule: filled borderless inputs), pill-free chips stay.
