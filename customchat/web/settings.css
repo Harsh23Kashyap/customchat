@@ -422,3 +422,10 @@ input[type=file]::file-selector-button:hover{background:#0f2e26}
 :root[data-theme=dark] input[type=checkbox]{background:rgba(255,255,255,.18)}
 textarea,.cm-editor textarea{resize:none!important}
 @media(max-width:760px){.cs.open .cs-list{position:fixed!important;left:12px!important;right:12px!important;top:auto!important;bottom:72px!important;width:auto!important;max-height:50vh;overflow:auto;z-index:80}}
+
+/* round 6 */
+@media(min-width:1181px){.layout{max-width:1360px;grid-template-columns:180px minmax(0,1fr) 440px;gap:36px}}
+.help{background:transparent;box-shadow:none;padding:0;border-radius:0;font-size:13px;line-height:1.5;color:#5d6b64}
+body.simple .colorrow .hex{display:none}
+.colorrow input[type=color]{width:36px;height:36px;border-radius:50%}
+.tile .head small{font-size:12.5px}
