@@ -9,6 +9,7 @@ question -> (1) resolve follow-up into a standalone question using memory
 """
 import collections, math, re, time, json, hashlib
 from concurrent.futures import ThreadPoolExecutor
+from . import permissions
 from . import providers, prompts as promptmod
 from .connectors import make_connector
 
@@ -24,12 +25,12 @@ class Engine:
         self._cache = {}
         self.prompts = promptmod.PromptStore("")
 
-    def validate_scope(self, scope):
+    def validate_scope(self, scope, owner=None):
         if not scope: return None
         if not isinstance(scope, dict) or set(scope) - {"source", "document"}:
             raise ValueError("Scope needs a source and optional local document")
         sid = scope.get("source"); doc = scope.get("document")
-        if sid not in self.connectors: raise ValueError("Unknown scoped source")
+        if sid not in self.connectors or not permissions.allowed(self.cfg,owner,sid,doc): raise ValueError("Source scope unavailable")
         if doc:
             conn = self.connectors[sid]
             if not hasattr(conn, "docs") or not isinstance(doc, str) or len(doc) > 400:
@@ -121,7 +122,9 @@ class Engine:
 
     def retrieve(self, question, source_ids=None, owner=None, scope=None):
         ids = [s for s in (list(self.connectors) if source_ids is None else source_ids) if s in self.connectors]
+        ids = [sid for sid in ids if permissions.allowed(self.cfg,owner,sid)]
         if scope:
+            if not permissions.allowed(self.cfg,owner,scope["source"],scope.get("document")): return [], {}
             ids = [scope["source"]] if scope["source"] in ids else []
         refresh_errors = {}
         for sid in list(ids):
@@ -133,7 +136,7 @@ class Engine:
                     ids.remove(sid); refresh_errors[sid] = "Local folder unavailable"
                     self._cache.clear()
         extra = self._uploads_evidence(owner, question) if source_ids is None and not scope else []
-        key = (json.dumps(scope, sort_keys=True), question.lower().strip(), tuple(sorted(ids)), owner if extra else None, len(extra),
+        key = (json.dumps([(s["id"],s.get("read_users"),s.get("document_users")) for s in self.cfg["sources"]],sort_keys=True),json.dumps(scope, sort_keys=True), question.lower().strip(), tuple(sorted(ids)), owner if extra or permissions.restricted(self.cfg) else None, len(extra),
                tuple((sid, getattr(self.connectors[sid], "revision", "")) for sid in sorted(ids)))
         if key in self._cache and not refresh_errors:
             return self._cache[key]
@@ -146,12 +149,13 @@ class Engine:
             out = []
             for qq in qs:
                 ck = hashlib.sha1(("%s|%s|%d" % (sid, qq.lower(), k)).encode()).hexdigest()
-                hit = None if scope else self._disk_get(ck, sid)
+                hit = None if scope or permissions.restricted(self.cfg) else self._disk_get(ck, sid)
                 if hit is None:
-                    if scope and scope.get("document"):
-                        hit = self.connectors[sid].search(qq, k, documents=[scope["document"]])
-                    else: hit = self.connectors[sid].search(qq, k)
-                    if not scope: self._disk_put(ck, hit, sid)
+                    conn=self.connectors[sid]
+                    docs=permissions.documents(self.cfg,owner,sid,conn)
+                    if scope and scope.get("document"): docs=[scope["document"]] if docs is None or scope["document"] in docs else []
+                    hit=conn.search(qq,k,documents=docs) if docs is not None else conn.search(qq,k)
+                    if not scope and not permissions.restricted(self.cfg): self._disk_put(ck, hit, sid)
                 out += hit
             return sid, out
 
@@ -162,6 +166,7 @@ class Engine:
                 for e in f.result(timeout=60)[1]:
                     e["score"] *= weights.get(sid, 1.0)
                     sig = ((e["source"] + "|" + e["id"]) if e.get("document") else "") or e["url"] or re.sub(r"\W+", "", e["title"].lower())[:80] or e["id"]
+                    if not permissions.allowed(self.cfg,owner,sid,e.get("document")): continue
                     if not Engine.usable(e):
                         continue  # a record with no text or no title cannot be cited
                     if sig not in seen and e["score"] >= self.cfg["retrieval"]["min_score"]:
@@ -407,7 +412,7 @@ class Engine:
         q = str(question or "").strip()
         if not q or len(q) > 2000:
             raise ValueError("Question must be 1-2000 characters")
-        scope = self.validate_scope(scope)
+        scope = self.validate_scope(scope, owner)
         mem_on = self.cfg["memory"]["enabled"]
         profile = ""
         if temporary:
@@ -416,12 +421,12 @@ class Engine:
             history = [{"question": str(h.get("question", ""))[:500], "answer": str(h.get("answer", ""))[:600]}
                        for h in (temp_history or [])[-6:] if isinstance(h, dict)] if mem_on else []
             summary = ""
-            if scope: history = []
+            if scope or permissions.restricted(self.cfg): history = []
             yield "progress", {"stage": "context", "label": "Preparing question context"}
             standalone = self.standalone(q, history, summary)
             blocked = self.check_question(standalone)
             yield "progress", {"stage": "sources", "label": "Checking selected sources"}
-            evidence, errors = ([], []) if blocked else self.retrieve(standalone, sources, None, scope)
+            evidence, errors = ([], []) if blocked else self.retrieve(standalone, list(self.connectors) if sources is None else sources, owner, scope)
         else:
             self.store.chat(owner, chat)
             if topic:
@@ -432,8 +437,8 @@ class Engine:
                 topic = self.store.new_topic(owner, q[:80])
             history = self.store.topic_turns(owner, topic, 12) if mem_on else []
             summary = self.store.topic(owner, topic)["summary"] if mem_on else ""
-            if scope: history = []; summary = ""
-            profile = self.store.get_profile(owner) if use_profile else ""
+            if scope or permissions.restricted(self.cfg): history = []; summary = ""
+            profile = self.store.get_profile(owner) if use_profile and not permissions.restricted(self.cfg) else ""
             yield "progress", {"stage": "context", "label": "Preparing question context"}
             standalone = self.standalone(q, history, summary)
             blocked = self.check_question(standalone)
@@ -483,7 +488,7 @@ class Engine:
         else:
             tid = self.store.add_turn(chat, topic, q, standalone, answer, evidence, ledger, style)
             if scope: self.store.save_state(owner, "scope-" + tid, scope)
-            if mem_on:
+            if mem_on and not permissions.restricted(self.cfg):
                 self._summarize(owner, topic)
             if self.store.chat(owner, chat)["title"] == "New chat":
                 self.store.rename_chat(owner, chat, q[:60])
@@ -493,7 +498,7 @@ class Engine:
                        "evidence": evidence, "ledger": ledger, "style": style, "source_errors": errors, "temporary": temporary, "scope": scope}
 
     def ask(self, owner, chat, question, sources=None, style="standard", topic=None, new_topic=False, use_cache=True, scope=None):
-        if scope is not None:
+        if scope is not None or permissions.restricted(self.cfg):
             return next(data for kind, data in self.ask_stream(owner, chat, question, sources, style, topic, new_topic, use_cache, scope=scope) if kind == "done")
         q = str(question or "").strip()
         if not q or len(q) > 2000:
