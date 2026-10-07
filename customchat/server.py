@@ -351,7 +351,7 @@ def make_handler(cfg, engine):
                 st = hardware.pull_status(qs.get("id", ""))
                 return self._send(200, st) if st else self._send(404, {"error": "Unknown download"})
             if path == "/api/states" and method == "GET":
-                return self._send(200, {"states": store.states(o)})
+                return self._send(200, {"states": [n for n in store.states(o) if not n.startswith("scope-")]})
             if path == "/api/states/save" and method == "POST":
                 return self._send(200, {"name": store.save_state(o, b.get("name"), settings_view())})
             if path == "/api/states/load" and method == "POST":
@@ -422,7 +422,7 @@ def make_handler(cfg, engine):
                 pass
             if path == "/api/ask":
                 r = engine.ask(o, b.get("chat") or store.new_chat(o), b.get("question"), b.get("sources"),
-                               b.get("style", "standard"), b.get("topic"), bool(b.get("new_topic")), not b.get("fresh"))
+                               b.get("style", "standard"), b.get("topic"), bool(b.get("new_topic")), not b.get("fresh"), scope=b.get("scope"))
                 return self._send(200, r)
             if path == "/api/regenerate":
                 t = store.turn(o, b.get("turn", ""))
