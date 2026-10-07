@@ -34,6 +34,7 @@
       <span class="status"></span><div class="title" id="chatTitle">New chat</div>
       <div class="bar-r"><button class="icon" id="readingBtn" title="Reading preferences" aria-label="Reading preferences">Aa</button><select id="style" aria-label="Answer depth"></select><button class="icon" id="prevQ" title="Previous question (k)" aria-label="Previous question"></button><button class="icon" id="nextQ" title="Next question (j)" aria-label="Next question"></button><button class="icon" id="tempBtn" hidden title="Temporary chat: nothing is saved" aria-label="Temporary chat" aria-pressed="false">◔</button><button class="icon" id="profileBtn" title="My profile" aria-label="My profile">☺</button><button class="icon" id="newTopic" title="Start a new conversation in this chat" aria-label="New conversation"></button><button class="icon" id="exportChat" title="Export chat as Markdown" aria-label="Export chat">⤓</button></div>
     </header>
+    <div id="pipelineStatus" class="pipeline-status" role="status" aria-live="polite" aria-atomic="true" hidden></div>
     <section class="thread" id="thread" role="log" aria-live="polite" aria-label="Conversation"></section>
     <button class="jump" id="jump" aria-label="Scroll to latest"></button>
     <footer class="composer">
