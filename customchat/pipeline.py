@@ -143,7 +143,7 @@ class Engine:
             try:
                 for e in f.result(timeout=60)[1]:
                     e["score"] *= weights.get(sid, 1.0)
-                    sig = e["url"] or re.sub(r"\W+", "", e["title"].lower())[:80] or e["id"]
+                    sig = ((e["source"] + "|" + e["id"]) if e.get("document") else "") or e["url"] or re.sub(r"\W+", "", e["title"].lower())[:80] or e["id"]
                     if not Engine.usable(e):
                         continue  # a record with no text or no title cannot be cited
                     if sig not in seen and e["score"] >= self.cfg["retrieval"]["min_score"]:
