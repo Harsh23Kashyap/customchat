@@ -125,6 +125,7 @@ async function states() {
 const C = (k, label, help) => ({ key: k, label, help, type: "color", colors: true });
 const SECTIONS = [
   { id: "wording", icon: "Aa", tone: "green", title: "Wording", sub: "The words people read", help: "Leave a box empty to keep the default text from the app file.", fields: [
+    { key: "logo_watermark", label: "Subtle logo watermark", help: "Optional background mark. It does not cover chat text and can be turned off.", type: "toggle" },
     { key: "logo", label: "Logo", help: "Optional. Choose a picture; it blends into the page.", type: "logo" },
     { key: "txt_title", label: "App name", help: "Shown in the top bar, the welcome screen and the browser tab.", type: "text", ph: "Blank uses the app default" },
     { key: "txt_tagline", label: "Welcome line", help: "The sentence under the name on an empty chat.", type: "text", ph: "Blank uses the app default" },
@@ -216,7 +217,7 @@ const MORE_PRESETS = {
 };
 /* How each tab is organised: [group title, [keys], collapsed-by-default] */
 const GROUPS = {
-  wording: [["Basics", ["logo", "txt_title", "txt_tagline"]], ["More wording", ["txt_examples", "txt_placeholder", "txt_hint", "txt_disclaimer", "txt_sidebar", "txt_footer"], true]],
+  wording: [["Basics", ["logo", "logo_watermark", "txt_title", "txt_tagline"]], ["More wording", ["txt_examples", "txt_placeholder", "txt_hint", "txt_disclaimer", "txt_sidebar", "txt_footer"], true]],
   colors: [["Mode", ["mode"]], ["Colors", ["brand", "bg"]], ["More colors", ["accent", "surface", "sidebar", "ink", "muted", "line", "bot", "you", "danger"], true]],
   background: [["Style", ["bg_style", "bg_color2"]], ["More background options", ["bg_angle", "bg_image", "pattern", "pattern_color", "pattern_opacity", "pattern_size"], true]],
   fonts: [["Fonts", ["font", "heading_font"]], ["More font options", ["custom_font", "font_size", "line_height"], true]],
@@ -289,6 +290,20 @@ function logoControl(f, current) {
   fe.addEventListener("input", () => { st.feather = +fe.value; render(); });
   rb.addEventListener("change", () => { st.strip = rb.checked; render(); });
   rm.addEventListener("click", () => { orig = null; prev.classList.add("leave"); setTimeout(() => { prev.hidden = true; prev.classList.remove("leave"); }, 180); before.hidden = true; onpage.hidden = true; rm.hidden = true; fe.disabled = rb.disabled = true; file.value = ""; setv(f, ""); });
+  const derive = el("button", {type:"button",class:"go ghost",disabled:current ? undefined : ""}, "Build colors from logo");
+  derive.addEventListener("click", () => {
+    if (!prev.src || !window.CCBrand) return;
+    const image = new Image(); image.onload = () => {
+      const canvas = document.createElement("canvas"); canvas.width = canvas.height = 64;
+      const ctx = canvas.getContext("2d", {willReadFrequently:true}); ctx.drawImage(image,0,0,64,64);
+      const seed = CCBrand.seed(ctx.getImageData(0,0,64,64).data);
+      theme.light = CCBrand.palette(seed,false); theme.dark = CCBrand.palette(seed,true);
+      changed(); paintPage();
+      say("Light and dark palettes are ready in the preview. Text contrast is at least 4.5:1 on generated surfaces. Colors remain editable. Save look to keep them.");
+    }; image.src = prev.src;
+  });
+  file.addEventListener("change", () => { derive.disabled = false; });
+  rm.addEventListener("click", () => { derive.disabled = true; theme.logo_watermark = false; changed(); });
   const box = el("div", { class: "logobox" });
   const take = (fl) => { if (!fl || !/^image\//.test(fl.type)) { say("Drop a PNG, JPG, WebP or GIF picture.", true); return; } const dt = new DataTransfer(); dt.items.add(fl); file.files = dt.files; file.dispatchEvent(new Event("change")); };
   let depth = 0; const over = (on) => box.classList.toggle("dragover", on);
@@ -296,7 +311,7 @@ function logoControl(f, current) {
   box.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; });
   box.addEventListener("dragleave", () => { if (--depth <= 0) { depth = 0; over(false); } });
   box.addEventListener("drop", (e) => { e.preventDefault(); depth = 0; over(false); take(e.dataTransfer.files[0]); });
-  box.append(stage, el("div", { class: "logoctl" }, fileBtn, el("span", { class: "h dropnote", text: "or drag a picture here" }), file, el("label", { class: "check" }, rb, "Remove plain background"), el("label", { class: "h" }, "Edge softness", fe), note, rm));
+  box.append(stage, el("div", { class: "logoctl" }, fileBtn, el("span", { class: "h dropnote", text: "or drag a picture here" }), file, el("label", { class: "check" }, rb, "Remove plain background"), el("label", { class: "h" }, "Edge softness", fe), derive, el("span", {class:"h",text:"Replaces both palettes in the preview. Save look to keep; edit Colors for overrides. Logo also becomes the favicon."}), note, rm));
   return box;
 }
 function control(f) {
