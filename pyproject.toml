@@ -3,16 +3,17 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "customchat"
+name = "customchat-app"
 version = "0.1.0"
 readme = "README.md"
 description = "Build a chat application over any evidence source from one YAML file."
 requires-python = ">=3.10"
-dependencies = ["PyYAML>=6.0"]
+dependencies = ["PyYAML>=6.0.3,<7"]
 license = {text = "MIT"}
 
 [project.scripts]
 customchat = "customchat.cli:main"
+customchat-app = "customchat.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["customchat*"]
