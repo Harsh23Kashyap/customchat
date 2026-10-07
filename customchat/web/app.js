@@ -28,7 +28,7 @@ const ICON = {
   close: "M6 6l12 12M18 6L6 18",
 };
 const svg = (n) => { const e = document.createElementNS("http://www.w3.org/2000/svg", "svg"); e.setAttribute("viewBox", "0 0 24 24"); e.setAttribute("width", "18"); e.setAttribute("height", "18"); e.setAttribute("fill", "none"); e.setAttribute("stroke", "currentColor"); e.setAttribute("stroke-width", "2"); e.setAttribute("stroke-linecap", "round"); e.setAttribute("stroke-linejoin", "round"); const p = document.createElementNS("http://www.w3.org/2000/svg", "path"); p.setAttribute("d", ICON[n]); e.append(p); return e; };
-const S = { suggestions: null, cfg: null, chat: null, topic: null, newTopic: false, tab: "chats", sources: new Set(), turns: [], ratings: {}, temp: false, useProfile: localStorage.getItem("cc_profile_on") === "1", busy: false, token: localStorage.getItem("cc_token") || "" };
+const S = { scope: null, suggestions: null, cfg: null, chat: null, topic: null, newTopic: false, tab: "chats", sources: new Set(), turns: [], ratings: {}, temp: false, useProfile: localStorage.getItem("cc_profile_on") === "1", busy: false, token: localStorage.getItem("cc_token") || "" };
 
 const TV = (k) => ((window.CCTheme && window.CCTheme.value) || {})[k] || "";
 const PREVIEW = !!window.__ccPreview;
@@ -144,6 +144,7 @@ function turnView(t, prev) {
   if (t.evidence.length && weak.length) meta.append(el("button", { class: "chip warn", title: "Sentences without a valid citation or with little overlap with the cited text. Click to see them.", onclick: () => alert("Check these sentences:\n\n" + weak.map((l) => "- " + l.claim).join("\n")) }, weak.length + " to check"));
   if (t.seconds !== undefined) meta.append(el("span", { "data-more": "1", class: "chip", title: "Time to answer" }, t.seconds < 1 ? "<1s" : t.seconds + "s"));
   if (t.standalone && t.standalone !== t.question) meta.append(el("span", { class: "chip", title: "Understood as" }, "Understood as: " + t.standalone));
+  if (t.scope) meta.append(el("span", {class:"chip scope-used", text:"Scoped: " + (t.scope.document || t.scope.source)}));
   meta.append(el("button", { "data-more": "1", class: "chip", title: "How this answer was built", onclick: () => contextDialog(t) }, "Context"));
   if (t.evidence.length) meta.append(el("button", { class: "chip copy", onclick: (ev) => { const b = ev.currentTarget; navigator.clipboard.writeText(t.answer).then(() => { toast("Copied"); b.textContent = "Copied"; b.classList.add("done"); setTimeout(() => { b.textContent = "Copy"; b.classList.remove("done"); }, 1600); }); } }, "Copy"));
   if (t.evidence.length) {
@@ -188,6 +189,25 @@ async function download(path, name) {
   const a = el("a", { href: URL.createObjectURL(await r.blob()), download: name }); a.click();
 }
 
+function scopeChip() {
+ const p=$("#scopeChip");p.replaceChildren();
+ if (S.scope) p.append(el("span",{text:"Only " + (S.scope.document || S.scope.source)}),el("button",{class:"chip",onclick:()=>{S.scope=null;scopeChip()}},"Clear"));
+}
+async function scopeDialog() {
+ try {
+  const rows=await api("/api/scopes");const dialog=el("dialog",{class:"reading-dialog scope-dialog"});
+  dialog.append(el("header",{class:"reading-head"},el("h2",{text:"Choose source scope"})));
+  const options=el("div",{class:"scope-options"});
+  for (const row of rows) {
+   const choose=(document)=>{S.scope={source:row.source,...(document?{document}:{})};scopeChip();dialog.close()};
+   options.append(el("button",{class:"chip",onclick:()=>choose()},"Collection: "+row.label));
+   row.documents.forEach(doc=>options.append(el("button",{class:"chip",onclick:()=>choose(doc)},doc)));
+  }
+  if (!rows.length) options.append(el("p",{text:"No configured sources"}));
+  dialog.append(options,el("footer",{},el("button",{class:"reading-done",onclick:()=>dialog.close()},"Done")));
+  dialog.addEventListener("close",()=>{dialog.remove();$("#scopeBtn").focus()});document.body.append(dialog);dialog.showModal();
+ } catch(e){toast(e.message)}
+}
 async function loadSuggestions() {
   if (PREVIEW) return;
   try { S.suggestions = await api("/api/suggestions", {temporary: S.temp}); if (!S.turns.length) drawThread(); }
@@ -297,7 +317,7 @@ async function send() {
   const th = $("#thread"); th.scrollTop = th.scrollHeight;
   let text = "", result = null, err = null;
   try {
-    await stream({ chat: S.temp ? null : S.chat, question: q, style: $("#style").value, topic: S.topic, new_topic: S.newTopic, sources: S.sources.size ? [...S.sources] : null, temporary: S.temp, history: S.temp ? S.turns.slice(-6).map((t) => ({ question: t.question, answer: t.answer })) : undefined, use_profile: S.useProfile && !S.temp }, (ev) => {
+    await stream({ scope: S.scope, chat: S.temp ? null : S.chat, question: q, style: $("#style").value, topic: S.topic, new_topic: S.newTopic, sources: S.sources.size ? [...S.sources] : null, temporary: S.temp, history: S.temp ? S.turns.slice(-6).map((t) => ({ question: t.question, answer: t.answer })) : undefined, use_profile: S.useProfile && !S.temp }, (ev) => {
       if (ev.type === "progress") { status.textContent = ev.data.label; }
       else if (ev.type === "token") {
         const thinking = $("#think");
@@ -381,6 +401,7 @@ async function init() {
     S.cfg.sources.forEach((s) => f.append(el("button", { class: "pill", onclick: (e) => { S.sources.has(s.id) ? S.sources.delete(s.id) : S.sources.add(s.id); e.target.style.opacity = S.sources.has(s.id) || !S.sources.size ? 1 : .45; [...f.children].forEach((c, i) => c.style.opacity = !S.sources.size || S.sources.has(S.cfg.sources[i].id) ? 1 : .45); } }, s.label)));
     $(".composer").prepend(f);
   }
+  $("#scopeBtn").onclick=scopeDialog;
   $("#hint").textContent = "Answers cite their sources. Check important facts.";
   $("#q").addEventListener("input", autosize);
   $("#q").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
