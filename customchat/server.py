@@ -391,8 +391,11 @@ def make_handler(cfg, engine):
                                   {"Content-Disposition": 'attachment; filename="customchat-export.json"'})
             if path == "/api/profile":
                 if method == "POST":
+                    if "fields" in b:
+                        fields = store.set_profile_fields(o, b["fields"])
+                        return self._send(200, {"fields": fields, "text": store.profile_context(o)})
                     return self._send(200, {"text": store.set_profile(o, str(b.get("text", "")))})
-                return self._send(200, {"text": store.get_profile(o)})
+                return self._send(200, {"text": store.profile_context(o), "fields": store.get_profile_fields(o)})
             if path == "/api/similar":
                 return self._send(200, engine.similar(o, qs.get("q", "")))
             if path == "/api/rate" and method == "POST":
@@ -473,6 +476,11 @@ def make_handler(cfg, engine):
                 if not name or not text.strip() or len(text) > 150_000:
                     raise ValueError("Upload needs a name and text up to 150,000 characters")
                 return self._send(200, {"id": store.add_upload(o, name, text)})
+            if path == "/api/upload-file" and method == "POST":
+                from . import fileread
+                name = str(b.get("name", "document")).strip()[:120] or "document"
+                text = fileread.extract(name, base64.b64decode(str(b.get("data", "")), validate=True))
+                return self._send(200, {"id": store.add_upload(o, name, text), "name": name, "chars": len(text)})
             if path == "/api/upload-pdf" and method == "POST":
                 name = str(b.get("name", "document.pdf")).strip()[:120] or "document.pdf"
                 text = pdfread.extract(base64.b64decode(str(b.get("data", "")), validate=True))
