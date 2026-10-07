@@ -588,3 +588,9 @@ html.preview .bar .title{font-size:13px!important}
 html[data-branded=on][data-theme=dark] .box{background:var(--bot);border-color:var(--line)}
 html[data-branded=on][data-theme=dark] .cmeta,html[data-branded=on][data-theme=dark] .cmeta *,html[data-branded=on][data-theme=dark] .hero p,html[data-branded=on][data-theme=dark] .box textarea::placeholder{color:var(--mut)}
 html[data-branded=on] .new{color:var(--on-brand)}
+/* Saved palette owns the reading surfaces, including dark composer overrides. */
+html[data-branded=on] .box{background:var(--paper)}
+html[data-branded=on] .send{background:var(--brand)!important;color:var(--on-brand)!important}
+html[data-branded=on] .hero h1{color:var(--brand)}
+:root[data-theme=dark] .box{background:var(--paper)}
+:root[data-theme=dark] .send{background:var(--brand)!important;color:var(--on-brand)!important}
