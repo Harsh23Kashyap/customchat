@@ -51,13 +51,13 @@ DEFAULT = {
     "emoji_bot": "", "emoji_you": "", "emoji_hero": "", "emoji_send": "", "emoji_attach": "", "emoji_temp": "",
     "motion": "full", "entrance": "fade", "speed": 100, "hover_lift": True,
     "sidebar": "left", "sidebar_width": 250, "chat_width": "normal", "avatars": "hide", "bubble": "flat",
-    "logo": "", "txt_title": "", "txt_tagline": "", "txt_examples": "", "txt_placeholder": "", "txt_footer": "", "txt_disclaimer": "", "txt_hint": "", "txt_sidebar": "",
+    "logo": "", "logo_watermark": False, "txt_title": "", "txt_tagline": "", "txt_examples": "", "txt_placeholder": "", "txt_footer": "", "txt_disclaimer": "", "txt_hint": "", "txt_sidebar": "",
     "you_align": "right", "composer": "inline", "toolbar": "show", "sources_panel": True,
 }
 
 RANGES = {"bg_angle": (0, 360), "pattern_opacity": (0, 60), "pattern_size": (8, 80), "font_size": (80, 140), "line_height": (120, 200),
           "radius": (0, 160), "speed": (40, 250), "sidebar_width": (200, 460)}
-BOOLS = ["hover_lift", "sources_panel"]
+BOOLS = ["hover_lift", "sources_panel", "logo_watermark"]
 COLORLIKE = ["bg_color2", "pattern_color"]
 
 
