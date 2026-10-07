@@ -397,8 +397,10 @@ class Engine:
             history = [{"question": str(h.get("question", ""))[:500], "answer": str(h.get("answer", ""))[:600]}
                        for h in (temp_history or [])[-6:] if isinstance(h, dict)] if mem_on else []
             summary = ""
+            yield "progress", {"stage": "context", "label": "Preparing question context"}
             standalone = self.standalone(q, history, summary)
             blocked = self.check_question(standalone)
+            yield "progress", {"stage": "sources", "label": "Checking selected sources"}
             evidence, errors = ([], []) if blocked else self.retrieve(standalone, sources, None)
         else:
             self.store.chat(owner, chat)
@@ -411,11 +413,15 @@ class Engine:
             history = self.store.topic_turns(owner, topic, 12) if mem_on else []
             summary = self.store.topic(owner, topic)["summary"] if mem_on else ""
             profile = self.store.get_profile(owner) if use_profile else ""
+            yield "progress", {"stage": "context", "label": "Preparing question context"}
             standalone = self.standalone(q, history, summary)
             blocked = self.check_question(standalone)
+            yield "progress", {"stage": "sources", "label": "Checking selected sources"}
             evidence, errors = ([], []) if blocked else (self.retrieve(standalone, sources, owner) if use_cache else self._fresh(standalone, sources, owner))
+        yield "progress", {"stage": "ranking", "label": "Selecting relevant passages"}
         evidence = self.filter_relevant(standalone, evidence)
         yield "meta", {"standalone": standalone, "evidence": evidence, "source_errors": errors}
+        yield "progress", {"stage": "answer", "label": "Writing from sources" if evidence else "No matching evidence; preparing a reply"}
         if not evidence:
             answer = blocked or self.cfg["prompt"]["no_evidence"]
             yield "token", answer
@@ -440,6 +446,7 @@ class Engine:
                 if note:
                     answer += "\n\n" + note
                     yield "token", "\n\n" + note
+        yield "progress", {"stage": "citations", "label": "Checking citations"}
         ledger = self.ledger(answer, evidence, standalone) if evidence else []
         if evidence and self.cfg["provider"]["type"] != "mock" and not locals().get("degraded"):
             # show only the sources the answer cites; a refusal cites nothing, so it shows none
@@ -449,6 +456,7 @@ class Engine:
             note = (self.cfg["prompt"].get("answer_note") or "").strip()
             if evidence and note and note not in answer:
                 answer += "\n\n" + note
+        yield "progress", {"stage": "history", "label": "Finishing temporary reply" if temporary else "Saving reply"}
         if temporary:
             tid = None
         else:
@@ -457,6 +465,7 @@ class Engine:
                 self._summarize(owner, topic)
             if self.store.chat(owner, chat)["title"] == "New chat":
                 self.store.rename_chat(owner, chat, q[:60])
+        yield "progress", {"stage": "followups", "label": "Finding related questions"}
         fu = self.followups(q, answer, evidence, [t.get("question", "") for t in history[-6:]])
         yield "done", {"seconds": round(time.time() - t0, 1), "followups": fu, "id": tid, "chat": chat, "topic": topic, "question": q, "standalone": standalone, "answer": answer,
                        "evidence": evidence, "ledger": ledger, "style": style, "source_errors": errors, "temporary": temporary}
