@@ -267,6 +267,11 @@
           "maximum": 1000000
         }
       }
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Version 1; omitted in legacy files."
     }
   }
-}
+        }
