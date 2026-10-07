@@ -15,6 +15,16 @@ For end users who should only chat. Set `CUSTOMCHAT_CONFIG=off` and the app serv
 
 The lock was tested locally. A real Render deploy has not been run from here.
 
+## One-command install and start (uv)
+
+With uv and Git installed:
+
+```sh
+uvx --from git+https://github.com/Harsh23Kashyap/customchat.git@main customchat start
+```
+
+Creates a persistent `customchat-app` workspace in your current folder and starts offline Demo. No key, clone step or public deploy. Read the printed URL; the port can change. Ctrl+C stops it. [Install choices and validation limits](docs/INSTALL.md). No PyPI/npm package was published; do not use an unqualified registry package name yet.
+
 ## Quick start (one command)
 
 ```
