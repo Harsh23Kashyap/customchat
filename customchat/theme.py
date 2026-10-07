@@ -29,7 +29,7 @@ ENUMS = {
     "mode": ["light", "dark", "auto"],
     "bg_style": ["soft", "solid", "gradient", "image"],
     "pattern": ["none", "dots", "grid", "lines", "diagonal", "checker", "waves", "plus"],
-    "motion": ["full", "subtle", "none"],
+    "motion": ["full", "subtle", "calm", "none"],
     "entrance": ["fade", "slide", "pop", "none"],
     "bubble": ["soft", "flat", "outline"],
     "density": ["compact", "cozy", "roomy"],
