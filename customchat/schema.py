@@ -143,6 +143,12 @@ def validate(raw):
         if not isinstance(s, dict) or s.get("type") not in CONNECTORS:
             raise ConfigError("sources[%d].type must be one of %s" % (i, ", ".join(sorted(CONNECTORS))))
         if s["type"] == "local_files":
+            for key in ("semantic_model", "rerank_model"):
+                value = s.get(key, "")
+                if not isinstance(value, str) or (value and not os.path.isabs(value)):
+                    raise ConfigError("sources[%d].%s must be an absolute local model directory" % (i, key))
+            if not isinstance(s.get("ocr", False), bool):
+                raise ConfigError("sources[%d].ocr must be true or false" % i)
             value = s.get("refresh_interval", 30)
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not 0 <= value <= 86400:
                 raise ConfigError("sources[%d].refresh_interval must be 0-86400 seconds" % i)
