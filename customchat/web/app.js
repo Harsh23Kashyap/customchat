@@ -198,7 +198,7 @@ function chartCard() {
 }
 function rdy() { const q = $("#q"), s = $("#send"); if (!q || !s || S.busy) return; const on = !!q.value.trim(); if (on && !s.classList.contains("on")) { s.classList.add("ready"); setTimeout(() => s.classList.remove("ready"), 200); } s.classList.toggle("on", on); }
 function drawThread() {
-  const th = $("#thread"); th.replaceChildren();
+  const th = $("#thread"), priorScroll = th.scrollTop, keep = th.scrollHeight - th.scrollTop - th.clientHeight > 100; th.replaceChildren();
   const w = el("div", { class: "wrap" });
   if (!S.turns.length) {
     const a = S.cfg.app;
@@ -206,7 +206,7 @@ function drawThread() {
     w.append(heroView()); const recent = recentQuestions(); if (recent) w.append(recent);
   } else { if (PREVIEW) w.append(heroView()); S.turns.forEach((t, i) => w.append(...turnView(t, S.turns[i - 1]))); if (PREVIEW) w.append(chartCard()); }
   { const rows = [...w.querySelectorAll(".row")], same = th.dataset.chat === String(S.chat), prev = same ? +th.dataset.n || 0 : 0; rows.forEach((r, i) => { if (i >= prev) r.classList.add("fresh"); }); th.dataset.chat = String(S.chat); th.dataset.n = rows.length; }
-  th.append(w); th.scrollTop = PREVIEW ? 0 : th.scrollHeight;
+  th.append(w); th.scrollTop = PREVIEW ? 0 : (keep ? priorScroll : th.scrollHeight);
   $("#pills").replaceChildren();
 }
 
@@ -291,7 +291,7 @@ async function send() {
             live.classList.add("answer-arrive");
           } else thinking.remove();
         }
-        text += ev.data; const sp = document.createElement("span"); sp.className = "tk"; sp.textContent = ev.data; live.append(sp); th.scrollTop = th.scrollHeight; }
+        text += ev.data; const sp = document.createElement("span"); sp.className = "tk"; sp.textContent = ev.data; const follow = th.scrollHeight - th.scrollTop - th.clientHeight < 100; live.append(sp); if (follow) th.scrollTop = th.scrollHeight; }
       else if (ev.type === "done") result = ev.data;
       else if (ev.type === "error") err = ev.data;
     });
