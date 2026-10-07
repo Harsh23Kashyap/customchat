@@ -295,6 +295,39 @@ class Store:
     def delete_state(self, owner, name):
         self.q("DELETE FROM states WHERE owner=? AND name=?", (owner, name), write=True)
 
+    def get_profile_fields(self, owner):
+        raw = self.get_profile(owner)
+        try:
+            data = json.loads(raw)
+            if isinstance(data, dict) and isinstance(data.get("fields"), list):
+                return data["fields"]
+        except (ValueError, TypeError):
+            pass
+        return [{"label": "Background", "value": raw}] if raw else []
+
+    def profile_context(self, owner):
+        return "\n".join(f'{f["label"]}: {f["value"]}' for f in self.get_profile_fields(owner))
+
+    def set_profile_fields(self, owner, fields):
+        if not isinstance(fields, list) or len(fields) > 20:
+            raise ValueError("Use at most 20 profile fields")
+        clean = []
+        for f in fields:
+            if not isinstance(f, dict):
+                raise ValueError("Invalid profile field")
+            label, value = str(f.get("label", "")).strip(), str(f.get("value", "")).strip()
+            if len(label) > 60 or len(value) > 1000:
+                raise ValueError("Field names: 60 characters; values: 1000 characters")
+            if value:
+                if not label:
+                    raise ValueError("Name each filled profile field")
+                clean.append({"label": label, "value": value})
+        encoded = json.dumps({"fields": clean}, ensure_ascii=False) if clean else ""
+        if len(encoded) > 3000:
+            raise ValueError("Profile total must be 3000 characters or less")
+        self.set_profile(owner, encoded)
+        return clean
+
     def set_profile(self, owner, text):
         text = (text or "").strip()[:3000]
         if text:
