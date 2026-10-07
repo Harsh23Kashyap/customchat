@@ -610,7 +610,8 @@ $("#saveBudget").addEventListener("click", async function () {
 });
 
 let helpQueued=false;new MutationObserver(()=>{if(helpQueued)return;helpQueued=true;queueMicrotask(()=>{helpQueued=false;compactHelp()})}).observe(document.getElementById("look"),{childList:true,subtree:true});
-init().then(() => { if (canEdit) { docsFreshness(false); loadBudget().catch((e) => { $("#budgetStatus").textContent = e.message; }); } updateVis(); setTimeout(updateVis, 500); }).catch((e) => say(e.message, true));
+$("#configGuide").addEventListener("click", () => CCTour.config(true));
+init().then(() => { CCTour.config(); if (canEdit) { docsFreshness(false); loadBudget().catch((e) => { $("#budgetStatus").textContent = e.message; }); } updateVis(); setTimeout(updateVis, 500); }).catch((e) => say(e.message, true));
 })();
 
 

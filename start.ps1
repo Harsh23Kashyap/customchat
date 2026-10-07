@@ -24,7 +24,7 @@ if (-not $uv) {
   if (-not (Test-Path $exe)) { throw 'uv install not found; inspect installer output' }
 } else { $exe = if ($uv.Source) { $uv.Source } else { $uv.FullName }; Write-Host 'uv already installed; skipped.' }
 # uv tool run is uvx; the published package needs no Git installation.
-$source = if ($env:CUSTOMCHAT_INSTALL_SOURCE) { $env:CUSTOMCHAT_INSTALL_SOURCE } else { 'customchat-app==0.1.2' }
+$source = if ($env:CUSTOMCHAT_INSTALL_SOURCE) { $env:CUSTOMCHAT_INSTALL_SOURCE } else { 'customchat-app==0.1.3' }
 Remove-Item Env:PYTHONPATH -ErrorAction SilentlyContinue
 Remove-Item Env:PYTHONHOME -ErrorAction SilentlyContinue
 & $exe tool run --python 3.12 --from $source customchat start @args

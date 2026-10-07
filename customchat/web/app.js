@@ -617,20 +617,11 @@ function previewMode() {
   const list = $("#list"); list.replaceChildren(...["Fiber and iron", "Protein needs", "Hydration"].map((t, i) => el("div", { class: "item" + (i ? "" : " on") }, el("span", { text: t }))));
   window.addEventListener("message", (e) => { if (e.origin === location.origin && e.data && e.data.ccTheme) { applyWording(); applyIcons(); drawThread(); pvBottom(); $("#chatTitle").textContent = "Fiber and iron"; } });
 }
-function tour() {
-  if (localStorage.getItem("cc_tour")) return;
-  const steps = [["Ask anything", "Answers are written from your sources and every claim links to the evidence."], ["Follow-ups just work", "Ask 'what about its cost?' and it remembers what you were discussing."], ["Temporary chat and profile", "Use the clock button for a chat that saves nothing. The person button holds optional background for your saved chats."]];
-  let i = 0;
-  const back = el("div", { class: "modal-back" });
-  const draw = () => {
-    const [h, p] = steps[i];
-    back.replaceChildren(el("div", { class: "modal", role: "dialog", "aria-modal": "true", "aria-label": "Quick tour" },
-      el("div", { class: "mut", text: (i + 1) + " of " + steps.length }), el("h2", { text: h }), el("p", { text: p }),
-      el("div", { class: "modal-act" }, el("button", { class: "chip", onclick: done }, "Skip"), el("button", { class: "chip on", onclick: () => (++i < steps.length ? draw() : done()) }, i + 1 < steps.length ? "Next" : "Done"))));
-  };
-  const done = () => { localStorage.setItem("cc_tour", "1"); back.remove(); $("#q").focus(); };
-  document.body.append(back); draw();
+function tour(replay=false) {
+  CCTour.chat(replay, () => $("#q").focus());
 }
+$("#chatGuide")?.addEventListener("click", () => tour(true));
+
 })();
 
 document.getElementById("sideClose")?.addEventListener("click", () => document.getElementById("app").classList.remove("menu-open"));
