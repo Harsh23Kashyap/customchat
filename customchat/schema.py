@@ -159,6 +159,15 @@ def validate(raw):
             value = s.get("refresh_interval", 30)
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not 0 <= value <= 86400:
                 raise ConfigError("sources[%d].refresh_interval must be 0-86400 seconds" % i)
+        if "read_users" in s:
+            if cfg["auth"]["mode"] != "accounts" or not isinstance(s["read_users"],list) or any(not isinstance(u,str) or not u for u in s["read_users"]):
+                raise ConfigError("sources[%d].read_users needs account user IDs and accounts auth" % i)
+        if "document_users" in s:
+            if cfg["auth"]["mode"] != "accounts" or s["type"] != "local_files" or not isinstance(s["document_users"],dict):
+                raise ConfigError("sources[%d].document_users needs local files and accounts auth" % i)
+            for doc,users in s["document_users"].items():
+                if not isinstance(doc,str) or not doc or not isinstance(users,list) or any(not isinstance(u,str) or not u for u in users):
+                    raise ConfigError("sources[%d].document_users needs document names mapped to user ID lists" % i)
         s.setdefault("id", "%s%d" % (s["type"], i))
         s.setdefault("label", s["id"])
         if not isinstance(s.get("weight", 1.0), (int, float)) or s.get("weight", 1.0) <= 0:
