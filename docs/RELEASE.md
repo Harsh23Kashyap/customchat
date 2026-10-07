@@ -1,0 +1,13 @@
+# First PyPI release preparation
+
+Distribution: customchat-app. Executables: customchat and customchat-app. Bare invocation starts the local Demo. The old PyPI name customchat belongs to another project; never use `pip install customchat` for this repository.
+
+**Not published yet.** The simple intended command after release is `uvx customchat-app`. Python/pip fallback after release: `python -m pip install customchat-app`, then `customchat-app`. Prefer uvx/pipx or a fresh virtual environment, not a shared system Python. Requires Python >=3.10. The core dependency has a tested major-version range (PyYAML>=6.0.3,<7). Optional PDF and semantic dependencies are not installed by default; model downloads never happen implicitly.
+
+The manual pypi.yml workflow builds wheel/sdist, checks metadata, tests the same wheel on Linux/macOS/Windows and Python3.10/3.12, and only publishes when explicitly selected. It uses PyPI trusted publishing, no long-lived API token. Register a pending publisher in the chosen PyPI account: project customchat-app, owner Harsh23Kashyap, repository customchat, workflow filename pypi.yml, environment pypi. That registration does not reserve the name. Use a GitHub environment approval gate for releases.
+
+Current artifact acceptance covers isolated pip install/pip check, paths with spaces, packaged Demo documents, offline answers without optional extras, Python floor metadata, executable aliases and explicit isolation from host PYTHONPATH conflicts. It is not proof against every library/environment conflict. Ordinary shared-environment pip can change dependencies; reinstall in a private environment rather than repairing unrelated packages. `python -I` ignores PYTHONPATH/user-site pollution. Optional semantic models and OCR binaries need their own validation.
+
+Existing installer scenarios also cover partial environment repair, repeat installs, interrupted receipt state, lock contention, occupied ports, health and configuration lock. Actual absent-uv bootstrap was previously checked on Linux only; macOS/Windows scripts contain bootstrap code but that branch still needs real absent-uv tests before claiming all-platform bootstrap verification. Offline first installs require cached dependencies; no network cannot conjure an absent package or Python runtime.
+
+Release held for PyPI account/access, pending-publisher registration, successful multi-OS artifact checks, review of the exact release commit and any remaining bootstrap/isolated-install checks. Local build/metadata tests are not registry publication.
