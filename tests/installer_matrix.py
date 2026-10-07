@@ -9,6 +9,7 @@ def main():
     with tempfile.TemporaryDirectory() as tmp:
         base=Path(tmp)
         for n in range(args.repeat):
+            print('Iteration '+str(n+1)+'/'+str(args.repeat),flush=True)
             state=base/str(n);workspace=base/('work'+str(n))
             cmd=[sys.executable,str(ROOT/'scripts/install.py'),'--uv',args.uv,'--source',str(Path(args.wheel).resolve()),'--state',str(state),'--directory',str(workspace)]
             def prep(extra=()):
@@ -32,6 +33,9 @@ def main():
                         if (state/'server.json').exists():url=json.loads((state/'server.json').read_text())['url'];break
                         time.sleep(.1)
                     assert url and not url.endswith(':'+str(port)), 'Readiness/port failed; installer log: '+log.read_text()+'; server log: '+((state/'server.log').read_text() if (state/'server.log').exists() else 'missing');counts['occupied_port']+=1
+                    print('Server ready at '+url,flush=True)
+                    server_log=(state/'server.log').read_text()
+                    if 'Timeout (' in server_log:print(server_log,flush=True)
                     assert 'Already running' in prep(['--offline']);counts['active_rerun']+=1
                     req=urllib.request.Request(url+'/api/ask',data=b'{"question":"What is CustomChat?"}',headers={'Content-Type':'application/json'})
                     result=json.load(urllib.request.urlopen(req));assert '[1]' in result['answer'] and len(result['evidence'])==2
