@@ -3,7 +3,7 @@ import copy, difflib, json, re
 from pathlib import Path
 from . import schema
 
-SOURCE_KEYS = {'id','label','type','weight','path','semantic_model','rerank_model','ocr','refresh_interval','url','results_path','fields','header_env','timeout','name','filter','category','entry','providers','provider','mailto','limit','language','endpoint','api_key_env'}
+SOURCE_KEYS = {'read_users','document_users','id','label','type','weight','path','semantic_model','rerank_model','ocr','refresh_interval','url','results_path','fields','header_env','timeout','name','filter','category','entry','providers','provider','mailto','limit','language','endpoint','api_key_env'}
 
 def editor_schema():
     def node(v):
