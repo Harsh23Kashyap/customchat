@@ -10,7 +10,7 @@ const FONT_STACKS = {
   jetbrains: ['"JetBrains Mono",ui-monospace,monospace', "JetBrains+Mono:wght@400;600"], mono: ["ui-monospace,SFMono-Regular,Menlo,Consolas,monospace", null],
 };
 const lum = (hex) => { const v = [1, 3, 5].map((i) => parseInt(hex.substr(i, 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
-const onColor = (hex) => (lum(hex) > 0.45 ? "#10201a" : "#fffdf7");
+const onColor = (hex) => ((lum(hex)+.05)/.05 >= 1.05/(lum(hex)+.05) ? "#000000" : "#ffffff");
 const rgba = (hex, a) => `rgba(${[1, 3, 5].map((i) => parseInt(hex.substr(i, 2), 16)).join(",")},${a})`;
 
 function patternImage(name, c, op) {
@@ -45,7 +45,7 @@ function apply(t, root = document.documentElement) {
   const mode = local === "light" || local === "dark" ? local : t.mode;
   const dark = mode === "dark" || (mode === "auto" && matchMedia("(prefers-color-scheme:dark)").matches);
   const c = dark ? t.dark : t.light, s = root.style, set = (k, v) => s.setProperty(k, v);
-  root.dataset.theme = dark ? "dark" : "light";
+  root.dataset.theme = dark ? "dark" : "light"; root.dataset.branded = t.logo ? "on" : "off";
   set("--brand", c.brand); set("--on-brand", onColor(c.brand)); set("--accent", c.brand); set("--lime", c.accent); set("--accent2", c.accent); set("--on-lime", onColor(c.accent));
   set("--cream", c.bg); set("--paper", c.surface); set("--ink", c.ink); set("--mut", c.muted); set("--line", c.line); set("--side-bg", c.sidebar);
   set("--bot", c.bot); set("--you", c.you); set("--danger", c.danger); set("--soft", `color-mix(in srgb, ${c.sidebar} 70%, ${c.surface})`);
@@ -72,6 +72,17 @@ function apply(t, root = document.documentElement) {
   d.pattern = t.pattern; d.motion = t.motion; d.entrance = t.entrance; d.bubble = t.bubble; d.sidebar = t.sidebar; d.chatw = t.chat_width;
   d.avatars = t.avatars; d.align = t.you_align; d.composer = t.composer; d.toolbar = t.toolbar; d.lift = t.hover_lift ? "on" : "off"; d.sources = t.sources_panel ? "on" : "off";
   const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.content = c.brand;
+  let icon = document.querySelector('link[data-cc-icon]');
+  if (!icon) { icon = document.createElement("link"); icon.rel = "icon"; icon.type = "image/png"; icon.dataset.ccIcon = "1"; document.head.append(icon); }
+  icon.href = t.logo || "/favicon.ico";
+  const paintWatermark = () => {
+    let watermark = document.getElementById("cc-watermark");
+    const host = document.querySelector(".main") || document.body; if (!host) return;
+    if (!watermark) { watermark = document.createElement("div"); watermark.id = "cc-watermark"; watermark.setAttribute("aria-hidden","true"); host.append(watermark); }
+    watermark.style.backgroundImage = t.logo && t.logo_watermark ? `url("${t.logo}")` : "none";
+    watermark.hidden = !(t.logo && t.logo_watermark);
+  };
+  if (document.body) paintWatermark(); else document.addEventListener("DOMContentLoaded",paintWatermark,{once:true});
   window.CCTheme.value = t;
 }
 window.__ccPreview = /[?&]preview=1/.test(location.search);
