@@ -34,7 +34,7 @@ const TV = (k) => ((window.CCTheme && window.CCTheme.value) || {})[k] || "";
 const PREVIEW = !!window.__ccPreview;
 function avatar(kind) {
   const e = TV(kind === "bot" ? "emoji_bot" : "emoji_you"), a = S.cfg.app;
-  return el("div", { class: "av " + kind + (e ? " emo" : ""), text: e || (kind === "bot" ? (TV("txt_title") || a.title || "AI").replace(/[^A-Za-z]/g, "").slice(0, 2) : "You") });
+  return el("div", { class: "av " + kind + (e ? " emo emo-"+TV((kind === "bot" ? "emoji_bot" : "emoji_you")+"_motion") : ""), text: e || (kind === "bot" ? (TV("txt_title") || a.title || "AI").replace(/[^A-Za-z]/g, "").slice(0, 2) : "You") });
 }
 async function api(path, body) {
   const h = { "Content-Type": "application/json" };
@@ -225,11 +225,29 @@ function recentQuestions() {
   return el("div", {class:"recent-questions"}, el("p", {class:"fu-label",text:"Your recent questions"}),
     el("div",{class:"ex"}, recent.map(x=>el("button",{onclick:()=>{$("#q").value=x;send();}},x))));
 }
+function gettingStarted() {
+  if (PREVIEW || S.temp) return null;
+  const cards = [
+    ["1", "How do I ask my first question?", "Use a sample below, or type a question about your documents.", () => { $("#q").focus(); }],
+    ["2", "How do I add my documents?", "Upload a PDF or text file, then ask about it.", uploadDialog],
+    ["3", "How do I choose what to search?", "Limit the next answer to one collection or document.", scopeDialog],
+    ["4", "How do I change the reading view?", "Choose your text size and answer width.", () => $("#readingBtn").click()],
+  ];
+  if (document.querySelector('.tb-link[href="/settings.html"]')) cards.push(
+    ["5", "How do I connect an AI model?", "Demo is offline. Choose a provider and test it in Configuration.", () => { location.href="/settings.html#sec-model"; }]);
+  cards.push([String(cards.length+1), "How do I try an action?", "Preview a local note action. Nothing is saved until you confirm.", () => $("#actionsBtn").click()]);
+  const box = el("section", {class:"getting-started", "aria-label":"Getting started"}, el("h2", {text:"Start here"}),
+    el("p", {class:"getting-started-note",text:S.cfg.provider.type === "mock" ? "You're in offline Demo. Try the app first, then connect an AI model when you're ready." : "Follow these steps at your own pace. Your existing documents and chats stay unchanged."}));
+  box.append(el("div", {class:"start-grid"}, cards.map(([n,title,detail,action]) => el("button", {class:"start-card",onclick:action},
+    el("span", {class:"start-number",text:n}), el("span", {},el("b", {text:title}),el("small", {text:detail}))))));
+  box.append(el("p", {class:"getting-started-note",text:"After an answer: click [1] to check its source. Use the download button to export your chat."}));
+  return box;
+}
 function heroView() {
   const a = S.cfg.app;
   const he = TV("emoji_hero") || TV("emoji_bot"), exs = TV("txt_examples") ? TV("txt_examples").split("\n").map((x) => x.trim()).filter(Boolean).slice(0, 8) : (S.suggestions ? S.suggestions.questions : a.examples);
-  return el("div", { class: "hero" + (PREVIEW ? " mini" : "") }, TV("logo") ? el("img", { class: "hero-logo", src: TV("logo"), alt: "" }) : el("div", { class: "av bot" + (he ? " emo" : ""), text: he || (TV("txt_title") || a.title || "AI").replace(/[^A-Za-z]/g, "").slice(0, 2) }), el("div", {}, el("h1", { text: TV("txt_title") || a.title }), el("p", { text: TV("txt_tagline") || a.tagline }),
-    el("div", { class: "ex" }, exs.map((x) => el("button", { onclick: () => { $("#q").value = x; send(); } }, x)))));
+  return el("div", { class: "hero" + (PREVIEW ? " mini" : "") }, TV("logo") ? el("img", { class: "hero-logo", src: TV("logo"), alt: "" }) : el("div", { class: "av bot" + (he ? " emo emo-"+TV((TV("emoji_hero")?"emoji_hero":"emoji_bot")+"_motion") : ""), text: he || (TV("txt_title") || a.title || "AI").replace(/[^A-Za-z]/g, "").slice(0, 2) }), el("div", {}, el("h1", { text: TV("txt_title") || a.title }), el("p", { text: TV("txt_tagline") || a.tagline }),
+    el("div", { class: "ex" }, exs.map((x) => el("button", { onclick: () => { $("#q").value = x; send(); } }, x))), gettingStarted()));
 }
 function chartCard() {
   const parts = [["Whole grains", 46, "var(--brand)"], ["Fruit and veg", 31, "var(--lime)"], ["Beans and lentils", 23, "var(--mut)"]];
@@ -313,6 +331,7 @@ async function stream(body, onEvent) {
   }
 }
 async function send() {
+  if (PREVIEW) return;
   const q = $("#q").value.trim(); if (!q || S.busy) return;
   const status = $("#pipelineStatus"); status.hidden = false; status.dataset.state="working"; status.textContent = "Preparing your answer";
   S.busy = true; sendIcon("stop", "Stop"); $("#q").value = ""; autosize(); S.lastQ = q;
@@ -324,7 +343,7 @@ async function send() {
   const th = $("#thread"); th.scrollTop = th.scrollHeight;
   let text = "", result = null, err = null;
   try {
-    await stream({ scope: S.scope, chat: S.temp ? null : S.chat, question: q, style: $("#style").value, topic: S.topic, new_topic: S.newTopic, sources: S.sources.size ? [...S.sources] : null, temporary: S.temp, history: S.temp ? S.turns.slice(-6).map((t) => ({ question: t.question, answer: t.answer })) : undefined, use_profile: S.useProfile && !S.temp }, (ev) => {
+    await stream({ scope: S.scope, chat: S.temp ? null : S.chat, question: q, style: $("#style").value, topic: S.topic, new_topic: S.newTopic, sources: S.sources.size ? [...S.sources] : null, temporary: S.temp, history: S.temp ? S.turns.slice(-200).map((t) => ({ question: t.question, answer: t.answer })) : undefined, use_profile: S.useProfile && !S.temp }, (ev) => {
       if (ev.type === "progress") { status.textContent = ev.data.label; }
       else if (ev.type === "token") {
         const thinking = $("#think");
@@ -359,27 +378,13 @@ async function send() {
   }
 }
 async function uploadDialog() {
-  const link = prompt("Paste a web page link to add it as a source, or press Cancel to choose files");
-  if (link && link.trim()) { try { const r = await api("/api/load-url", { url: link.trim() }); toast("Added: " + r.name); } catch (e) { toast(e.message); } return; }
-  const inp = el("input", { type: "file", accept: ".txt,.md,.csv,.json,.pdf,application/pdf", multiple: "" });
-  inp.addEventListener("change", async () => {
-    let n = 0;
-    for (const f of inp.files) {
-      if (/\.pdf$/i.test(f.name)) {
-        if (f.size > 8e6) { toast(f.name + " is over 8 MB"); continue; }
-        try {
-          const bytes = new Uint8Array(await f.arrayBuffer()); let bin = ""; for (let i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
-          await api("/api/upload-pdf", { name: f.name, data: btoa(bin) }); n++;
-        } catch (e) { toast(f.name + ": " + e.message); }
-        continue;
-      }
-      if (f.size > 150000) { toast(f.name + " is over 150 KB"); continue; }
-      try { await api("/api/uploads", { name: f.name, text: await f.text() }); n++; } catch (e) { toast(e.message); }
-    }
-    if (n) toast(n + " file" + (n > 1 ? "s" : "") + " added. Questions can now use them.");
-  });
-  inp.click();
+  const modal=el("div",{class:"modal-back"}),box=el("div",{class:"modal",role:"dialog","aria-label":"Add sources"}),files=el("input",{type:"file",multiple:"","aria-label":"Choose source files"}),url=el("input",{type:"url",placeholder:"https://…","aria-label":"Web page link"}),status=el("p",{class:"mut",text:S.temp?"Uploads are saved sources, not used in temporary chats. Start a saved chat to ask about them.":"PDF, text, Word and spreadsheets. Images use local text recognition, not visual reasoning. Unsupported files get a clear error."});
+  const upload=async()=>{let n=0;for(const f of files.files){try{if(f.size>8e6)throw Error("File is over 8 MB");const bytes=new Uint8Array(await f.arrayBuffer());let bin="";for(let i=0;i<bytes.length;i+=8192)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+8192));const result=await api("/api/upload-file",{name:f.name,data:btoa(bin)});n++;status.textContent="Added "+result.name+": "+result.chars+" text characters."}catch(e){status.textContent=f.name+": "+e.message;toast(status.textContent)}}if(n)toast(n+" source"+(n>1?"s":"")+" added"+(S.temp?". Not used in temporary chat.":"."))};
+  files.addEventListener("change",upload);
+  const addLink=el("button",{class:"btn-out",text:"Add web link",onclick:async()=>{try{const r=await api("/api/load-url",{url:url.value});status.textContent="Added: "+r.name}catch(e){status.textContent=e.message}}}),close=el("button",{class:"btn-out",text:"Done",onclick:()=>modal.remove()});
+  box.append(el("h2",{text:"Add sources"}),status,files,el("hr"),url,addLink,el("div",{class:"modal-act"},close));modal.append(box);document.body.append(modal);files.focus();
 }
+
 function contextDialog(t) {
   const m = el("div", { class: "modal-back", onclick: (e) => e.target === m && m.remove() }, el("div", { class: "modal", role: "dialog", "aria-label": "Answer context" },
     el("h2", { text: "How this answer was built" }),
@@ -401,8 +406,13 @@ async function init() {
     const L = 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; document.documentElement.style.setProperty("--on-accent", L > 0.5 ? "#000" : "#fff"); }
   const a = S.cfg.app; document.title = a.title;
   $("#brand").textContent = a.title; $("#sideTitle").textContent = "Conversations"; $("#noteName").textContent = a.title; $("#noteText").textContent = a.footer; $("#tempPill").addEventListener("click", () => $("#tempBtn").click()); $("#themeBtn").addEventListener("click", () => { const dark = document.documentElement.dataset.theme === "dark"; localStorage.setItem("cc_mode", dark ? "light" : "dark"); CCTheme.apply(CCTheme.value); });
-  $("#modelBadge").textContent = S.cfg.provider.type + (S.cfg.provider.model ? " · " + S.cfg.provider.model : "");
-  S.cfg.styles.forEach((s) => $("#style").append(el("option", { value: s === "standard" ? s : s, ...(s === "standard" ? { selected: "" } : {}) }, s[0].toUpperCase() + s.slice(1))));
+  const providerNames = {mock:"Demo",openai:"OpenAI",claude:"Claude",gemini:"Gemini",ollama:"Ollama",openai_compatible:"Custom provider",openrouter:"OpenRouter",deepseek:"DeepSeek",groq:"Groq",mistral:"Mistral",minimax:"MiniMax",mimo:"Xiaomi MiMo"};
+  const badge=$("#modelBadge"), demo=S.cfg.provider.type === "mock";
+  badge.textContent = demo ? "Demo · offline" : (providerNames[S.cfg.provider.type] || S.cfg.provider.type) + (S.cfg.provider.model ? " · " + S.cfg.provider.model : "");
+  badge.title = demo ? "Offline Demo: built-in answers from your documents. No AI model or paid calls. Choose a provider in Configuration to use AI." : "Configured AI provider and model";
+  $("#themeBtn").title = "Switch between light and dark theme";
+  const modeHelp={quick:"Short answer: 2 to 4 sentences.",standard:"Balanced answer in short paragraphs.",deep:"Longer answer with sections, caveats and open questions. This changes answer detail, not the model or source quality."};
+  S.cfg.styles.forEach((s) => $("#style").append(el("option", {title:modeHelp[s] || "Answer style: "+s, "data-description":modeHelp[s] || "", value: s === "standard" ? s : s, ...(s === "standard" ? { selected: "" } : {}) }, s[0].toUpperCase() + s.slice(1))));
   if (S.cfg.sources.length > 1) {
     const f = el("div", { class: "pills" });
     S.cfg.sources.forEach((s) => f.append(el("button", { class: "pill", onclick: (e) => { S.sources.has(s.id) ? S.sources.delete(s.id) : S.sources.add(s.id); e.target.style.opacity = S.sources.has(s.id) || !S.sources.size ? 1 : .45; [...f.children].forEach((c, i) => c.style.opacity = !S.sources.size || S.sources.has(S.cfg.sources[i].id) ? 1 : .45); } }, s.label)));
@@ -479,17 +489,11 @@ function toggleTemp() {
   $("#q").focus();
 }
 async function profileDialog() {
-  let cur = ""; try { cur = (await api("/api/profile")).text; } catch (e) { /* ignore */ }
-  const ta = el("textarea", { rows: "6", placeholder: "Optional background the answers can take into account, for example your goals or constraints. Kept on this server, never treated as evidence.", maxlength: "3000" }); ta.value = cur;
-  const on = el("input", { type: "checkbox", id: "useProfile" }); on.checked = S.useProfile;
-  const close = () => back.remove();
-  const save = async () => { try { await api("/api/profile", { text: ta.value }); S.useProfile = on.checked && !!ta.value.trim(); localStorage.setItem("cc_profile_on", S.useProfile ? "1" : "0"); toast("Profile saved"); close(); drawThread(); } catch (e) { toast(e.message); } };
-  const back = el("div", { class: "modal-back", onclick: (e) => e.target === back && close() },
-    el("div", { class: "modal", role: "dialog", "aria-modal": "true", "aria-label": "My profile" },
-      el("h2", { text: "My profile" }), ta,
-      el("label", { class: "chk" }, on, " Use my profile in saved chats (not in temporary chats)"),
-      el("div", { class: "modal-act" }, el("button", { class: "chip", onclick: close }, "Cancel"), el("button", { class: "chip on", onclick: save }, "Save"))));
-  document.body.append(back); ta.focus();
+  let fields=[];try{const r=await api("/api/profile");fields=r.fields||(r.text?[{label:"Background",value:r.text}]:[])}catch(e){toast(e.message);return}
+  const rows=el("div",{class:"profile-fields"}),on=el("input",{type:"checkbox",id:"useProfile"});on.checked=S.useProfile;
+  const add=(f={label:"",value:""})=>{if(rows.children.length>=20){toast("Use at most 20 fields");return}const label=el("input",{type:"text",placeholder:"Field name, e.g. Goals",maxlength:60,"aria-label":"Field name"}),value=el("textarea",{rows:2,placeholder:"Field value",maxlength:1000,"aria-label":"Field value"});label.value=f.label;value.value=f.value;const row=el("div",{class:"profile-row"},label,value,el("button",{type:"button",class:"chip",text:"Remove",onclick:()=>row.remove()}));rows.append(row)};
+  fields.forEach(add);if(!fields.length)add();const close=()=>back.remove();const save=async()=>{try{const fields=[...rows.children].map(r=>({label:r.querySelector("input").value,value:r.querySelector("textarea").value}));await api("/api/profile",{fields});S.useProfile=on.checked&&fields.some(f=>f.value.trim());localStorage.setItem("cc_profile_on",S.useProfile?"1":"0");toast("Profile saved");close();drawThread()}catch(e){toast(e.message)}};
+  const back=el("div",{class:"modal-back",onclick:e=>e.target===back&&close()},el("div",{class:"modal",role:"dialog","aria-modal":"true","aria-label":"My profile"},el("h2",{text:"My profile"}),el("p",{class:"h",text:"Optional background, not evidence. Saved on this server. Up to 20 fields; 3000 characters total."}),rows,el("button",{class:"chip",text:"Add field",onclick:()=>add()}),el("label",{class:"chk"},on," Use my profile in saved chats (not temporary chats)"),el("div",{class:"modal-act"},el("button",{class:"chip",text:"Cancel",onclick:close}),el("button",{class:"chip on",text:"Save",onclick:save}))));document.body.append(back);rows.querySelector("input").focus();
 }
 function setupMic() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition; const m = $("#mic");
@@ -594,11 +598,15 @@ function applyWording() {
 }
 function applyIcons() {
   for (const [id, key, name] of [["#send", "emoji_send", "send"], ["#upload", "emoji_attach", "clip"], ["#tempBtn", "emoji_temp", "temp"]]) {
-    const b = $(id); if (!b) continue; const e = TV(key); if (id === "#send" && S.busy) continue; b.replaceChildren(e ? document.createTextNode(e) : svg(name));
+    const b = $(id); if (!b) continue; const e = TV(key); if (id === "#send" && S.busy) continue; b.classList.remove("emo-bounce","emo-pulse","emo-wiggle");if(e&&["bounce","pulse","wiggle"].includes(TV(key+"_motion")))b.classList.add("emo-"+TV(key+"_motion"));b.replaceChildren(e ? document.createTextNode(e) : svg(name));
   }
 }
 function pvBottom() { const t = $("#thread"); if (t) { t.style.scrollBehavior = "auto"; t.scrollTop = t.scrollHeight; } }
 function previewMode() {
+  document.body.inert = true;
+  document.querySelectorAll("input,textarea,select,button").forEach(control => { control.disabled=true; control.tabIndex=-1; });
+  $("#q").placeholder="Visual preview only";
+  $("#q").value="";
   document.documentElement.classList.add("preview");
   S.turns = [
     { id: "p1", chat: "p", question: "How much fiber should an adult eat each day?", answer: "What we know: adults are advised to eat about 14 g of fiber per 1,000 kcal, which works out to roughly 25 g a day for women and 38 g for men [1].\n\nWhat we don't know: the supplied sources do not say how much benefit or risk comes with eating more or less than that [1].\n\nWhat to ask a dietitian: how much fiber suits you, and which foods are the best way to reach it.", evidence: [{ n: 1, title: "Health Implications of Dietary Fiber (Academy of Nutrition and Dietetics, 2015)", text: "" }], ledger: [], seconds: 4 },
