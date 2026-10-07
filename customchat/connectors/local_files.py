@@ -128,17 +128,18 @@ class LocalFiles:
                                   "id": "%s#%s%d" % (os.path.relpath(path, root), ("page-%d-" % page) if page else "", n), "document": os.path.relpath(path, root), "version": digest, "section": sec_title, "page": page, "ocr": ocr})
                 n += 1
 
-    def search(self, query, k=6):
+    def search(self, query, k=6, documents=None):
         if hasattr(self, "_lock"):
             with self._lock:
                 self.refresh()
-                return self._search(query, k)
-        return self._search(query, k)
+                return self._search(query, k, documents)
+        return self._search(query, k, documents)
 
-    def _search(self, query, k):
+    def _search(self, query, k, documents=None):
         q = tokens(query)
         scored = []
         for d in self.docs:
+            if documents is not None and d.get("document") not in documents: continue
             tf = {}
             for t in d["tok"]:
                 tf[t] = tf.get(t, 0) + 1
@@ -155,7 +156,7 @@ class LocalFiles:
                 self._vectors = self._semantic.encode([d["title"] + " " + d["text"] for d in self.docs], normalize_embeddings=True)
                 self._vector_revision = self.revision
             vector = self._semantic.encode([query], normalize_embeddings=True)[0]
-            semantic = sorted([(sum(float(a) * float(b) for a, b in zip(v, vector)), d) for v, d in zip(self._vectors, self.docs)], key=lambda x: -x[0])
+            semantic = sorted([(sum(float(a) * float(b) for a, b in zip(v, vector)), d) for v, d in zip(self._vectors, self.docs) if documents is None or d.get("document") in documents], key=lambda x: -x[0])
             keyword = sorted(scored, key=lambda x: -x[0])
             # Reciprocal rank fusion: do not compare unlike lexical/vector scales.
             merged = {}
@@ -164,6 +165,7 @@ class LocalFiles:
                     row = merged.setdefault(doc["id"], [0, doc]); row[0] += 1 / (60 + rank + 1)
             scored = [tuple(v) for v in merged.values()]
         scored.sort(key=lambda x: -x[0])
+        if documents is not None: scored = [(score, d) for score, d in scored if d.get("document") in documents]
         if getattr(self, "rerank_model", "") and scored:
             if not self._reranker: self._reranker = self._model(self.rerank_model, True)
             candidate = scored[:min(30, max(k * 3, k))]
