@@ -25,3 +25,5 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: ./install.ps1 --state "$env:RUNNER_TEMP/entry" --source (Get-ChildItem dist/*.whl).FullName --no-browser --lock-config --verify-and-stop
+      - name: Fresh-computer uvx bootstrap
+        run: python tests/start_bootstrap.py
