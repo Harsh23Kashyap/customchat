@@ -15,6 +15,7 @@ WEB = os.path.join(os.path.dirname(__file__), "web")
 
 
 def make_handler(cfg, engine):
+    from . import permissions
     store = engine.store
     token_env = cfg["auth"]["token_env"]
     hits = collections.defaultdict(list)
@@ -26,9 +27,18 @@ def make_handler(cfg, engine):
     acc = Accounts(store, bool(cfg["auth"].get("signup", True))) if cfg["auth"]["mode"] == "accounts" else None
 
     def turn_scopes(owner, rows):
+        rows=[permissions.view(cfg,owner,row) for row in rows]
         for row in rows:
-            try: row["scope"] = store.get_state(owner, "scope-" + row["id"])
+            try:
+                if row.get("id"):
+                    saved=store.get_state(owner, "scope-" + row["id"])
+                    if permissions.allowed(cfg,owner,saved["source"],saved.get("document")): row["scope"]=saved
             except ValueError: pass
+        return rows
+
+    def safe_export(owner):
+        rows=store.export_all(owner)
+        for chat in rows: chat['turns']=turn_scopes(owner,chat.get('turns',[]))
         return rows
 
     def settings_view():
@@ -134,7 +144,7 @@ def make_handler(cfg, engine):
             if method == "GET" and not path.startswith("/api/"):
                 return self._static(path)
             if path == "/api/health":
-                if qs.get("deep"):
+                if qs.get("deep") and can_edit(self):
                     return self._send(200, {"ok": True, "app": cfg["app"].get("title") or cfg["app"].get("name", ""), "provider": cfg["provider"]["type"],
                                             "sources": [x.get("id") or x.get("name") or x.get("type") for x in cfg.get("sources", [])],
                                             "db": store.ping(), "version": "0.1", "degraded": store.degraded})
@@ -142,7 +152,10 @@ def make_handler(cfg, engine):
             if path == "/api/theme" and method == "GET":
                 return self._send(200, {"theme": themestore.value, "meta": themes.meta(), "can_edit": can_edit(self)})
             if path == "/api/config":
-                return self._send(200, schema.public_view(cfg))
+                view=schema.public_view(cfg)
+                principal=acc.user_for(self._cookie()) if acc else None
+                view['sources']=[s for s in view['sources'] if permissions.allowed(cfg,principal['id'] if principal else None,s['id'])]
+                return self._send(200, view)
             if acc and path.startswith("/api/account/"):
                 b = self._body() if method == "POST" else {}
                 ck = self._cookie()
@@ -173,16 +186,17 @@ def make_handler(cfg, engine):
             if path == "/api/scopes" and method == "GET":
                 rows = []
                 for sid, conn in engine.connectors.items():
+                    if not permissions.allowed(cfg,o,sid): continue
                     docs = []
                     if hasattr(conn, "docs"):
                         try: conn.refresh()
                         except OSError: pass
-                        docs = sorted({d.get("document") for d in conn.docs if d.get("document")}) if not getattr(conn, "last_error", "") else []
+                        docs = sorted({d.get("document") for d in conn.docs if d.get("document") and permissions.allowed(cfg,o,sid,d.get("document"))}) if not getattr(conn, "last_error", "") else []
                     rows.append({"source": sid, "label": conn.label, "documents": docs})
                 return self._send(200, rows)
             if path == "/api/suggestions" and method == "POST":
                 from .suggestions import starters, recent
-                result = starters(engine)
+                result = starters(engine,o)
                 return self._send(200, dict(result, recent=[] if b.get("temporary") else recent(store, o)))
             if LOCKED and path == "/api/theme" and method == "POST":
                 return self._send(404, {"error": "Not found"})
@@ -368,7 +382,7 @@ def make_handler(cfg, engine):
             if path == "/api/turns":
                 return self._send(200, turn_scopes(o, store.turns(o, qs.get("chat", ""))))
             if path == "/api/export-all":
-                return self._send(200, json.dumps(store.export_all(o), indent=1).encode(), "application/json",
+                return self._send(200, json.dumps(safe_export(o), indent=1).encode(), "application/json",
                                   {"Content-Disposition": 'attachment; filename="customchat-export.json"'})
             if path == "/api/profile":
                 if method == "POST":
@@ -387,7 +401,7 @@ def make_handler(cfg, engine):
                 return self._send(200, {"imported": n})
             if path == "/api/export":
                 ch = store.chat(o, qs.get("chat", ""))
-                return self._send(200, chat_markdown(ch["title"], store.turns(o, ch["id"])).encode(), "text/markdown; charset=utf-8",
+                return self._send(200, chat_markdown(ch["title"], turn_scopes(o,store.turns(o, ch["id"]))).encode(), "text/markdown; charset=utf-8",
                                   {"Content-Disposition": 'attachment; filename="chat.md"'})
             if path in ("/api/ask", "/api/ask-stream", "/api/regenerate"):
                 budget.take("question", o)
@@ -425,12 +439,15 @@ def make_handler(cfg, engine):
                                b.get("style", "standard"), b.get("topic"), bool(b.get("new_topic")), not b.get("fresh"), scope=b.get("scope"))
                 return self._send(200, r)
             if path == "/api/regenerate":
-                t = store.turn(o, b.get("turn", ""))
+                t = permissions.view(cfg,o,store.turn(o, b.get("turn", "")))
                 try: saved_scope = store.get_state(o, "scope-" + t["id"])
                 except ValueError: saved_scope = None
                 r = next(data for kind, data in engine.ask_stream(o, t["chat"], t["question"], None, b.get("style", "standard"), t["topic"], False, False, scope=saved_scope) if kind == "done")
                 return self._send(200, r)
             if path == "/api/branch" and method == "POST":
+                target=store.turn(o,str(b.get("turn") or ""))
+                if any(permissions.view(cfg,o,t)['answer'] != t['answer'] for t in store.turns(o,target['chat'])):
+                    raise PermissionError("This chat contains answers no longer available. Start a new chat.")
                 return self._send(200, store.branch(o, str(b.get("turn") or ""), b.get("question")))
             if path == "/api/rename":
                 store.rename_chat(o, b.get("chat"), b.get("title")); return self._send(200, {"ok": True})
@@ -461,17 +478,17 @@ def make_handler(cfg, engine):
             if path == "/api/delete-upload":
                 store.delete_upload(o, b.get("upload")); engine._cache.clear(); return self._send(200, {"ok": True})
             if path == "/api/topics":
-                return self._send(200, store.topics(o))
+                return self._send(200, [dict(t,summary="") if permissions.restricted(cfg) else t for t in store.topics(o)])
             if path == "/api/topic-turns":
                 return self._send(200, turn_scopes(o, store.topic_turns(o, qs.get("topic", ""))))
             if path == "/api/rename-topic":
                 store.rename_topic(o, b.get("topic"), b.get("title")); return self._send(200, {"ok": True})
             if path == "/api/bibtex":
-                t = store.turn(o, qs.get("turn", ""))
+                t = permissions.view(cfg,o,store.turn(o, qs.get("turn", "")))
                 return self._send(200, bibtex(t["evidence"]).encode(), "text/plain; charset=utf-8",
                                   {"Content-Disposition": 'attachment; filename="references.bib"'})
             if path == "/api/pdf":
-                t = store.turn(o, qs.get("turn", ""))
+                t = permissions.view(cfg,o,store.turn(o, qs.get("turn", "")))
                 return self._send(200, pdf_bytes(cfg["app"]["title"], t), "application/pdf",
                                   {"Content-Disposition": 'attachment; filename="answer.pdf"'})
             return self._send(404, {"error": "Not found"})
