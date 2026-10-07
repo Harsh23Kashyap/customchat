@@ -26,6 +26,9 @@ def _main(argv=None):
     st.add_argument("--lock-config", action="store_true")
     v = sub.add_parser("validate", help="check an app file"); v.add_argument("app")
     r = sub.add_parser("run", help="serve an app"); r.add_argument("app"); r.add_argument("--host"); r.add_argument("--port", type=int)
+    df = sub.add_parser("config-diff", help="preview changed keys and effects without values"); df.add_argument("app"); df.add_argument("candidate")
+    ca = sub.add_parser("config-apply", help="apply exact previewed config with private rollback backup")
+    ca.add_argument("app"); ca.add_argument("candidate"); ca.add_argument("--current-sha", required=True); ca.add_argument("--candidate-sha", required=True)
     sub.add_parser("config-schema", help="print JSON Schema for editor autocomplete")
     cd = sub.add_parser("config-doctor", help="offline line/key configuration checks"); cd.add_argument("app")
     d = sub.add_parser("doctor", help="check provider and sources"); d.add_argument("app")
@@ -36,6 +39,14 @@ def _main(argv=None):
     if argv is None: argv = sys.argv[1:]
     if not argv: argv = ["start"]
     args = ap.parse_args(argv)
+    if args.cmd == "config-diff":
+        from .configchange import diff
+        print(json.dumps(diff(args.app,args.candidate),indent=2)); return
+    if args.cmd == "config-apply":
+        from .configchange import apply
+        backup=apply(args.app,args.candidate,args.current_sha,args.candidate_sha)
+        print("Applied file. Rollback backup: " + backup)
+        print("Restart the app to load it. Review auth/source/network changes before launch."); return
     if args.cmd == "config-schema":
         from .configdoctor import editor_schema
         print(json.dumps(editor_schema(), indent=2)); return
