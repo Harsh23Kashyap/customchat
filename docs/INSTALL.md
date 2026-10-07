@@ -4,12 +4,12 @@ Choose uvx as the main route. It runs a Python tool in an isolated cached enviro
 
 ## Published package and one-command start
 
-CustomChat 0.1.0 is published at https://pypi.org/project/customchat-app/ . With uv already installed:
+CustomChat 0.1.1 is the current release at https://pypi.org/project/customchat-app/ . With uv already installed:
 
 ```sh
 uvx customchat-app start
 # Pin a release:
-uvx customchat-app@0.1.0 start
+uvx customchat-app@0.1.1 start
 # Choose a workspace and hide configuration:
 uvx customchat-app start --directory my-chat --no-browser --lock-config
 ```
