@@ -2,7 +2,7 @@
 """Shared local installer. Invoked by OS scripts after uv/Python bootstrap."""
 import argparse,contextlib,json,os,shutil,subprocess,sys,time,urllib.request
 from pathlib import Path
-RELEASE='18117743213ecf58fc6fa8fe3c82c22d98770a13'
+RELEASE='08ab51591a43edf382080add86e8eacbaff0e9cf'
 SOURCE='https://github.com/Harsh23Kashyap/customchat/archive/'+RELEASE+'.zip'
 
 def healthy(url):
