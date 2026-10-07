@@ -29,12 +29,22 @@ def _main(argv=None):
     d = sub.add_parser("doctor", help="check provider and sources"); d.add_argument("app")
     ev = sub.add_parser("eval", help="run questions from a file and report citation coverage"); ev.add_argument("app"); ev.add_argument("questions", help="text file, one question per line")
     a = sub.add_parser("ask", help="ask one question from the terminal"); a.add_argument("app"); a.add_argument("question"); a.add_argument("--json", action="store_true")
+    ex = sub.add_parser("export", help="export app YAML, look, prompts and local documents, without private state")
+    ex.add_argument("app"); ex.add_argument("output", help="new ZIP file; never overwritten")
     args = ap.parse_args(argv)
     if args.cmd == "init":
         if os.path.exists(args.name):
             sys.exit("%s already exists" % args.name)
         shutil.copytree(TEMPLATE, args.name, ignore=shutil.ignore_patterns("__pycache__", "*.db"))
         print("Created %s/. Next: customchat run %s/app.yaml" % (args.name, args.name))
+    elif args.cmd == "export":
+        from .portable import export_app, ExportError
+        try:
+            m = export_app(args.app, args.output)
+        except (ExportError, OSError) as e:
+            sys.exit("Export stopped: %s" % e)
+        print("Exported %d app files to %s. No keys or private session state copied." % (len(m["files"]), args.output))
+        print("Review included local documents before sharing.")
     elif args.cmd == "start":
         from .launcher import start
         start(args.directory, args.port, args.no_browser, args.lock_config)
