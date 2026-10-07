@@ -14,7 +14,7 @@ class ExportError(ValueError):
     pass
 
 MAX_BYTES = 64 * 1024 * 1024
-DOC_TYPES = {'.md', '.txt', '.json', '.csv'}
+DOC_TYPES = {'.md', '.txt', '.json', '.csv', '.pdf'}
 PRIVATE = {'secrets', 'credentials', 'accounts', 'sessions', 'uploads', 'private'}
 SECRET_KEYS = re.compile(r'^(api_key|key|password|secret|token|authorization|cookie|headers|credentials|dsn)$', re.I)
 
