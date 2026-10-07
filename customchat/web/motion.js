@@ -85,7 +85,7 @@
       var f = e.target.closest("[data-k]"); if (!f) return;
       var k = f.dataset.k || "";
       if (!/font|^bg|background|pattern|emoji|icon/.test(k)) return;
-      [document.querySelector(".preview"), /font/.test(k) ? document.getElementById("typeprev") : null].forEach(function (pv) {
+      [/font/.test(k) ? document.getElementById("typeprev") : null].forEach(function (pv) {
         if (!pv) return;
         pv.classList.remove("fade-soft"); void pv.offsetWidth; pv.classList.add("fade-soft");
         setTimeout(function () { pv.classList.remove("fade-soft"); }, 400);
