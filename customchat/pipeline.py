@@ -416,6 +416,7 @@ class Engine:
             history = [{"question": str(h.get("question", ""))[:500], "answer": str(h.get("answer", ""))[:600]}
                        for h in (temp_history or [])[-6:] if isinstance(h, dict)] if mem_on else []
             summary = ""
+            if scope: history = []
             yield "progress", {"stage": "context", "label": "Preparing question context"}
             standalone = self.standalone(q, history, summary)
             blocked = self.check_question(standalone)
@@ -491,7 +492,9 @@ class Engine:
         yield "done", {"seconds": round(time.time() - t0, 1), "followups": fu, "id": tid, "chat": chat, "topic": topic, "question": q, "standalone": standalone, "answer": answer,
                        "evidence": evidence, "ledger": ledger, "style": style, "source_errors": errors, "temporary": temporary, "scope": scope}
 
-    def ask(self, owner, chat, question, sources=None, style="standard", topic=None, new_topic=False, use_cache=True):
+    def ask(self, owner, chat, question, sources=None, style="standard", topic=None, new_topic=False, use_cache=True, scope=None):
+        if scope is not None:
+            return next(data for kind, data in self.ask_stream(owner, chat, question, sources, style, topic, new_topic, use_cache, scope=scope) if kind == "done")
         q = str(question or "").strip()
         if not q or len(q) > 2000:
             raise ValueError("Question must be 1-2000 characters")
