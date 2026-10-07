@@ -35,6 +35,8 @@ jobs:
       - uses: actions/download-artifact@v4
         with: {name: python-distributions, path: dist/}
       - run: python tests/release_install.py
+      - name: Real absent-uv bootstrap
+        run: python tests/absent_uv.py
   publish:
     if: ${{ inputs.publish }}
     needs: [build, verify]
