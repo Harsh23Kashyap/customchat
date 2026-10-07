@@ -110,6 +110,14 @@ def make_handler(cfg, engine):
             u = urlparse(self.path)
             path, qs = u.path, {k: v[0] for k, v in parse_qs(u.query).items()}
             if path == "/favicon.ico":
+                logo = themestore.value.get("logo", "")
+                if logo:
+                    try:
+                        data = base64.b64decode(logo.split(",",1)[1], validate=True)
+                        if data.startswith(b"\x89PNG\r\n\x1a\n"):
+                            return self._send(200, data, "image/png")
+                    except (ValueError, IndexError):
+                        pass
                 return self._send(204, b"", "image/x-icon")
             if LOCKED and (path in LOCKED_PAGES or path.startswith(LOCKED_API)):
                 return self._error_page(404) if method == "GET" and not path.startswith("/api/") else self._send(404, {"error": "Not found"})
