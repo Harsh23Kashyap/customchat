@@ -150,7 +150,6 @@ function turnView(t, prev) {
   meta.append(el("button", { "data-more": "1", class: "chip", title: "How this answer was built", onclick: () => contextDialog(t) }, "Context"));
   if (t.evidence.length) meta.append(el("button", { class: "chip copy", onclick: (ev) => { const b = ev.currentTarget; navigator.clipboard.writeText(t.answer).then(() => { toast("Copied"); b.textContent = "Copied"; b.classList.add("done"); setTimeout(() => { b.textContent = "Copy"; b.classList.remove("done"); }, 1600); }); } }, "Copy"));
   if (t.evidence.length) {
-    for (const v of [1, -1]) meta.append(el("button", { class: "chip" + (S.ratings[t.id] === v ? " on" : "") + (S.pop === t.id + ":" + v ? " pop" : ""), "aria-pressed": String(S.ratings[t.id] === v), onclick: async () => { const r = S.ratings[t.id] === v ? 0 : v; try { if (r) S.pop = t.id + ":" + v; await api("/api/rate", { turn: t.id, rating: r }); if (r) S.ratings[t.id] = r; else delete S.ratings[t.id]; drawThread(); } catch (e) { toast(e.message); } } }, v > 0 ? "Helpful" : "Not helpful"));
     meta.append(el("button", { "data-more": "1", class: "chip", onclick: () => download("/api/bibtex?turn=" + t.id, "references.bib") }, "BibTeX"));
     meta.append(el("button", {"data-more":"1",class:"chip",onclick:()=>download("/api/answer-markdown?turn="+t.id,"answer.md")},"Markdown"));
     meta.append(el("button", { "data-more": "1", class: "chip", onclick: () => download("/api/pdf?turn=" + t.id, "answer.pdf") }, "PDF"));
@@ -243,10 +242,12 @@ function gettingStarted() {
   box.append(el("p", {class:"getting-started-note",text:"After an answer: click [1] to check its source. Use the download button to export your chat."}));
   return box;
 }
+function temporaryScene(){const n=el("div");n.innerHTML='<div class="temp-concept"><div class="ephemeral-scene" aria-hidden="true"><svg viewBox="0 0 540 230"><defs><linearGradient id="vapour" x2="0" y2="1"><stop stop-color="#eee9f7"/><stop offset="1" stop-color="#f7f4ec"/></linearGradient></defs><ellipse cx="270" cy="190" rx="165" ry="15" fill="#e5dfeb"/><g class="bubble bubble-one"><rect x="100" y="57" width="144" height="73" rx="18" fill="url(#vapour)"/><path d="m126 130-13 15v-26"/><path d="M123 80h88M123 98h65" class="ink-line"/></g><g class="bubble bubble-two"><rect x="285" y="98" width="145" height="65" rx="18" fill="#e7edf0"/><path d="m399 163 12 14v-24"/><path d="M307 119h96M307 136h73" class="ink-line"/></g><g class="clock-loop"><circle cx="278" cy="65" r="29" fill="#fffdf7"/><path d="M278 47v19l12 7"/><path d="M250 63a28 28 0 0 1 47-19m-5-11 5 11-12-1"/></g><g class="paper-drift"><path d="M75 125h29l10 10v44H75zM104 125v10h10" fill="#fffdf7"/><path d="M83 145h23M83 154h18"/></g><g class="star star-one"><path d="m441 40 3 10 11 3-11 3-3 10-3-10-10-3 10-3z" fill="#d6bc78" stroke="none"/></g><g class="star star-two"><path d="m220 169 3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="#b1c1b0" stroke="none"/></g><g class="vapour dots"><circle cx="128" cy="79" r="3"/><circle cx="157" cy="64" r="2"/><circle cx="186" cy="43" r="3"/></g></svg><span class="scene-caption">Here for the conversation. Gone from your history.</span></div><span class="temp-eyebrow">A LITTLE LESS PERMANENT</span><h1>Temporary chat</h1><p>This conversation is not saved.<br>Your profile and uploaded sources stay out of it.</p><button type="button">Back to saved chats ↗</button></div>';n.querySelector("button").addEventListener("click",()=>document.querySelector("#tempPill").click());return n.firstChild;}
 function heroView() {
+  if(S.temp&&!PREVIEW)return temporaryScene();
   const a = S.cfg.app;
   const he = TV("emoji_hero") || TV("emoji_bot"), exs = TV("txt_examples") ? TV("txt_examples").split("\n").map((x) => x.trim()).filter(Boolean).slice(0, 8) : (S.suggestions ? S.suggestions.questions : a.examples);
-  return el("div", { class: "hero" + (PREVIEW ? " mini" : "") }, TV("logo") ? el("img", { class: "hero-logo", src: TV("logo"), alt: "" }) : el("div", { class: "av bot" + (he ? " emo emo-"+TV((TV("emoji_hero")?"emoji_hero":"emoji_bot")+"_motion") : ""), },he?CCEmoji.node(he,TV((TV("emoji_hero")?"emoji_hero":"emoji_bot")+"_animated"),"",["calm","none"].includes(TV("motion"))):document.createTextNode((TV("txt_title")||a.title||"AI").replace(/[^A-Za-z]/g,"").slice(0,2))), el("div", {}, el("h1", { text: TV("txt_title") || a.title }), el("p", { text: TV("txt_tagline") || a.tagline }),
+  return el("div", { class: "hero" + (PREVIEW ? " mini" : "") }, TV("logo") ? el("img", { class: "hero-logo", src: TV("logo"), alt: "" }) : el("div", { class: "av bot" + (he ? " emo emo-"+TV((TV("emoji_hero")?"emoji_hero":"emoji_bot")+"_motion") : ""), },he?CCEmoji.node(he,TV((TV("emoji_hero")?"emoji_hero":"emoji_bot")+"_animated"),"",["calm","none"].includes(TV("motion"))):document.createTextNode((TV("txt_title")||a.title||"AI").replace(/[^A-Za-z]/g,"").slice(0,2))), el("div", {}, el("h1", { text: S.temp ? "Temporary chat" : TV("txt_title") || a.title }), el("p", { text: S.temp ? "This chat is not saved. Your profile and uploaded sources are not used." : TV("txt_tagline") || a.tagline }),
     el("div", { class: "ex" }, exs.map((x) => el("button", { onclick: () => { $("#q").value = x; send(); } }, x))), gettingStarted()));
 }
 function chartCard() {
@@ -266,7 +267,7 @@ function drawThread() {
     w.append(heroView()); const recent = recentQuestions(); if (recent) w.append(recent);
   } else { if (PREVIEW) w.append(heroView()); S.turns.forEach((t, i) => w.append(...turnView(t, S.turns[i - 1]))); if (PREVIEW) w.append(chartCard()); }
   { const rows = [...w.querySelectorAll(".row")], same = th.dataset.chat === String(S.chat), prev = same ? +th.dataset.n || 0 : 0; rows.forEach((r, i) => { if (i >= prev) r.classList.add("fresh"); }); th.dataset.chat = String(S.chat); th.dataset.n = rows.length; }
-  th.append(w); th.scrollTop = PREVIEW ? 0 : (keep ? priorScroll : th.scrollHeight);
+  th.append(w); th.scrollTop = PREVIEW || !S.turns.length ? 0 : (keep ? priorScroll : th.scrollHeight);
   $("#pills").replaceChildren();
 }
 
@@ -405,7 +406,7 @@ async function init() {
   { const h = S.cfg.app.accent.replace("#", ""), v = [0, 2, 4].map((i) => parseInt(h.substr(i, 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
     const L = 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; document.documentElement.style.setProperty("--on-accent", L > 0.5 ? "#000" : "#fff"); }
   const a = S.cfg.app; document.title = a.title;
-  $("#brand").textContent = a.title; $("#sideTitle").textContent = "Conversations"; $("#noteName").textContent = a.title; $("#noteText").textContent = a.footer; $("#tempPill").addEventListener("click", () => $("#tempBtn").click()); $("#themeBtn").addEventListener("click", () => { const dark = document.documentElement.dataset.theme === "dark"; localStorage.setItem("cc_mode", dark ? "light" : "dark"); CCTheme.apply(CCTheme.value); });
+  $("#brand").textContent = a.title; $("#sideTitle").textContent = "Conversations"; $("#noteName").textContent = a.title; $("#noteText").textContent = a.footer; $("#tempPill").addEventListener("click", toggleTemp); $("#themeBtn").addEventListener("click", () => { const dark = document.documentElement.dataset.theme === "dark"; localStorage.setItem("cc_mode", dark ? "light" : "dark"); CCTheme.apply(CCTheme.value); });
   const providerNames = {mock:"Demo",openai:"OpenAI",claude:"Claude",gemini:"Gemini",ollama:"Ollama",openai_compatible:"Custom provider",openrouter:"OpenRouter",deepseek:"DeepSeek",groq:"Groq",mistral:"Mistral",minimax:"MiniMax",mimo:"Xiaomi MiMo"};
   const badge=$("#modelBadge"), demo=S.cfg.provider.type === "mock";
   badge.textContent = demo ? "Demo · offline" : (providerNames[S.cfg.provider.type] || S.cfg.provider.type) + (S.cfg.provider.model ? " · " + S.cfg.provider.model : "");
@@ -443,7 +444,20 @@ async function init() {
   $("#q").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
   $("#exportChat").addEventListener("click", () => S.chat && S.turns.length ? download("/api/export?chat=" + S.chat, "chat.md") : toast("Nothing to export yet"));
   $("#q").addEventListener("input", rdy); $("#send").addEventListener("click", () => (S.busy ? aborter && aborter.abort() : send())); $("#newChat").addEventListener("click", newChat);
-  $("#menu").addEventListener("click", () => $("#app").classList.toggle("menu-open"));
+  const sidebarOverlay = () => matchMedia("(max-width:860px)").matches || document.documentElement.dataset.sidebar === "hidden";
+  const syncSidebar = () => {
+    const open = sidebarOverlay() ? $("#app").classList.contains("menu-open") : !$("#app").classList.contains("side-collapsed");
+    $("#menu").setAttribute("aria-expanded", String(open));
+    $("#menu").setAttribute("aria-label", open ? "Close chats" : "Open chats");
+    $("#side").inert = !open;
+  };
+  $("#menu").setAttribute("aria-controls", "side");
+  $("#menu").addEventListener("click", () => { $("#app").classList.toggle(sidebarOverlay() ? "menu-open" : "side-collapsed"); syncSidebar(); });
+  $("#sideClose").addEventListener("click", () => { $("#app").classList.remove("menu-open"); if (!sidebarOverlay()) $("#app").classList.add("side-collapsed"); $("#menu").focus(); syncSidebar(); });
+  new MutationObserver(syncSidebar).observe($("#app"), {attributes:true, attributeFilter:["class"]});
+  new MutationObserver(syncSidebar).observe(document.documentElement, {attributes:true, attributeFilter:["data-sidebar"]});
+  matchMedia("(max-width:860px)").addEventListener("change", syncSidebar);
+  syncSidebar();
   $("#search").addEventListener("input", () => S.tab === "chats" && loadList());
   document.querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => { document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("on", x === b)); S.tab = b.dataset.tab; loadList(); }));
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("#app").classList.remove("src", "menu-open"); });
@@ -479,21 +493,24 @@ document.addEventListener("click", (e) => {
 // ---- temporary chat, profile, mic, similar questions, question navigation, resizer, tour ----
 function setTemp(on) {
   S.temp = on; document.body.classList.toggle("temp", on);
-  const b = $("#tempBtn"); if (b) b.setAttribute("aria-pressed", String(on)); $("#tempPill").setAttribute("aria-pressed", String(on));
+  const b = $("#tempBtn"); if (b) b.setAttribute("aria-pressed", String(on)); $("#tempPill").setAttribute("aria-pressed", String(on)); $("#tempPill").title = on ? "Leave temporary mode" : "Start a chat that is not saved"; $("#q").placeholder = on ? "Ask without saving this chat" : "Ask a question";
 }
 function toggleTemp() {
   if (S.temp) { newChat(); return; }
-  S.chat = null; S.topic = null; S.turns = []; setTemp(true);
+  S.chat = null; S.topic = null; S.turns = []; S.newTopic = false; S.scope = null; S.sources.clear(); scopeChip(); setTemp(true); $("#app").classList.remove("menu-open", "src");
   $("#chatTitle").textContent = "Temporary chat"; drawThread();
   const t = $("#thread .hero"); if (t) { t.querySelector("h1").textContent = "Temporary chat"; t.querySelector("p").textContent = "Nothing here is saved, and your profile and uploads are not used. Closing the chat clears it."; }
   $("#q").focus();
 }
 async function profileDialog() {
   let fields=[];try{const r=await api("/api/profile");fields=r.fields||(r.text?[{label:"Background",value:r.text}]:[])}catch(e){toast(e.message);return}
-  const rows=el("div",{class:"profile-fields"}),on=el("input",{type:"checkbox",id:"useProfile"});on.checked=S.useProfile;
-  const add=(f={label:"",value:""})=>{if(rows.children.length>=20){toast("Use at most 20 fields");return}const label=el("input",{type:"text",placeholder:"Field name, e.g. Goals",maxlength:60,"aria-label":"Field name"}),value=el("textarea",{rows:2,placeholder:"Field value",maxlength:1000,"aria-label":"Field value"});label.value=f.label;value.value=f.value;const row=el("div",{class:"profile-row"},label,value,el("button",{type:"button",class:"chip",text:"Remove",onclick:()=>row.remove()}));rows.append(row)};
-  fields.forEach(add);if(!fields.length)add();const close=()=>back.remove();const save=async()=>{try{const fields=[...rows.children].map(r=>({label:r.querySelector("input").value,value:r.querySelector("textarea").value}));await api("/api/profile",{fields});S.useProfile=on.checked&&fields.some(f=>f.value.trim());localStorage.setItem("cc_profile_on",S.useProfile?"1":"0");toast("Profile saved");close();drawThread()}catch(e){toast(e.message)}};
-  const back=el("div",{class:"modal-back",onclick:e=>e.target===back&&close()},el("div",{class:"modal",role:"dialog","aria-modal":"true","aria-label":"My profile"},el("h2",{text:"My profile"}),el("p",{class:"h",text:"Optional background, not evidence. Saved on this server. Up to 20 fields; 3000 characters total."}),rows,el("button",{class:"chip",text:"Add field",onclick:()=>add()}),el("label",{class:"chk"},on," Use my profile in saved chats (not temporary chats)"),el("div",{class:"modal-act"},el("button",{class:"chip",text:"Cancel",onclick:close}),el("button",{class:"chip on",text:"Save",onclick:save}))));document.body.append(back);rows.querySelector("input").focus();
+  const previous=document.activeElement,rows=el("div",{class:"profile-fields"}),on=el("input",{type:"checkbox",id:"useProfile","aria-label":"Use in saved chats"}),count=el("span",{text:"0 / 3,000 characters"});on.checked=S.useProfile;
+  const updateCount=()=>{const n=[...rows.querySelectorAll("input,textarea")].reduce((n,e)=>n+e.value.length,0);count.textContent=n.toLocaleString()+" / 3,000 characters"};
+  const add=(f={label:"",value:""})=>{if(rows.children.length>=20){toast("Use at most 20 fields");return}const id="profile-field-"+Math.random().toString(36).slice(2),label=el("input",{id,type:"text",placeholder:"e.g. Goals, interests, preferences",maxlength:60,"aria-label":"What should it know?",oninput:updateCount}),value=el("textarea",{id:id+"-value",rows:2,placeholder:"Tell it what matters to you…",maxlength:1000,"aria-label":"Details",oninput:updateCount});label.value=f.label;value.value=f.value;const row=el("div",{class:"profile-field"},el("div",{class:"profile-field-head"},el("label",{for:id,text:"What should it know?"}),el("button",{type:"button",class:"profile-remove",text:"Remove",onclick:()=>{row.remove();updateCount()}})),label,el("label",{for:id+"-value",text:"Details"}),value);rows.append(row);updateCount();return label};
+  fields.forEach(add);if(!fields.length)add();const close=()=>{document.removeEventListener("keydown",keys);back.remove();previous?.focus()};const save=async()=>{try{const fields=[...rows.children].map(r=>({label:r.querySelector("input").value,value:r.querySelector("textarea").value}));await api("/api/profile",{fields});S.useProfile=on.checked&&fields.some(f=>f.value.trim());localStorage.setItem("cc_profile_on",S.useProfile?"1":"0");toast("Profile saved");close();drawThread()}catch(e){toast(e.message)}};
+  const box=el("div",{class:"modal profile-design",role:"dialog","aria-modal":"true","aria-label":"My profile"},el("header",{},el("div",{},el("span",{class:"profile-eyebrow",text:"OPTIONAL CONTEXT"}),el("h2",{text:"My profile"})),el("button",{type:"button",class:"profile-close","aria-label":"Close",text:"×",onclick:close})),el("p",{class:"profile-intro",text:"A little background for better replies. Not evidence. Never used in temporary chats. Up to 20 details."}),rows,el("button",{type:"button",class:"profile-add",text:"+ Add another detail",onclick:()=>add()?.focus()}),el("div",{class:"profile-use"},el("div",{},el("b",{text:"Use in saved chats"}),el("span",{text:"Stored on this server. You can change it anytime."})),on),el("footer",{},count,el("div",{},el("button",{type:"button",class:"profile-cancel",text:"Cancel",onclick:close}),el("button",{type:"button",class:"profile-save",text:"Save profile",onclick:save}))));
+  const back=el("div",{class:"modal-back",onclick:e=>e.target===back&&close()},box);
+  const keys=(e)=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}else if(e.key==="Tab"){const items=[...box.querySelectorAll("button,input,textarea")];const first=items[0],last=items.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}};document.addEventListener("keydown",keys);document.body.append(back);rows.querySelector("input").focus();
 }
 function setupMic() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition; const m = $("#mic");
@@ -601,7 +618,7 @@ function applyIcons() {
     const b = $(id); if (!b) continue; const e = TV(key); if (id === "#send" && S.busy) continue; b.classList.remove("emo-bounce","emo-pulse","emo-wiggle");if(e&&["bounce","pulse","wiggle"].includes(TV(key+"_motion")))b.classList.add("emo-"+TV(key+"_motion"));b.replaceChildren(e ? CCEmoji.node(e,TV(key+"_animated"),"",["calm","none"].includes(TV("motion"))) : svg(name));
   }
 }
-function pvBottom() { const t = $("#thread"); if (t) { t.style.scrollBehavior = "auto"; t.scrollTop = t.scrollHeight; } }
+function pvBottom() { const t = $("#thread"); if (t) { t.style.scrollBehavior = "auto"; t.scrollTop = 0; } }
 function previewMode() {
   window.ccPreviewMotion=(t)=>{const node=document.querySelector('.row.bot:last-of-type')||document.querySelector('.msg.bot')||document.querySelector('#thread');if(!node)return;node.getAnimations().forEach(a=>a.cancel());if(matchMedia('(prefers-reduced-motion:reduce)').matches||['calm','none'].includes(t.motion)||t.entrance==='none')return;const frames=t.entrance==='slide'?[{opacity:0,transform:'translateY(18px)'},{opacity:1,transform:'none'}]:t.entrance==='pop'?[{opacity:0,transform:'scale(.94)'},{opacity:1,transform:'none'}]:[{opacity:0},{opacity:1}];node.animate(frames,{duration:(t.motion==='subtle'?180:420)*100/t.speed,easing:'ease-out'})};
   document.body.inert = true;
@@ -613,6 +630,7 @@ function previewMode() {
     { id: "p1", chat: "p", question: "How much fiber should an adult eat each day?", answer: "What we know: adults are advised to eat about 14 g of fiber per 1,000 kcal, which works out to roughly 25 g a day for women and 38 g for men [1].\n\nWhat we don't know: the supplied sources do not say how much benefit or risk comes with eating more or less than that [1].\n\nWhat to ask a dietitian: how much fiber suits you, and which foods are the best way to reach it.", evidence: [{ n: 1, title: "Health Implications of Dietary Fiber (Academy of Nutrition and Dietetics, 2015)", text: "" }], ledger: [], seconds: 4 },
     { id: "p2", chat: "p", question: "Which foods contain iron?", answer: "Iron is found in meat, fish, beans, lentils and fortified cereals [1]. Iron from plants is absorbed less well than iron from meat, and vitamin C eaten at the same meal helps [2].", evidence: [{ n: 1, title: "Iron fact sheet for consumers", text: "" }, { n: 2, title: "Iron absorption and diet", text: "" }], ledger: [], seconds: 3 },
   ];
+  S.turns = [S.turns[1]];S.turns[0].answer="Iron is found in beans, lentils and fortified cereals [1]. Vitamin C helps your body absorb it [2].";
   S.chat = "p"; drawThread(); pvBottom(); $("#chatTitle").textContent = "Fiber and iron";
   const list = $("#list"); list.replaceChildren(...["Fiber and iron", "Protein needs", "Hydration"].map((t, i) => el("div", { class: "item" + (i ? "" : " on") }, el("span", { text: t }))));
   window.addEventListener("message", (e) => { if (e.origin === location.origin && e.data && e.data.ccTheme) { applyWording(); applyIcons(); drawThread(); pvBottom(); $("#chatTitle").textContent = "Fiber and iron"; } });

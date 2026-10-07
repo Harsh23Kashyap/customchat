@@ -1,0 +1,52 @@
+DietChat public page: https://dietchat.org/about.html
+Captured 2026-10-08. This is website information, not clinical research evidence.
+
+About DietChat Home About Features Contact DietNerd.org ↗
+About DietChat
+Research context for better health conversations.
+DietChat is the conversational companion to DietNerd. It is part of the CustomNerd research family. It helps you explore diet and nutrition questions with article links, food data, saved conversations, follow-up context and optional documents. Research answers can be incomplete; check source details before using them for health decisions. Evidence made clear How it works
+From a question to published evidence.
+DietChat searches PubMed records and shows the research journey as it runs. Where an article is resolved, you can open its Article Analysis and original record. A retrieved paper is not proof that a particular claim is supported. The food-comparison lane uses FoodData Central records and links each food to its USDA source. What DietChat does
+Features
+Research, without losing the thread.
+Small previews of the tools you can use in DietChat. These are illustrations, not live answers or medical advice. 01 / CONVERSATIONS
+Pick up where you left off.
+Saved chats can receive short AI topic titles after the answer; rename any conversation yourself. Search your own history, expand a chat to preview each question-answer pair, or delete a pair or whole conversation with a 30-second Undo. Temporary chat stays out of saved history. Conversations Search conversations How much protein do I need? + How can I get enough iron? + Pair or full-chat delete · Undo 30s Saved conversation
+How much protein do I need?
+Let's look at your goal and the research.
+Preview temporary chat 02 / RESEARCH
+See the work as it happens.
+The journey moves as retrieval and analysis events arrive. Choose Light for standard research or Heavy for longer experimental research. Heavy is available but its answers are not yet source-verified and may withhold a target when support cannot be checked. Where a source is resolved, open Article Analysis or its original record. You can also view the research steps and optional claim-source notes; a citation alone does not verify its claim. Research journey
+Question
+Find studies
+Check studies
+Answer [1] Study title · View article analysis ↗ 03 / YOUR CONTEXT
+Add what matters to you.
+Set an optional diet profile with goals, conditions, weight and dietary preferences in the notes. Attach a document or ask about a specific paper. Switch profile use on or off per conversation, and change or clear your profile later. Diet profile · optional Goal Build muscle Context Vegetarian meals + Attach PDF Ask about a paper 04 / COMPARE
+See the numbers another way.
+Where an answer contains a suitable numeric table, you can view it as a chart and return to the table. Ask for a five-food comparison of chicken breast, paneer, tofu, lentils and eggs. DietChat shows protein and fiber per 100 g in a table, with separate charts and links to each FoodData Central record. Values refer to the named preparations, not every variety of those foods. Fiber (g per 100 g) · illustration
+View as chart Food Fiber (g) Tofu 2.3 Lentils 7.9 Tofu 2.3 Lentils 7.9 05 / TAKE IT WITH YOU
+Keep a useful answer.
+Copy an answer or download a readable saved-conversation PDF with questions, tables and page numbers. Answer
+Compare the evidence, then ask a follow-up.
+Copy answer Download PDF ↓ 06 / FOLLOW-UP
+Talk it through naturally.
+Ask follow-ups in the same thread with recent question context, not earlier answers treated as source evidence. On supported browsers, tap the microphone to dictate into the composer, see listening and transcript status, then edit the text before sending. If recognition is unavailable, type instead. Sending always takes a separate action.
+What about someone who avoids dairy? Ask a follow-up... ♩ ↑ Voice fills the box. Sending is a separate step. And more 07 / MORE TOOLS
+AI topic titles after an answer, manual rename and + expansion 08 / MORE TOOLS
+Voice dictation on supported browsers 09 / MORE TOOLS
+Delete individual question-answer pairs with Undo 10 / MORE TOOLS
+Delete full conversations with Undo 11 / MORE TOOLS
+Choose light or dark theme 12 / MORE TOOLS
+Light research; Heavy experimental and not yet source-verified 13 / MORE TOOLS
+Open article analysis and original sources 14 / MORE TOOLS
+Show optional claim evidence 15 / MORE TOOLS
+Review or clear your diet profile 16 / MORE TOOLS
+Research from PDF, text and CSV attachments 17 / MORE TOOLS
+Ask follow-up questions with recent context; see sending feedback 18 / MORE TOOLS
+Five-food protein/fiber table and separate charts with USDA record links Open DietChat → The people behind the project
+Meet our team
+Harsh Kashyap
+Thapar Institute of Engineering and Technology Patiala, India LinkedIn ↗
+Professor Dennis Shasha
+Department of Computer Science New York University, New York, USA NYU faculty page ↗ Opening DietChat

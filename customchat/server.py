@@ -332,7 +332,7 @@ def make_handler(cfg, engine):
                     if path == "/api/websearch/test" and method == "POST":
                         pid = str(b.get("id") or "")
                         try:
-                            items, raw = websearch.search(pid, str(b.get("query") or "test")[:300], 3, with_raw=True)
+                            items, raw = websearch.search(pid, str(b.get("query") or "test")[:300], 3, with_raw=True, key_override=b.get("key") if "key" in b else None)
                             return self._send(200, {"ok": True, "items": [{"title": i["title"], "text": i["text"][:200], "url": i["url"]} for i in items], "raw": raw})
                         except websearch.SearchError as e:
                             return self._send(200, {"ok": False, "error": str(e), "items": []})
@@ -359,6 +359,11 @@ def make_handler(cfg, engine):
                         return self._send(200, {"ok": not marks, "problems": sorted({m for _, m in marks}), "marks": [{"line": l, "message": m} for l, m in marks]})
                 except ValueError as e:
                     return self._send(400, {"error": str(e)})
+            if path == "/api/ollama/pull/cancel" and method == "POST":
+                if not can_edit(self):
+                    return self._send(403, {"error": "Only the admin can cancel downloads"})
+                st = hardware.cancel_pull(str(b.get("id") or ""))
+                return self._send(200, st) if st else self._send(404, {"error": "Unknown download"})
             if path == "/api/ollama/pull":
                 if not can_edit(self):
                     return self._send(403, {"error": "Only the admin can download models"})
@@ -530,7 +535,7 @@ def make_handler(cfg, engine):
                 a = cfg["app"]
                 data = data.decode().replace("{{THEME_JSON}}", json.dumps(themestore.value).replace("<", "\\u003c")).replace("{{TITLE}}", _esc(a["title"])).replace("{{ACCENT}}", _esc(a["accent"])).replace("{{ACCENT2}}", _esc(a.get("accent2", "#d7ef72"))).replace("{{THEME}}", _esc(a["theme"])).encode()
             if name == "index.html" and LOCKED:
-                data = data.replace(b'<a class="tb-link" href="/settings.html">Configuration</a>', b"")
+                data = re.sub(rb'<a[^>]*href="/settings.html"[^>]*>Configuration</a>', b"", data)
             self._send(200, data, ctype + ("; charset=utf-8" if ctype.startswith("text") or "javascript" in ctype else ""))
 
         def _guard(self, method):

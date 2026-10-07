@@ -64,7 +64,8 @@ def inspect(path):
         if 'anyOf' in spec:
             if v is None:return
             spec=next(x for x in spec['anyOf'] if x.get('type')=='object')
-        typ=spec.get('type');types={'object':dict,'array':list,'string':str,'integer':int,'number':(int,float),'boolean':bool}
+        typ=spec.get('type');typ=next((t for t in typ if t!='null'),'null') if isinstance(typ,list) and v is not None else ('null' if isinstance(typ,list) else typ);types={'object':dict,'array':list,'string':str,'integer':int,'number':(int,float),'boolean':bool}
+        if typ=='null' and v is None:return
         if typ in types and (not isinstance(v,types[typ]) or typ in ('integer','number') and isinstance(v,bool)):
             issue(key,'Expected '+typ+'.','Use a '+typ+' value.');return
         if 'enum' in spec and v not in spec['enum']:issue(key,'Unsupported choice.','Choose: '+', '.join(spec['enum']))

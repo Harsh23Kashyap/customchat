@@ -87,7 +87,7 @@ async function ollamaPanel() {
   rec.picks.forEach((p) => {
     const c = el("div", { class: "ocard fit-" + p.fit }, el("div", { class: "otag", text: p.label }), el("b", { text: p.name }), el("div", { class: "h", text: p.note }),
       el("div", { class: "fitchip " + p.fit }, el("i"), p.fit_why));
-    if (det) c.append(el("div", { class: "otech", text: p.tag + " | " + p.download_gb + " GB download | needs about " + p.needs_gb + " GB (" + p.uses_pct + "% of budget) | speed " + p.speed }));
+    if (det) c.append(el("div",{class:"model-metrics"},el("div",{class:"metric-head"},el("span",{text:"Memory budget"}),el("b",{text:p.uses_pct+"%"})),el("div",{class:"budget-track",role:"img","aria-label":p.uses_pct+"% of memory budget used, 85% fit limit"},el("i",{style:"width:"+Math.max(0,Math.min(100,p.uses_pct))+"%"}),el("span",{style:"left:85%"})),el("div",{class:"metric-foot"},el("b",{text:p.needs_gb+" GB needed"}),el("span",{text:rec.budget_gb+" GB budget"})),el("div",{class:"metric-row"},el("span",{},"↓ Download",el("b",{text:p.download_gb+" GB"})),el("span",{class:"speed",text:"Speed: "+p.speed})),el("small",{class:"model-tag",text:p.tag})));
     c.append(el("div", { class: "oact" }, modelAction(p.tag, p.installed)));
     cards.append(c);
   });
@@ -106,24 +106,28 @@ function modelAction(tag, installed) {
   if (installed) { wrap.append(el("span", { class: "okt", text: "Installed" }), el("button", { type: "button", class: "mini", onclick: use }, "Use this model")); return wrap; }
   const bar = el("div", { class: "pbar", hidden: "" }, el("i")), msg = el("span", { class: "h" });
   const btn = el("button", { type: "button", class: "mini dl", disabled: canEdit ? undefined : "" }, "Download");
+  let pullId="";const cancel=el("button",{type:"button",class:"mini",text:"Cancel download",hidden:"",onclick:async()=>{cancel.disabled=true;msg.textContent="Cancelling...";try{await api("/api/ollama/pull/cancel",{id:pullId})}catch(e){cancel.disabled=false;msg.textContent=e.message}}});
   btn.addEventListener("click", async () => {
     btn.disabled = true; bar.hidden = false; msg.textContent = "Starting...";
     try {
       const { id } = await api("/api/ollama/pull", { model: tag, base_url: $("#base").value.trim() });
+      pullId=id;cancel.hidden=false;cancel.disabled=false;
       for (;;) {
         await new Promise((r) => setTimeout(r, 700));
         const st = await api("/api/ollama/pull?id=" + id);
         bar.firstChild.style.width = st.pct + "%"; msg.textContent = st.error || (st.done ? "Done" : (st.status || "Downloading") + " " + st.pct + "%");
-        if (st.error) { btn.disabled = false; btn.textContent = "Try again"; bar.hidden = true; msg.className = "h bad"; break; }
-        if (st.done) { wrap.replaceChildren(el("span", { class: "okt", text: "Installed" }), el("button", { type: "button", class: "mini", onclick: use }, "Use this model")); use(); break; }
+        if(st.cancelled&&st.done){cancel.hidden=true;bar.hidden=true;btn.disabled=false;btn.textContent="Resume download";msg.textContent="Cancelled. Ollama may keep partial files for resume.";break}
+        if (st.error) { cancel.hidden=true; btn.disabled = false; btn.textContent = "Try again"; bar.hidden = true; msg.className = "h bad"; break; }
+        if (st.done) { cancel.hidden=true;wrap.replaceChildren(el("span", { class: "okt", text: "Installed" }), el("button", { type: "button", class: "mini", onclick: use }, "Use this model")); use(); break; }
       }
-    } catch (e) { btn.disabled = false; bar.hidden = true; msg.textContent = e.message; msg.className = "h bad"; }
+    } catch (e) { cancel.hidden=true; btn.disabled = false; bar.hidden = true; msg.textContent = e.message; msg.className = "h bad"; }
   });
-  wrap.append(btn, bar, msg); return wrap;
+  wrap.append(btn, cancel, bar, msg); return wrap;
 }
+function syncDeleteLook(){const name=$("#states").value,btn=$("#del");btn.disabled=!name||!canEdit;btn.textContent=name?'Delete "'+name+'"':'Choose a saved look to delete';}
 async function states() {
   const s = (await api("/api/states")).states; const sel = $("#states"); sel.replaceChildren();
-  sel.append(el("option", { value: "", text: "Select a state..." })); s.forEach((n) => sel.append(el("option", { value: n, text: n })));
+  sel.append(el("option", { value: "", text: "Select a state..." })); s.forEach((n) => sel.append(el("option", { value: n, text: n })));syncDeleteLook();
 }
 
 /* ---------- look: every setting, with a plain explanation ---------- */
@@ -439,6 +443,14 @@ function pvFollow() {
     hist.hidden = !(m && testLog.length); hist.replaceChildren(el("b", { text: "Recent tests" }), ...testLog.map((x) => el("div", { class: "pvh-row" }, el("span", { class: "fitdot " + (x.ok ? "green" : "red") }), el("span", { text: x.p + (x.ok ? " worked" : " failed"),title:x.detail || "" }), el("span", { class: "h", text: x.t })))); }
 }
 function pvPop() { const f = document.getElementById("pv"); if (!f || matchMedia("(prefers-reduced-motion:reduce)").matches || ["calm","none"].includes(theme.motion)) return; f.animate([{ opacity: .55, transform: "scale(.985)" }, { opacity: 1, transform: "scale(1)" }], { duration: 220, easing: "ease-out" }); }
+function syncColorEditor(sec) {
+  sec.querySelectorAll('[data-m]').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.m===editMode)));
+  const spec=SECTIONS.find(s=>s.id==='colors');
+  for(const f of spec.fields.filter(f=>f.colors)){
+    const swatch=sec.querySelector('#f-'+f.key);if(!swatch)continue;
+    const value=get(f)||'';swatch.value=value||'#888888';const hex=swatch.closest('.colorrow')?.querySelector('.hex');if(hex)hex.value=value;
+  }
+}
 function drawLook() {
   const root = $("#look"); root.replaceChildren();
   for (const s of SECTIONS) {
@@ -447,7 +459,7 @@ function drawLook() {
     sec.append(head, el("div", { class: "help", text: s.help }));
     if (s.modeTabs) {
       const tabs = el("div", { class: "seg mini", role: "radiogroup", "aria-label": "Color set being edited" });
-      for (const m of ["light", "dark"]) tabs.append(el("button", { type: "button", "data-m": m, role: "radio", "aria-checked": String(editMode === m), onclick: () => { editMode = m; setPvMode(m); drawLook(); pushPreview(); } }, "Editing: " + (m === "light" ? "Light" : "Dark")));
+      for (const m of ["light", "dark"]) tabs.append(el("button", { type: "button", "data-m": m, role: "radio", "aria-checked": String(editMode === m), onclick: () => { editMode = m; setPvMode(m); syncColorEditor(sec); pushPreview(); } }, "Editing: " + (m === "light" ? "Light" : "Dark")));
       sec.append(tabs);
     }
     const byKey = Object.fromEntries(s.fields.map((f) => [f.key, f])); const gs = GROUPS[s.id];
@@ -474,9 +486,11 @@ function buildMenu() {
   const groups=[["config","Configuration",[["model","Model and key"],["search","Sources and APIs"]]],["frontend","Frontend",[["presets","Presets and states"],...SECTIONS.map(s=>[s.id,s.title])]], ["manage","App management",[["freshness","Document freshness"],["budget","Budget"],["portable","Portable app"],["finish","All set"]]]];
   groups.forEach(([id,title,items])=>{const group=el("div",{class:"nav-group","data-group":id});group.append(el("b",{class:"nav-label",text:title}));items.forEach(([id,t])=>group.append(el("a",{href:"#sec-"+id,text:t})));m.append(group);});
   m.querySelector("a").classList.add("on");
+  let navHoldUntil=0;
+  m.addEventListener("click",e=>{const a=e.target.closest("a");if(!a)return;activeSec=a.hash.replace("#sec-","");navHoldUntil=Date.now()+1200;pvFollow();m.querySelectorAll("a").forEach(x=>x.classList.toggle("on",x===a))});
   const col=$("#col");const order=["model","search","presets","look","freshness","budget","portable","finish"];
   order.forEach(id=>{const sec=id==="look"?$("#look"):$("#sec-"+id);if(sec)col.insertBefore(sec,$("#msg"));});
-  const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) { activeSec = e.target.id.replace("sec-", ""); pvFollow(); document.querySelectorAll("#menu a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id)); } }, { rootMargin: "-20% 0px -70% 0px" });
+  const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting && Date.now()>navHoldUntil) { activeSec = e.target.id.replace("sec-", ""); pvFollow(); document.querySelectorAll("#menu a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id)); } }, { rootMargin: "-20% 0px -70% 0px" });
   const watch = () => document.querySelectorAll("section.tile[id^=sec-]").forEach((n) => io.observe(n)); watch(); setTimeout(watch, 800); setTimeout(watch, 2500);
 }
 function buildPresets() {
@@ -526,6 +540,7 @@ async function init() {
   }
   $("#apply").addEventListener("click", async () => { try { cur = (await api("/api/settings", { settings: read() })).settings; draw(); say("Applied. New questions use these settings."); } catch (e) { say(e.message, true); } });
   $("#save").addEventListener("click", async () => { try { const n = (await api("/api/states/save", { name: $("#sname").value })).name; await states(); say("Saved as \u201c" + n + "\u201d."); } catch (e) { say(e.message, true); } });
+  $("#states").addEventListener("change",syncDeleteLook);
   $("#load").addEventListener("click", async () => { const n = $("#states").value; if (!n) return say("Choose a saved state first", true); try { cur = (await api("/api/states/load", { name: n })).settings; draw(); say("Loaded \u201c" + n + "\u201d."); } catch (e) { say(e.message, true); } });
   $("#del").addEventListener("click", async () => { const n = $("#states").value; if (!n) return say("Choose a saved look first", true); if (!confirm("Delete the saved look \"" + n + "\"?")) return; await api("/api/states/delete", { name: n }); await states(); say("Deleted."); });
   $("#saveLook").addEventListener("click", async () => { try { theme = (await api("/api/theme", { theme })).theme; saved = clone(theme); drawLook(); changed(); say("Look saved. The chat now uses it for everyone."); } catch (e) { say(e.message, true); } });

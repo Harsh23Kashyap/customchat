@@ -1,0 +1,21 @@
+DietChat public page: https://dietchat.org/addons.html
+Captured 2026-10-08. This is website information, not clinical research evidence.
+
+Research add-ons | DietChat ← Back to research DietChat / LAB Checking account...
+PERSONAL RESEARCH TOOLS
+Choose how deep to go.
+The main chat stays simple. The evidence ledger is optional; safety checks in the answer stay on. 01 / AVAILABLE
+Evidence ledger Off
+See the citation attached to each claim. A matched paper is not proof the claim is supported. Unverified claims stay labeled as unverified. Evidence ledger flow A claim links to one citation, then a source title, while passage verification remains open. CLAIM CITATION SOURCE unverified IN DEVELOPMENT
+Next in the lab
+These are diagrams of intended workflows, not controls that are live yet.
+Research workbench
+Inspect a study's population, method, outcome and limits before relying on it. Study People Outcome Limits
+Safety triage
+Separate a health-risk signal from ordinary research browsing before the answer. Research Safety
+Evidence refresh
+Check whether a research question has newer relevant studies before updating an answer. Question New papers?
+Evidence duel
+Put two competing claims side by side and compare only evidence that directly addresses both. Claim A Claim B Direct?
+Checks that stay on
+The direct-comparison gate will not rank two options without a directly comparative retrieved source. The answer also keeps three sections: what we know, what we don't know, and what to ask a dietitian. These are safeguards, not add-ons to opt out of. Question Compare safely 3 sections Answer Opening DietChat

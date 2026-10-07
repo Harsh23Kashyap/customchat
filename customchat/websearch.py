@@ -77,10 +77,10 @@ def normalize(pid, data, limit):
     return out
 
 
-def search(pid, query, limit=5, with_raw=False):
+def search(pid, query, limit=5, with_raw=False, key_override=None):
     if pid not in PROVIDERS:
         raise SearchError("Unknown search provider")
-    key = key_for(pid)
+    key = key_for(pid) if key_override is None else str(key_override).strip()
     if not key:
         raise SearchError("No key saved for %s" % PROVIDERS[pid]["label"])
     p = PROVIDERS[pid]

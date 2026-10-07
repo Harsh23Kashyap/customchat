@@ -171,6 +171,7 @@ def report(base="http://localhost:11434"):
 # ---------- download a model through the local Ollama API ----------
 import threading, uuid
 PULLS = {}
+_PULL_HANDLES = {}
 _plock = threading.Lock()
 TAG_OK = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,79}$")
 
@@ -180,17 +181,23 @@ def start_pull(base, model):
     if not TAG_OK.match(model or "") or not re.match(r"^https?://[^\s]+$", base):
         raise ValueError("That model name or address is not valid")
     pid = uuid.uuid4().hex[:12]
-    st = {"model": model, "status": "starting", "pct": 0, "done": False, "error": ""}
+    st = {"model": model, "status": "starting", "pct": 0, "done": False, "error": "", "cancelled": False}
     with _plock:
         for k in [k for k, v in PULLS.items() if v["done"]][:-8]:
             PULLS.pop(k, None)
         PULLS[pid] = st
+        _PULL_HANDLES[pid] = {"cancel": threading.Event(), "response": None}
 
     def run():
         try:
             req = urllib.request.Request(base + "/api/pull", data=json.dumps({"model": model, "stream": True}).encode(), headers={"Content-Type": "application/json"})
             with urllib.request.urlopen(req, timeout=60) as r:
+                _PULL_HANDLES[pid]["response"] = r
+                if _PULL_HANDLES[pid]["cancel"].is_set():
+                    return
                 for raw in r:
+                    if _PULL_HANDLES[pid]["cancel"].is_set():
+                        break
                     try:
                         d = json.loads(raw.decode("utf-8", "replace"))
                     except ValueError:
@@ -202,16 +209,42 @@ def start_pull(base, model):
                         st["pct"] = max(st["pct"], min(99, int(100 * d.get("completed", 0) / d["total"])))
                     if d.get("status") == "success":
                         st["pct"] = 100
-            if not st["error"] and st["pct"] < 100:
-                st["pct"] = 100
+            if not st["error"] and st["pct"] < 100 and not _PULL_HANDLES[pid]["cancel"].is_set():
+                st["error"] = "Ollama ended the stream before confirming success."
         except urllib.error.HTTPError as e:
             st["error"] = "Ollama refused the download (HTTP %d). Check the model name." % e.code
         except Exception:
             st["error"] = "Could not reach Ollama. Is it running at the Base URL?"
-        st["done"] = True
+        finally:
+            with _plock:
+                if _PULL_HANDLES[pid]["cancel"].is_set():
+                    st.update(cancelled=True, status="Cancelled", error="", pct=0)
+                st["done"] = True
+                _PULL_HANDLES.pop(pid, None)
     threading.Thread(target=run, daemon=True).start()
     return pid
 
 
 def pull_status(pid):
     return PULLS.get(pid)
+
+
+def cancel_pull(pid):
+    with _plock:
+        st = PULLS.get(pid)
+        handle = _PULL_HANDLES.get(pid)
+        if not st:
+            return None
+        if not handle or st["done"]:
+            return dict(st)
+        handle["cancel"].set()
+        st.update(status="Cancelling", cancelled=True)
+        response = handle["response"]
+    if response:
+        try:
+            import socket
+            response.fp.raw._sock.shutdown(socket.SHUT_RDWR)
+        except (AttributeError, OSError):
+            pass
+        response.close()
+    return dict(st)

@@ -11,12 +11,23 @@
     const glow=node('div','cc-tour-focus');glow.setAttribute('aria-hidden','true');document.body.append(glow);
     let i=0,target=null;
     const motion=()=>!matchMedia('(prefers-reduced-motion: reduce)').matches;
-    function locate(){if(!target){glow.hidden=true;return}const r=target.getBoundingClientRect();const top=Math.max(8,r.top),bottom=Math.min(innerHeight-8,r.bottom);glow.hidden=bottom<=top;Object.assign(glow.style,{top:top+'px',left:Math.max(8,r.left)+'px',width:Math.min(r.width,innerWidth-16)+'px',height:Math.max(0,bottom-top)+'px'});}
+    function locate(){
+      if(!target){glow.hidden=true;dialog.dataset.edge='none';dialog.style.left='16px';dialog.style.top='16px';return}
+      const r=target.getBoundingClientRect(),top=Math.max(8,r.top),bottom=Math.min(innerHeight-8,r.bottom),left=Math.max(8,r.left),right=Math.min(innerWidth-8,r.right);
+      glow.hidden=bottom<=top||right<=left;Object.assign(glow.style,{top:top+'px',left:left+'px',width:Math.max(0,right-left)+'px',height:Math.max(0,bottom-top)+'px'});
+      const w=dialog.offsetWidth,h=dialog.offsetHeight,gap=20,pad=16;let x,y,edge;
+      if(innerWidth>760 && innerWidth-r.right>=w+gap+pad){x=r.right+gap;y=Math.max(pad,Math.min(innerHeight-h-pad,r.top+6));edge='left'}
+      else if(innerWidth>760 && r.left>=w+gap+pad){x=r.left-w-gap;y=Math.max(pad,Math.min(innerHeight-h-pad,r.top+6));edge='right'}
+      else if(innerHeight-r.bottom>=h+gap+pad){x=Math.max(pad,Math.min(innerWidth-w-pad,r.left));y=r.bottom+gap;edge='top'}
+      else if(r.top>=h+gap+pad){x=Math.max(pad,Math.min(innerWidth-w-pad,r.left));y=r.top-h-gap;edge='bottom'}
+      else{x=Math.max(pad,(innerWidth-w)/2);y=Math.max(pad,innerHeight-h-pad);edge='top'}
+      dialog.dataset.edge=edge;Object.assign(dialog.style,{left:x+'px',top:y+'px',bottom:'auto',right:'auto'});
+    }
     function end(){mark(key);dialog.close();dialog.remove();glow.remove();window.removeEventListener('resize',locate);window.removeEventListener('scroll',locate);window.scrollTo({top:scroll,behavior:'instant'});if(before?.isConnected)before.focus({preventScroll:true});onClose?.();}
     function draw(){
       const s=steps[i];target=document.querySelector(s.target||'');
       if(target&&getComputedStyle(target).display==='none')target=document.querySelector('#cfgmode');
-      target?.scrollIntoView({block:'start',behavior:'instant'});locate();
+      target?.scrollIntoView({block:'start',behavior:'instant'});
       const header=node('header','cc-tour-head'),count=node('span','cc-tour-count',`${i+1} / ${steps.length}`),skip=node('button','cc-tour-skip','Skip');skip.type='button';skip.onclick=end;
       header.append(node('span','cc-tour-label',title),count,skip);
       const scene=node('div','cc-tour-scene');scene.setAttribute('aria-hidden','true');scene.dataset.kind=s.kind||'tabs';
@@ -26,7 +37,7 @@
       const content=node('div','cc-tour-content');const h=node('h2','',s.title);h.id='cc-tour-title';dialog.setAttribute('aria-labelledby',h.id);content.append(h,node('p','',s.text));
       const progress=node('div','cc-tour-progress');progress.setAttribute('aria-label',`Step ${i+1} of ${steps.length}`);steps.forEach((_,j)=>progress.append(node('i',j<=i?'done':'')));
       const footer=node('footer','cc-tour-actions'),back=node('button','cc-tour-back','Back'),next=node('button','cc-tour-next',i===steps.length-1?'Done':'Next');back.type=next.type='button';back.disabled=i===0;back.onclick=()=>{i--;draw()};next.onclick=()=>{if(i===steps.length-1)end();else{i++;draw()}};footer.append(back,next);
-      dialog.replaceChildren(header,scene,content,progress,footer);
+      dialog.replaceChildren(header,content,progress,footer);locate();requestAnimationFrame(locate);
       if(motion())dialog.animate([{opacity:.5,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:240,easing:'ease-out'});
       next.focus({preventScroll:true});
     }
@@ -36,7 +47,7 @@
   }
   const configSteps=[
     {title:'Your setup, one place',text:'Simple keeps everyday settings close. Advanced adds fine design controls. The sidebar groups Configuration, Frontend and App management.',target:'#cfgmode',tabs:['Simple','Advanced','Sections'],icon:'⚙'},
-    {title:'Choose who answers',text:'Model and key selects your provider and model. Demo is offline and free. Save a key only for a provider that needs one, then use Test connection.',target:'#sec-model',tabs:['Model','Key','Test'],icon:'✦'},
+    {title:'Choose who answers',text:'Model and key selects your provider and model. Demo is offline and free. Save a key only for a provider that needs one, then use Test connection.',target:'#seg',tabs:['Model','Key','Test'],icon:'✦'},
     {title:'Choose what to search',text:'Sources and APIs controls live web search and its provider keys. Local documents remain your evidence. Presets give you ready-made configurations to start from.',target:'#sec-search',tabs:['Sources','APIs','Presets'],icon:'⌕'},
     {title:'Make the words yours',text:'Wording changes the title, welcome text and logo. Fonts changes body and heading type. Empty text keeps the app default.',target:'#sec-wording',tabs:['Wording','Logo','Fonts'],icon:'Aa'},
     {title:'Give it your look',text:'Colors edits light and dark palettes. Background sets the page behind the chat. Shape and spacing controls corners, shadows and message style. Fine controls live in Advanced.',target:'#sec-colors',tabs:['Colors','Background','Shape'],icon:'◐'},

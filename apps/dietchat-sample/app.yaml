@@ -1,0 +1,69 @@
+schema_version: 1
+actions:
+  allow: null
+  writes: true
+budget:
+  daily_questions: 0
+  user_daily_questions: 0
+  daily_model_calls: 0
+  spend_cap_usd: null
+app:
+  id: dietchat-sample
+  title: DietChat
+  tagline: Ask a diet or nutrition question. I will trace the evidence and explain
+    what the research says.
+  accent: '#173f35'
+  accent2: '#d7ef72'
+  footer: Offline website-content sample. Not medical advice.
+  examples:
+  - How much protein do I need daily?
+  - Is coffee good for heart health?
+  - What helps with iron deficiency?
+  language: en
+  theme: light
+provider:
+  type: mock
+  model: ''
+  base_url: ''
+  api_key_env: ''
+  temperature: 0.2
+  timeout: 120
+  fallback: null
+sources:
+- id: dietchat-public
+  type: local_files
+  label: DietChat public pages (not clinical evidence)
+  path: docs
+retrieval:
+  top_k: 6
+  min_score: 0.0
+  query_rewrite: false
+  cache_ttl: 0
+prompt:
+  system: Answer from numbered local page excerpts and cite [n]. This sample contains
+    website descriptions, not research papers. Do not present them as medical evidence.
+    Say clearly when the pages do not answer a health question.
+  style:
+    quick: Answer in 2 to 4 sentences.
+    standard: Answer clearly with short paragraphs.
+    deep: Answer in depth with sections, caveats and open questions.
+  answer_note: ''
+  revise: false
+  no_evidence: I could not find evidence for that in the configured sources.
+memory:
+  enabled: true
+  recent_turns: 4
+  summary_every: 6
+  context_chars: 60000
+citations:
+  required: true
+  ledger: true
+auth:
+  mode: none
+  token_env: ''
+  signup: true
+storage:
+  path: data/customchat.db
+server:
+  host: 127.0.0.1
+  port: 8080
