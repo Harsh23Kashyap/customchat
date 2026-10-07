@@ -50,6 +50,11 @@ def _safe_doc(p, root):
 def bundle(cfg, theme_value=None, prompt_value=None):
     """Returns ZIP bytes and a manifest; only configured local evidence is copied."""
     clean = schema.validate({k: copy.deepcopy(v) for k, v in cfg.items() if k in schema.DEFAULTS})
+    if state_folder := _state_folder(cfg):
+        budget_path = state_folder / 'budget.json'
+        if budget_path.exists():
+            from .budget import clean as clean_budget
+            clean['budget'] = clean_budget(json.loads(budget_path.read_text()))
     _check_values(clean)
     base = Path(cfg.get('_dir', '.')).absolute()
     state = _state_folder(cfg)
