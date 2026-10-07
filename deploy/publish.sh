@@ -9,18 +9,21 @@ ENV_FILE="${PUBLISH_ENV:-deploy/publish.env}"
 [ -f "$ENV_FILE" ] || { echo "Missing $ENV_FILE. Copy deploy/publish.env.example to it and fill it in."; exit 1; }
 # shellcheck disable=SC1090
 . "$ENV_FILE"
-: "${EC2_HOST:?set EC2_HOST}" "${EC2_USER:=ubuntu}" "${SSH_KEY:?set SSH_KEY}" "${APP_DIR:=/opt/customchat}" "${APP_FILE:=apps/dietchat/app.yaml}"
+: "${EC2_HOST:?set EC2_HOST}" "${EC2_USER:=ubuntu}" "${SSH_KEY:?set SSH_KEY}" "${APP_DIR:=/opt/customchat}"
 S3_BACKUP="${S3_BACKUP:-}"
+APP_DATA_DIR="${APP_DATA_DIR:-$APP_DIR/apps/dietchat/data}"
 SSH="ssh -i $SSH_KEY -o StrictHostKeyChecking=accept-new $EC2_USER@$EC2_HOST"
 echo "Plan:"
 echo "  1. Check tests pass here"
 echo "  2. Copy this folder to $EC2_USER@$EC2_HOST:$APP_DIR (not data/, .venv, .git, publish.env)"
 echo "  3. On the box: restart the customchat service (it installs anything missing on start)"
 echo "  4. Wait for /api/health"
-[ -n "$S3_BACKUP" ] && echo "  5. Back up the data to $S3_BACKUP first"
+[ -n "$S3_BACKUP" ] && echo "  Before copying: back up $APP_DATA_DIR to $S3_BACKUP (local files only, not MySQL)"
 if [ "${1:-}" != "--yes" ]; then echo; echo "Dry run only. Add --yes to run."; exit 0; fi
 python3 -m unittest discover -s tests >/dev/null
-[ -n "$S3_BACKUP" ] && $SSH "aws s3 sync $APP_DIR/data $S3_BACKUP/\$(date +%Y%m%d-%H%M%S)/ --only-show-errors" || true
+if [ -n "$S3_BACKUP" ]; then
+  $SSH "test -d '$APP_DATA_DIR' && aws s3 sync '$APP_DATA_DIR' '$S3_BACKUP'/\$(date +%Y%m%d-%H%M%S)/ --only-show-errors"
+fi
 rsync -az --delete -e "ssh -i $SSH_KEY" --exclude data --exclude .venv --exclude .git --exclude 'deploy/publish.env' ./ "$EC2_USER@$EC2_HOST:$APP_DIR/"
 $SSH "cd $APP_DIR && sudo systemctl restart customchat"
 for i in $(seq 1 20); do
