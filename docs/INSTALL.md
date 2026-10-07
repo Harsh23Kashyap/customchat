@@ -44,7 +44,7 @@ The pipx route follows its documented source-install syntax but was not executed
 
 ## Validation and release readiness
 
-A wheel and source distribution were built locally. In a new home/workspace and empty uv cache, the wheel installed independently of the repo and served health 200, mock provider, a Demo answer with 2 local citations, and 404 for settings in locked mode. Packaged web assets and Demo template were inspected. API-verified; browser pixels not inspected for this install path. Existing source tests plus launcher regressions pass. Linux only; real Windows/macOS/WSL, Docker and public hosting remain unverified.
+A wheel and source distribution were built locally. In a new home/workspace and empty uv cache, the wheel installed independently of the repo and served health 200, mock provider, a Demo answer with 2 local citations, and 404 for settings in locked mode. The Git source command was also executed with a new home and empty uv cache, resolving commit eecc832bf57821692d1cceddf04f995624090d77, and passed the same health/chat/lock checks. Packaged web assets and Demo template were inspected. API-verified; browser pixels not inspected for this install path. Existing source tests plus launcher regressions pass. Linux only; real Windows/macOS/WSL, Docker and public hosting remain unverified.
 
 Packaging is prepared, not published. Before a short PyPI command: verify package-name ownership/availability, choose a release version, test the release artifact, then get approval to publish. No PyPI/npm credentials or publishing were used.
 
