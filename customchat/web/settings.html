@@ -21,9 +21,9 @@
         <div class="saved"><b class="sv-t">Saved looks</b>
           <div class="two">
             <div class="sub"><small>Save the current look under a name</small><input id="sname" placeholder="Look name" aria-label="State name"><button class="go green" id="save">Save look</button></div>
-            <div class="sub"><small>Bring a saved look back</small><select id="states" aria-label="Saved states"></select><div class="row2"><button class="go blue" id="load">Load</button><button class="go ghost" id="del">Delete</button></div></div>
+            <div class="sub"><small>Bring a saved look back</small><select id="states" aria-label="Saved states"></select><div class="row2"><button class="go blue" id="load">Load</button></div></div>
           </div>
-          <div class="row2 quiet"><button class="go ghost" id="exp">Export</button><label class="go ghost filebtn" for="imp">Import<input id="imp" type="file" accept="application/json,.json" hidden></label><button class="go ghost" type="button" id="resetLink">Reset to default</button></div>
+          <details class="look-more"><summary>Manage saved looks</summary><div class="row2 quiet"><button class="go ghost" id="del">Delete saved look</button><button class="go ghost" id="exp">Export</button><label class="go ghost filebtn" for="imp">Import<input id="imp" type="file" accept="application/json,.json" hidden></label><button class="go ghost" type="button" id="resetLink">Reset to default</button></div></details>
         </div>
       </section>
       <section class="tile" id="sec-model"><div class="head"><span class="ic purple">&#9881;</span><div><b>Model</b><small>Where the answers come from</small></div></div>
@@ -36,11 +36,11 @@
         <label for="modelPick">Model<span class="h" id="modelh">Pick from the list your provider offers.</span></label>
         <div class="keyrow"><select id="modelPick" aria-label="Model"></select><button type="button" class="go ghost" id="refreshModels">Refresh list</button></div>
         <input id="model" placeholder="Type the model name" aria-label="Model name" hidden>
-        <div class="keyrow"><button type="button" class="go ghost" id="testconn">Test connection</button><span class="testres" id="testres" role="status" aria-live="polite"></span></div>
+        <div class="keyrow testrow"><button type="button" class="go ghost" id="testconn">Test connection</button><span class="testres" id="testres" role="status" aria-live="polite"></span></div>
         <label>Base URL <em>(Ollama and OpenAI-compatible servers only)</em><span class="h">Where the server runs, for example http://localhost:11434 for Ollama.</span><input id="base" placeholder="http://localhost:11434"></label>
         <div class="two">
-          <label>Temperature <output id="tv"></output><span class="h">Low is precise and repeatable. High is more creative.</span><input id="temp" aria-label="Temperature" type="range" min="0" max="2" step="0.05"></label>
-          <label>Sources per answer <output id="kv"></output><span class="h">How many passages are shown to the model for each question.</span><input id="topk" aria-label="Sources per answer" type="range" min="1" max="20" step="1"></label>
+          <label>Temperature <span id="temperatureViz" class="slider-viz thermometer" aria-hidden="true"><i></i></span><output id="tv"></output><span class="h">Low is precise and repeatable. High is more creative.</span><input id="temp" aria-label="Temperature" type="range" min="0" max="2" step="0.05"></label>
+          <label>Sources per answer <span id="sourcesViz" class="slider-viz doc-stack" aria-hidden="true"></span><output id="kv"></output><span class="h">How many passages are shown to the model for each question.</span><input id="topk" aria-label="Sources per answer" type="range" min="1" max="20" step="1"></label>
         </div>
         <label class="check"><input id="rewrite" type="checkbox"> Rewrite follow-up questions before searching</label>
         <button class="go blue big" id="apply">Apply</button>
@@ -70,7 +70,7 @@
       <div class="pvhead"><b>Live preview</b><span class="livetag">Updates as you edit</span><div class="seg mini" id="pvmode" role="radiogroup" aria-label="Preview as"><button type="button" data-m="light" aria-checked="true">Light</button><button type="button" data-m="dark" aria-checked="false">Dark</button></div></div>
       <div class="pvmodel" id="pvmodel" hidden aria-live="polite"></div>
       <iframe id="pv" src="/?preview=1" title="Preview of the chat" loading="eager"></iframe>
-      <small class="pvnote" id="pvcap"></small><small class="pvnote">This is the real chat with sample messages.</small>
+      <small class="pvnote" id="pvcap"></small><small class="pvnote">Visual preview only. Sample messages; typing and sending are disabled.</small>
       <div id="pvextra" class="pvextra" hidden></div>
     </aside>
   </div>
@@ -85,4 +85,4 @@ help.textContent=m==="simple"?"The everyday settings, in plain words.":"Adds pro
 var m="simple";try{m=localStorage.getItem(K)||"simple"}catch(e){}set(m);
 bar.addEventListener("click",function(e){var b=e.target.closest("button");if(b)set(b.dataset.m)})})()</script>
 </body>
-  </html>
+</html>
