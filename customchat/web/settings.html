@@ -54,6 +54,15 @@
         <button type="button" class="go green" id="checkDocs">Check documents now</button>
         <div id="docsFreshness" role="status" aria-live="polite"></div>
       </section>
+      <section class="tile" id="sec-budget"><div class="head"><span class="ic green">&#9881;</span><div><b>Budget</b><small>Limit public chat usage</small></div></div>
+        <div class="help">Daily limits reset at midnight UTC and survive restarts. 0 means no quota. Model-call limits cover answer-pipeline calls, including follow-ups and provider fallback as one invocation. Failed attempts count. Configuration tests/generation and provider-side retries are not counted individually.</div>
+        <label>Questions per day, whole app<input id="budgetQuestions" type="number" min="0" max="10000000" value="0"></label>
+        <label>Questions per user per day<input id="budgetUser" type="number" min="0" max="10000000" value="0"></label>
+        <label>Model calls per day<input id="budgetCalls" type="number" min="0" max="10000000" value="0"></label>
+        <label>Dollar cap (USD)<input id="budgetSpend" type="number" min="0" max="1000000" step="0.01" placeholder="Not set"></label>
+        <div class="help">Dollar accounting is not available yet. Setting any dollar cap blocks non-Demo answer-pipeline calls rather than guessing a bill. It does not limit owner-run configuration tests, external search fees or embedding costs. Set provider-side billing limits before publishing.</div>
+        <button type="button" class="go green" id="saveBudget">Save budget</button><div id="budgetStatus" role="status" aria-live="polite"></div>
+      </section>
       <div id="look"></div>
       <p class="msg" id="msg" role="status" aria-live="polite"></p>
     </div>
