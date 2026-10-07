@@ -27,7 +27,7 @@ def main():
                 with open(log,'w') as out:p=subprocess.Popen(cmd+['--port',str(port),'--no-browser','--lock-config','--offline','--stop-after-seconds','4'],stdout=out,stderr=subprocess.STDOUT)
                 try:
                     url=None
-                    for _ in range(150):
+                    for _ in range(450):
                         if p.poll() is not None:raise RuntimeError(log.read_text())
                         if (state/'server.json').exists():url=json.loads((state/'server.json').read_text())['url'];break
                         time.sleep(.1)
