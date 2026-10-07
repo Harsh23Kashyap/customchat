@@ -24,6 +24,26 @@ customchat start
 
 The default is Demo, with local passages and no key or model call. For AI, configure your workspace's app.yaml provider or use the unlocked Configuration page. Keys stay in named environment variables/private local storage, never YAML or git. `--lock-config` hides configuration for this run; remove it on restart to configure. No public hosting, account creation or cloud spend is involved.
 
+## Installer entry scripts
+
+From a clone or downloaded repository, run:
+
+```sh
+# Linux or macOS
+sh install.sh
+```
+
+```powershell
+# Windows PowerShell
+./install.ps1
+```
+
+The scripts download uv from its official installer only if missing, then obtain Python3.12 and install CustomChat in a private environment. No sudo or Git is needed for this route. Internet is required for first setup. Default workspace: `customchat-app`; installer state: `~/.customchat/install`. Existing workspace files stay untouched. A ready environment is skipped; an incomplete or broken installer-owned environment is rebuilt. Busy ports fall forward and active healthy runs are reused. A concurrent installer exits with a clear error.
+
+Use `--directory my-chat`, `--no-browser`, `--lock-config`, or `--prepare-only` as needed. `--offline` reuses an already prepared environment/cache; it cannot create missing downloads. The source is pinned in `scripts/install.py`, not a registry release. Installer scripts execute downloaded software: review them before running. Network, disk, permission and platform failures are reported, not a guarantee that every machine works.
+
+Linux: eight scenarios repeated ten times passed. A separate isolated absent-uv/Python bootstrap downloaded both and passed health, Demo citations and config lock. The GitHub Actions workflow repeats the scenario matrix ten times on ubuntu, macOS and Windows; see the actual run for current results. Its entry-script step uses preinstalled uv, so it does not prove absent-uv bootstrap on those OSes.
+
 ## Other routes
 
 | Route | What users need | Judgment |
@@ -31,7 +51,7 @@ The default is Demo, with local passages and no key or model call. For AI, confi
 | uvx / uv tool | uv; internet; Git for current source command | Best balance for this Python app: isolated install, reusable CLI, no custom bootstrap |
 | pipx | pipx and a compatible Python; Git for source command | Good fallback if already installed; similar isolation |
 | npx wrapper | Node/npm plus Python or a bootstrap download | Adds a second runtime and npm wrapper maintenance; no benefit for this app's internals |
-| curl installer | shell/curl plus maintained installer | Convenient but adds trusted remote shell execution and platform/install/update logic; not built |
+| curl installer | shell/curl plus maintained installer | OS entry scripts above provide this bootstrap; review downloaded code |
 | Docker | Docker engine/Desktop, image/source | Useful deployment isolation, heavier for first local chat; not tested here |
 
 For pipx users:
@@ -40,7 +60,7 @@ For pipx users:
 pipx run --spec git+https://github.com/Harsh23Kashyap/customchat.git@main customchat start
 ```
 
-The pipx route follows its documented source-install syntax but was not executed here. uv was present in the test environment; uv installation on a bare OS and automatic Python download were not exercised. We do not have reliable measurements of what tools target users already have installed. Existing `python3 setup_and_run.py` remains the fallback for users who have Python and a clone.
+The pipx route follows its documented source-install syntax but was not executed here. The original uvx test used existing uv; a later isolated Linux installer test downloaded uv and managed Python. We do not have reliable measurements of what tools target users already have installed. Existing `python3 setup_and_run.py` remains the fallback for users who have Python and a clone.
 
 ## Validation and release readiness
 
