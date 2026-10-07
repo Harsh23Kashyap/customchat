@@ -412,6 +412,8 @@ def make_handler(cfg, engine):
                 t = store.turn(o, b.get("turn", ""))
                 r = engine.ask(o, t["chat"], t["question"], None, b.get("style", "standard"), t["topic"], False, False)
                 return self._send(200, r)
+            if path == "/api/branch" and method == "POST":
+                return self._send(200, store.branch(o, str(b.get("turn") or ""), b.get("question")))
             if path == "/api/rename":
                 store.rename_chat(o, b.get("chat"), b.get("title")); return self._send(200, {"ok": True})
             if path == "/api/pin":
