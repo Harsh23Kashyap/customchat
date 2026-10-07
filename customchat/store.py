@@ -209,6 +209,37 @@ class Store:
             raise PermissionError("Turn not found")
         self.q("UPDATE turns SET style=? WHERE id=?", (r["style"][8:], turn), write=True)
 
+    def branch(self, owner, turn, question):
+        """Copy only earlier visible turns into a new chat. Never change the original."""
+        question = str(question or "").strip()
+        if not question or len(question) > 2000:
+            raise ValueError("Question must be 1-2000 characters")
+        target = self.turn(owner, turn)
+        original = self.chat(owner, target["chat"])
+        rows = self.turns(owner, target["chat"])
+        index = next((i for i, r in enumerate(rows) if r["id"] == turn), None)
+        if index is None:
+            raise PermissionError("Turn not found")
+        chat = str(uuid.uuid4()); topics = {}; now = time.time()
+        c = self.c()
+        try:
+            c.execute("INSERT INTO chats(id,owner,title,created) VALUES(?,?,?,?)", (chat, owner, ("Branch: " + original["title"])[:140], now))
+            for i, r in enumerate(rows[:index]):
+                old = r["topic"] or "untitled"
+                if old not in topics:
+                    topics[old] = str(uuid.uuid4())
+                    c.execute("INSERT INTO topics(id,owner,title,summary,created) VALUES(?,?,?,'',?)", (topics[old], owner, r["question"][:120], now))
+                c.execute("INSERT INTO turns VALUES(?,?,?,?,?,?,?,?,?,?)", (str(uuid.uuid4()), chat, topics[old], r["question"], r["standalone"], r["answer"], json.dumps(r["evidence"]), json.dumps(r["ledger"]), r["style"], now + i * .001))
+            c.execute("INSERT INTO states VALUES(?,?,?,?)", (owner, "branch-" + chat, json.dumps({"chat": original["id"], "turn": turn}), now))
+            c.commit()
+        except Exception:
+            if hasattr(c, "rollback"): c.rollback()
+            elif hasattr(c, "db"): c.db.rollback()
+            raise
+        finally:
+            if not self._mem: c.close()
+        return {"chat": chat, "question": question, "original_chat": original["id"], "copied_turns": index}
+
     # uploads (private text the owner adds in the UI)
     def add_upload(self, owner, name, text):
         i = str(uuid.uuid4())
