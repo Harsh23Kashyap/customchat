@@ -1,6 +1,8 @@
-# Ways to put CustomChat online: pick one
+# Ways to run or host CustomChat: pick one
 
-Written comparison only. Nothing here was deployed. Prices and free tiers change, so check each provider's pricing page before choosing.
+New local install choice: [uvx source install](INSTALL.md), `uvx --from git+https://github.com/Harsh23Kashyap/customchat.git@main customchat start`. Local package installation is tested; no registry publication or public deployment.
+
+Written hosting comparison only. Nothing here was deployed. Prices and free tiers change, so check each provider's pricing page before choosing.
 
 | | A. "Just give this prompt" | B. One-liner (`python3 setup_and_run.py`) | C. Render blueprint | D. EC2 on their own AWS | E. EC2 + S3 frontend |
 |---|---|---|---|---|---|
