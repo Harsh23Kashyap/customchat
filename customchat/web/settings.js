@@ -176,7 +176,7 @@ const SECTIONS = [
     { key: "emoji_attach", label: "Attach button", help: "Replaces the paperclip.", type: "emoji", ph: "Optional" },
     { key: "emoji_temp", label: "Temporary chat button", help: "Replaces the clock icon.", type: "emoji", ph: "Optional" } ] },
   { id: "motion", icon: "\u21BB", tone: "green", title: "Motion", sub: "Animations and speed", help: "Turn animation down if it feels busy. Visitors whose device asks for less motion always get none.", fields: [
-    { key: "motion", label: "Amount of motion", help: "Full: all effects. Subtle: quick and quiet. None: nothing moves. Your device's reduced-motion setting always overrides Full.", type: "select" },
+    { key: "motion", label: "Amount of motion", help: "Full: all effects. Subtle: quick and quiet. Calm: no decorative motion, stable reading. None: nothing moves. Your device's reduced-motion setting always overrides Full.", type: "select" },
     { key: "entrance", label: "New message effect", help: "How messages appear.", type: "select" },
     { key: "speed", label: "Animation speed", help: "100 is normal. Higher is faster.", type: "range", unit: "%" },
     { key: "hover_lift", label: "Lift items on hover", help: "Buttons and chips rise slightly under the mouse.", type: "toggle" } ] },
@@ -191,7 +191,7 @@ const SECTIONS = [
     { key: "sources_panel", label: "Sources side panel", help: "The panel that opens when you click a source.", type: "toggle" } ] },
 ];
 const LABELS = { mode: { light: "Light", dark: "Dark", auto: "Match the device" }, bg_style: { soft: "Soft glow (legacy)", solid: "Plain color", gradient: "Two-color gradient", image: "Image" },
-  pattern: { none: "None", dots: "Dots", grid: "Grid", lines: "Lines", diagonal: "Diagonal", checker: "Checker", waves: "Waves", plus: "Plus signs" }, motion: { full: "Full", subtle: "Subtle", none: "None" },
+  pattern: { none: "None", dots: "Dots", grid: "Grid", lines: "Lines", diagonal: "Diagonal", checker: "Checker", waves: "Waves", plus: "Plus signs" }, motion: { full: "Full", subtle: "Subtle", calm: "Calm", none: "None" },
   entrance: { fade: "Fade in", slide: "Slide up", pop: "Pop", none: "None" }, bubble: { soft: "Soft bubbles", flat: "Flat", outline: "Outline" }, density: { compact: "Compact", cozy: "Cozy", roomy: "Roomy" },
   sidebar: { left: "Left", right: "Right", hidden: "Hidden" }, chat_width: { narrow: "Narrow", normal: "Normal", wide: "Wide", full: "Full width" }, avatars: { show: "Show", hide: "Hide" },
   you_align: { right: "Right", left: "Left" }, shadow: { none: "None", soft: "Soft", strong: "Strong" }, composer: { inline: "Inline", floating: "Floating" }, toolbar: { show: "Show", hide: "Hide" } };
