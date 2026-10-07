@@ -142,6 +142,10 @@ def validate(raw):
     for i, s in enumerate(cfg["sources"]):
         if not isinstance(s, dict) or s.get("type") not in CONNECTORS:
             raise ConfigError("sources[%d].type must be one of %s" % (i, ", ".join(sorted(CONNECTORS))))
+        if s["type"] == "local_files":
+            value = s.get("refresh_interval", 30)
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not 0 <= value <= 86400:
+                raise ConfigError("sources[%d].refresh_interval must be 0-86400 seconds" % i)
         s.setdefault("id", "%s%d" % (s["type"], i))
         s.setdefault("label", s["id"])
         if not isinstance(s.get("weight", 1.0), (int, float)) or s.get("weight", 1.0) <= 0:
