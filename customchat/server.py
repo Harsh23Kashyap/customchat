@@ -166,6 +166,12 @@ def make_handler(cfg, engine):
                 if not can_edit(self):
                     return self._send(403, {"error": "The look can only be changed from this computer or by the admin"})
                 return self._send(200, {"theme": themestore.reset() if b.get("reset") else themestore.save(b.get("theme"))})
+            if path == "/api/app-export" and method == "GET":
+                if not can_edit(self):
+                    raise PermissionError("Only the app owner can export configuration.")
+                from .portable import bundle
+                data, _ = bundle(cfg, themestore.value, engine.prompts._load())
+                return self._send(200, data, "application/zip", {"Content-Disposition": 'attachment; filename="customchat-app.zip"'})
             if path == "/api/settings" and method == "GET":
                 return self._send(200, {"settings": settings_view(), "can_edit": can_edit(self), "providers": sorted(schema.PROVIDERS)})
             if path == "/api/settings" and method == "POST":
@@ -480,7 +486,7 @@ ERR_PAGES = {
 # Config lock: CUSTOMCHAT_CONFIG=off serves the chat only. No settings page, no config or key endpoints.
 LOCKED = os.environ.get("CUSTOMCHAT_CONFIG", "").strip().lower() in ("off", "0", "false", "locked", "disabled")
 LOCKED_PAGES = {"/settings.html", "/settings.js", "/settings.css", "/panels.js", "/pipeline.js", "/codeeditor.js", "/codeeditor.LICENSE.txt"}
-LOCKED_API = ("/api/settings", "/api/provider", "/api/hardware", "/api/prompts", "/api/codegen", "/api/websearch", "/api/catalog", "/api/ollama", "/api/states")
+LOCKED_API = ("/api/app-export", "/api/settings", "/api/provider", "/api/hardware", "/api/prompts", "/api/codegen", "/api/websearch", "/api/catalog", "/api/ollama", "/api/states")
 
 
 def _esc(s):
