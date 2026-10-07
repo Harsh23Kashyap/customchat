@@ -10,7 +10,7 @@ if [ -z "$UV" ]; then
   if command -v curl >/dev/null 2>&1; then curl -fLsS https://astral.sh/uv/install.sh -o "$tmp"
   elif command -v wget >/dev/null 2>&1; then wget -q https://astral.sh/uv/install.sh -O "$tmp"
   else echo 'Need curl or wget to download uv. No changes made.' >&2; exit 1; fi
-  UV_NO_MODIFY_PATH=1 sh "$tmp"
+  UV_INSTALL_DIR="$HOME/.local/bin" UV_NO_MODIFY_PATH=1 sh "$tmp"
   UV="$HOME/.local/bin/uv"
   [ -x "$UV" ] || { echo 'uv install not found; inspect installer output.' >&2; exit 1; }
 else echo 'uv already installed; skipped.'; fi
