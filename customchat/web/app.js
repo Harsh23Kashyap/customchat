@@ -287,6 +287,7 @@ async function stream(body, onEvent) {
 }
 async function send() {
   const q = $("#q").value.trim(); if (!q || S.busy) return;
+  const status = $("#pipelineStatus"); status.hidden = false; status.textContent = "Waiting for the app";
   S.busy = true; sendIcon("stop", "Stop"); $("#q").value = ""; autosize(); S.lastQ = q;
   const w = $("#thread .wrap") || $("#thread");
   w.querySelector(".hero")?.remove();
@@ -297,7 +298,8 @@ async function send() {
   let text = "", result = null, err = null;
   try {
     await stream({ chat: S.temp ? null : S.chat, question: q, style: $("#style").value, topic: S.topic, new_topic: S.newTopic, sources: S.sources.size ? [...S.sources] : null, temporary: S.temp, history: S.temp ? S.turns.slice(-6).map((t) => ({ question: t.question, answer: t.answer })) : undefined, use_profile: S.useProfile && !S.temp }, (ev) => {
-      if (ev.type === "token") {
+      if (ev.type === "progress") { status.textContent = ev.data.label; }
+      else if (ev.type === "token") {
         const thinking = $("#think");
         if (thinking) {
           if (motionAllowed() && thinking.animate) {
@@ -321,6 +323,7 @@ async function send() {
     const u = el("div", { class: "toast", onclick: () => { u.remove(); $("#q").value = q; send(); } }, (err || "Something went wrong").replace(/[.?!]+$/, "") + ". Click to retry"); centerToast(u);
     document.body.append(u); setTimeout(() => u.remove(), 7000);
   }
+  status.textContent = result ? "Answer ready" : (err || "Reply interrupted"); setTimeout(() => { if (!S.busy) status.hidden = true; }, 2500);
   S.busy = false; applyIcons(); sendIcon("send", "Send"); drawThread(); loadList(); $("#q").focus();
   if (!result) {
     // keep what the user typed, and any text that did arrive, instead of losing both
