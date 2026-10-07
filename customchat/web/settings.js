@@ -232,6 +232,8 @@ const setv = (f, v) => { if (f.colors) theme[editMode][f.key] = v; else theme[f.
 let sendTimer = 0;
 function pushPreview() {
   const t = clone(theme); const m = $("#pvmode .seg button[aria-checked=true], #pvmode button[aria-checked=true]"); t.mode = m ? m.dataset.m : t.mode;
+  const frame=$("#pv");const reduced=matchMedia("(prefers-reduced-motion:reduce)").matches||["calm","none"].includes(t.motion);
+  if(!reduced){frame.classList.add("preview-changing");setTimeout(()=>frame.classList.remove("preview-changing"),160)}
   const w = $("#pv").contentWindow; if (w) w.postMessage({ ccTheme: t }, location.origin);
   const w2 = $("#pv").contentWindow; if (w2 && w2.CCTheme) { /* same-origin: also apply the wording/emoji source */ w2.CCTheme.value = t; }
 }
@@ -395,7 +397,7 @@ function pvFollow() {
     let hist = $("#pvhist"); if (!hist) { hist = el("div", { id: "pvhist", class: "pvhist" }); card.parentNode.append(hist); }
     hist.hidden = !(m && testLog.length); hist.replaceChildren(el("b", { text: "Recent tests" }), ...testLog.map((x) => el("div", { class: "pvh-row" }, el("span", { class: "fitdot " + (x.ok ? "green" : "red") }), el("span", { text: x.p + (x.ok ? " worked" : " failed") }), el("span", { class: "h", text: x.t })))); }
 }
-function pvPop() { const f = document.getElementById("pv"); if (!f || matchMedia("(prefers-reduced-motion:reduce)").matches) return; f.animate([{ opacity: .55, transform: "scale(.985)" }, { opacity: 1, transform: "scale(1)" }], { duration: 220, easing: "ease-out" }); }
+function pvPop() { const f = document.getElementById("pv"); if (!f || matchMedia("(prefers-reduced-motion:reduce)").matches || ["calm","none"].includes(theme.motion)) return; f.animate([{ opacity: .55, transform: "scale(.985)" }, { opacity: 1, transform: "scale(1)" }], { duration: 220, easing: "ease-out" }); }
 function drawLook() {
   const root = $("#look"); root.replaceChildren();
   for (const s of SECTIONS) {
