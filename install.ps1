@@ -6,6 +6,7 @@ if (-not $uv -and (Test-Path $localUv)) { $uv = Get-Item $localUv }
 if (-not $uv) {
   Write-Host 'Installing uv from its official installer.'
   $env:UV_NO_MODIFY_PATH = '1'
+  $env:UV_INSTALL_DIR = Join-Path $HOME '.local\bin'
   $script = Join-Path ([IO.Path]::GetTempPath()) ([IO.Path]::GetRandomFileName() + '.ps1')
   try {
     Invoke-WebRequest https://astral.sh/uv/install.ps1 -OutFile $script
