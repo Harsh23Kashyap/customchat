@@ -31,6 +31,8 @@ def _main(argv=None):
     a = sub.add_parser("ask", help="ask one question from the terminal"); a.add_argument("app"); a.add_argument("question"); a.add_argument("--json", action="store_true")
     ex = sub.add_parser("export", help="export app YAML, look, prompts and local documents, without private state")
     ex.add_argument("app"); ex.add_argument("output", help="new ZIP file; never overwritten")
+    if argv is None: argv = sys.argv[1:]
+    if not argv: argv = ["start"]
     args = ap.parse_args(argv)
     if args.cmd == "init":
         if os.path.exists(args.name):
