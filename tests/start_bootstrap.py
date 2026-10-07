@@ -34,7 +34,12 @@ def main():
                     if url:break
                     time.sleep(.2)
                 assert url,(base/'run.log').read_text()
-                with urllib.request.urlopen(url+'/api/health') as r:assert r.status==200
+                for attempt in range(100):
+                    try:
+                        with urllib.request.urlopen(url+'/api/health',timeout=1) as r:assert r.status==200
+                        break
+                    except OSError:time.sleep(.1)
+                else:raise AssertionError('Server URL printed but health never became ready')
                 req=urllib.request.Request(url+'/api/ask',data=b'{"question":"What is CustomChat?"}',headers={'Content-Type':'application/json'})
                 with urllib.request.urlopen(req) as r:answer=json.load(r)
                 assert answer['evidence'] and '[1]' in answer['answer'],answer
