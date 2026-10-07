@@ -6,6 +6,7 @@ Both DietChat (PubMed evidence, accounts, saved conversations) and WirelessChat
 import copy, json, os
 
 DEFAULTS = {
+    "schema_version": 1,
     "budget": {"daily_questions": 0, "user_daily_questions": 0, "daily_model_calls": 0, "spend_cap_usd": None},
     "app": {
         "id": "my-chat",
@@ -117,6 +118,8 @@ def load(path):
 def validate(raw):
     if not isinstance(raw, dict):
         raise ConfigError("Config must be a mapping")
+    if type(raw.get("schema_version", 1)) is not int or raw.get("schema_version", 1) != 1:
+        raise ConfigError("schema_version must be 1; newer schemas are not supported by this release")
     unknown = set(raw) - set(DEFAULTS)
     if unknown:
         raise ConfigError("Unknown top-level keys: " + ", ".join(sorted(unknown)))
