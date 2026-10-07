@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="/customselect.css"><script src="/customselect.js" defer></script></head>
 <body>
 <a class="skip" href="#q">Skip to question box</a>
-<header class="toolbar"><div class="tb-brand" id="brand"></div><a class="tb-link" href="/settings.html">Configuration</a><span class="badge" id="modelBadge"></span><button class="theme-btn" id="themeBtn" aria-label="Toggle theme"><i></i></button></header>
+<header class="toolbar"><div class="tb-brand" id="brand"></div><a class="tb-link" href="/about.html">About</a><a class="tb-link" href="/settings.html">Configuration</a><span class="badge" id="modelBadge"></span><button class="theme-btn" id="themeBtn" aria-label="Toggle theme"><i></i></button></header>
 <div class="app" id="app">
   <aside class="side" id="side">
     <div class="side-head">
@@ -38,15 +38,16 @@
     <section class="thread" id="thread" role="log" aria-live="polite" aria-label="Conversation"></section>
     <button class="jump" id="jump" aria-label="Scroll to latest"></button>
     <footer class="composer">
-      <div class="scope-bar"><button id="actionsBtn" class="chip">Actions</button><button id="scopeBtn" class="chip">Source scope</button><span id="scopeChip"></span></div>
+
       <div class="pills" id="similar" aria-label="Asked before"></div>
       <div class="pills" id="pills"></div>
       <div class="box">
-        <button class="icon" id="upload" title="Add a text file as a source" aria-label="Add file"></button>
+        <button class="icon" id="upload" title="Add files or a web link" aria-label="Add file"></button>
         <button class="icon" id="mic" title="Dictate" aria-label="Dictate" hidden></button>
         <textarea id="q" rows="1" placeholder="Ask a question" aria-label="Question" maxlength="2000"></textarea>
         <button class="send" id="send" aria-label="Send"></button>
       </div>
+      <div class="composer-tools" role="group" aria-label="Question tools"><button id="scopeBtn" class="chip" title="Choose documents for the next answer">Source scope</button><button id="actionsBtn" class="chip" title="Preview and confirm a local note action">Actions</button><span id="scopeChip"></span></div>
       <div class="cmeta"><span id="hint"></span><span>Not a substitute for professional advice.</span></div>
     </footer>
   </main>
@@ -54,4 +55,4 @@
 </div>
 <script src="/reading.js" defer></script><script src="/app.js"></script>
 </body>
-  </html>
+</html>
