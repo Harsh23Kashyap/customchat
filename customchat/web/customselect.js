@@ -18,6 +18,7 @@
       list.replaceChildren();
       [...sel.options].forEach((o, i) => {
         const it = document.createElement("div"); it.className = "cs-opt" + (i === sel.selectedIndex ? " on" : ""); it.setAttribute("role", "option"); it.setAttribute("aria-selected", i === sel.selectedIndex ? "true" : "false"); it.textContent = o.textContent; it.tabIndex = -1;
+        if (o.dataset.description) { const help=document.createElement("small"); help.className="cs-description"; help.textContent=o.dataset.description; it.append(help); it.title=o.dataset.description; it.setAttribute("aria-label",o.textContent+". "+o.dataset.description); }
         if (o.disabled) it.classList.add("dis");
         if (sel.dataset.fonts && o.value && o.value !== "custom" && o.value !== "system") { it.style.fontFamily = '"' + o.textContent + '", sans-serif'; if (!window.__csFonts) { window.__csFonts = 1; const l = document.createElement("link"); l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?" + [...sel.options].filter((x) => x.value && x.value !== "custom" && x.value !== "system").map((x) => "family=" + encodeURIComponent(x.textContent).replace(/%20/g, "+")).join("&") + "&display=swap"; document.head.append(l); } }
         it.addEventListener("click", () => { if (o.disabled) return; sel.selectedIndex = i; sel.dispatchEvent(new Event("change", { bubbles: true })); sync(); close(); btn.focus(); });
