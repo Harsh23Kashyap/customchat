@@ -81,6 +81,10 @@ function highlight(node, text, terms) {
   text.split(re).forEach((p, i) => node.append(i % 2 ? el("mark", { text: p }) : document.createTextNode(p)));
   return node;
 }
+function sendIcon(name, label) {
+  const send = $("#send"); send.replaceChildren(name === "send" && TV("emoji_send") ? document.createTextNode(TV("emoji_send")) : svg(name)); send.setAttribute("aria-label", label);
+  if (motionAllowed() && send.animate) send.animate([{opacity:.5,transform:"scale(.95)"},{opacity:1,transform:"scale(1)"}],{duration:150,easing:"ease-out"});
+}
 function motionAllowed() { return document.documentElement.dataset.motion !== "none" && !matchMedia("(prefers-reduced-motion: reduce)").matches; }
 let sourceExit;
 function closeSources() {
@@ -258,7 +262,7 @@ async function stream(body, onEvent) {
 }
 async function send() {
   const q = $("#q").value.trim(); if (!q || S.busy) return;
-  S.busy = true; $("#send").replaceChildren(svg("stop")); $("#send").setAttribute("aria-label", "Stop"); $("#q").value = ""; autosize(); S.lastQ = q;
+  S.busy = true; sendIcon("stop", "Stop"); $("#q").value = ""; autosize(); S.lastQ = q;
   const w = $("#thread .wrap") || $("#thread");
   w.querySelector(".hero")?.remove();
   const live = el("div", { class: "a", id: "live" });
@@ -272,8 +276,8 @@ async function send() {
         const thinking = $("#think");
         if (thinking) {
           if (motionAllowed() && thinking.animate) {
-            thinking.removeAttribute("id"); thinking.style.position = "absolute";
-            const fade = thinking.animate([{opacity:1,transform:"scale(1)"},{opacity:0,transform:"translateY(-2px) scale(.92)"}],{duration:120}); fade.onfinish = () => thinking.remove();
+            thinking.removeAttribute("id"); thinking.style.overflow = "hidden";
+            const fade = thinking.animate([{opacity:1,height:thinking.getBoundingClientRect().height+"px",padding:"4px 0"},{opacity:0,height:"0px",padding:"0px"}],{duration:120,easing:"ease-out"}); fade.onfinish = () => thinking.remove();
             live.classList.add("answer-arrive");
           } else thinking.remove();
         }
@@ -292,7 +296,7 @@ async function send() {
     const u = el("div", { class: "toast", onclick: () => { u.remove(); $("#q").value = q; send(); } }, (err || "Something went wrong").replace(/[.?!]+$/, "") + ". Click to retry"); centerToast(u);
     document.body.append(u); setTimeout(() => u.remove(), 7000);
   }
-  S.busy = false; applyIcons(); $("#send").setAttribute("aria-label", "Send"); drawThread(); loadList(); $("#q").focus();
+  S.busy = false; applyIcons(); sendIcon("send", "Send"); drawThread(); loadList(); $("#q").focus();
   if (!result) {
     // keep what the user typed, and any text that did arrive, instead of losing both
     if (text && err !== "Stopped") { const w2 = $("#thread .wrap") || $("#thread"); w2.querySelector(".hero")?.remove(); w2.append(el("div", { class: "q", text: q }), el("div", { class: "a" }, text + "\n\n(Cut short. Click the notice to ask again.)")); }
