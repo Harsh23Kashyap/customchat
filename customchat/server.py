@@ -17,6 +17,8 @@ WEB = os.path.join(os.path.dirname(__file__), "web")
 def make_handler(cfg, engine):
     from . import permissions
     store = engine.store
+    from .actions import Actions
+    actions=Actions(cfg,store)
     token_env = cfg["auth"]["token_env"]
     hits = collections.defaultdict(list)
     from .budget import Budget, BudgetError
@@ -183,6 +185,9 @@ def make_handler(cfg, engine):
                 return self._send(404, {"error": "Not found"})
             o = self._owner()
             b = self._body() if method == "POST" else {}
+            if path == "/api/actions" and method == "GET": return self._send(200,actions.catalog())
+            if path == "/api/actions/prepare" and method == "POST": return self._send(200,actions.prepare(o,b.get('tool'),b.get('args')))
+            if path == "/api/actions/execute" and method == "POST": return self._send(200,actions.execute(o,b.get('ticket')))
             if path == "/api/scopes" and method == "GET":
                 rows = []
                 for sid, conn in engine.connectors.items():
@@ -365,7 +370,7 @@ def make_handler(cfg, engine):
                 st = hardware.pull_status(qs.get("id", ""))
                 return self._send(200, st) if st else self._send(404, {"error": "Unknown download"})
             if path == "/api/states" and method == "GET":
-                return self._send(200, {"states": [n for n in store.states(o) if not n.startswith("scope-")]})
+                return self._send(200, {"states": [n for n in store.states(o) if not n.startswith(("scope-","action-","note-"))]})
             if path == "/api/states/save" and method == "POST":
                 return self._send(200, {"name": store.save_state(o, b.get("name"), settings_view())})
             if path == "/api/states/load" and method == "POST":
