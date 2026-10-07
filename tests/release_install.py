@@ -30,6 +30,17 @@ main(['ask','workspace/app.yaml','What is CustomChat?'])
         bad=root/'host conflict';bad.mkdir();(bad/'yaml.py').write_text("raise RuntimeError('host conflict')")
         polluted=dict(env,PYTHONPATH=str(bad))
         subprocess.run([str(py),'-I','-m','customchat','validate','workspace/app.yaml'],check=True,cwd=root,env=polluted)
+        # An incompatible core dependency is diagnosed, then repaired from the same wheel.
+        subprocess.run([str(py),'-m','pip','install','PyYAML==6.0.2'],check=True,cwd=root,env=env)
+        mismatch=subprocess.run([str(py),'-m','pip','check'],cwd=root,env=env,capture_output=True,text=True)
+        assert mismatch.returncode!=0 and 'pyyaml' in (mismatch.stdout+mismatch.stderr).lower()
+        subprocess.run([str(py),'-m','pip','install','--force-reinstall',str(wheel)],check=True,cwd=root,env=env)
+        subprocess.run([str(py),'-m','pip','check'],check=True,cwd=root,env=env)
+        # Deleted dependency is a partial install. Reinstallation must restore it.
+        subprocess.run([str(py),'-m','pip','uninstall','-y','PyYAML'],check=True,cwd=root,env=env)
+        subprocess.run([str(py),'-m','pip','install',str(wheel)],check=True,cwd=root,env=env)
+        subprocess.run([str(py),'-m','customchat','validate','workspace/app.yaml'],check=True,cwd=root,env=env)
+        subprocess.run([str(py),'-m','pip','check'],check=True,cwd=root,env=env)
         # Core executable aliases must both exist in the wheel install.
         bindir=envroot/('Scripts' if os.name=='nt' else 'bin')
         for name in ('customchat','customchat-app'):
