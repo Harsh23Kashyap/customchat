@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "customchat-app"
-version = "0.1.0"
+version = "0.1.1"
 readme = "README.md"
 description = "Build a chat application over any evidence source from one YAML file."
 requires-python = ">=3.10"
@@ -19,7 +19,7 @@ customchat-app = "customchat.cli:main"
 include = ["customchat*"]
 
 [tool.setuptools.package-data]
-customchat = ["web/*", "templates/minimal/app.yaml", "templates/minimal/docs/*.md"]
+customchat = ["web/*", "web/logos/*.svg", "templates/minimal/app.yaml", "templates/minimal/docs/*.md"]
 
 [project.urls]
 Repository = "https://github.com/Harsh23Kashyap/customchat"
