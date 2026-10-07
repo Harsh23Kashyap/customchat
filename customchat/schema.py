@@ -6,6 +6,7 @@ Both DietChat (PubMed evidence, accounts, saved conversations) and WirelessChat
 import copy, json, os
 
 DEFAULTS = {
+    "budget": {"daily_questions": 0, "user_daily_questions": 0, "daily_model_calls": 0, "spend_cap_usd": None},
     "app": {
         "id": "my-chat",
         "title": "My Chat",
@@ -120,6 +121,9 @@ def validate(raw):
     if unknown:
         raise ConfigError("Unknown top-level keys: " + ", ".join(sorted(unknown)))
     cfg = _merge(DEFAULTS, raw)
+    from .budget import clean as budget_clean
+    try: cfg["budget"] = budget_clean(cfg["budget"])
+    except ValueError as e: raise ConfigError(str(e)) from None
     p = cfg["provider"]
     if p["type"] not in PROVIDERS:
         raise ConfigError("provider.type must be one of " + ", ".join(sorted(PROVIDERS)))
