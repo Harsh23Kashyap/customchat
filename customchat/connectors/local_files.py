@@ -28,6 +28,11 @@ class LocalFiles:
         root = block.get("path", "docs")
         root = root if os.path.isabs(root) else os.path.join(base_dir, root)
         self.root = os.path.abspath(root)
+        self.semantic_model = block.get("semantic_model", "")
+        self.rerank_model = block.get("rerank_model", "")
+        self._semantic = self._reranker = None
+        self._vectors = None; self._vector_revision = None
+        self.ocr = bool(block.get("ocr", False))
         self.refresh_interval = float(block.get("refresh_interval", 30))
         self._lock = threading.RLock()
         self._snapshot = None
@@ -45,7 +50,7 @@ class LocalFiles:
             raise OSError("Local document folder is missing or unavailable")
         rows = []
         for p in sorted(glob.glob(os.path.join(self.root, "**", "*"), recursive=True)):
-            if not p.lower().endswith((".md", ".txt", ".json", ".csv")): continue
+            if not p.lower().endswith((".md", ".txt", ".json", ".csv", ".pdf")): continue
             if os.path.islink(p) or os.path.realpath(p) != os.path.abspath(p):
                 raise OSError("Local documents must not use symlinks")
             if os.path.isfile(p):
@@ -68,7 +73,12 @@ class LocalFiles:
                 nxt = LocalFiles.__new__(LocalFiles)
                 nxt.docs = []
                 for name, data, digest in rows:
-                    nxt._add(os.path.join(self.root, name), self.root, data, digest)
+                    if name.lower().endswith(".pdf"):
+                        from ..pdfread import pages
+                        for page in pages(data, ocr=self.ocr):
+                            nxt._add(os.path.join(self.root, name), self.root, page["text"].encode(), digest, page["page"], page["ocr"])
+                    else:
+                        nxt._add(os.path.join(self.root, name), self.root, data, digest)
                 n = len(nxt.docs) or 1
                 df = {}
                 for d in nxt.docs:
@@ -80,9 +90,9 @@ class LocalFiles:
                 self.revision = hashlib.sha256(json.dumps(signature).encode()).hexdigest()
                 self.indexed_at = time.time(); self.last_error = ""
                 return True
-            except OSError:
+            except (OSError, ValueError):
                 self.last_error = "Local folder check failed. No old passages will be used until it recovers."
-                raise
+                raise OSError("Local source could not be indexed; check PDF dependencies or readability") from None
 
     def status(self):
         with self._lock:
@@ -91,7 +101,7 @@ class LocalFiles:
                     "checked_at": self.checked_at, "indexed_at": self.indexed_at,
                     "refresh_interval": self.refresh_interval, "error": self.last_error}
 
-    def _add(self, path, root, data=None, digest=""):
+    def _add(self, path, root, data=None, digest="", page=None, ocr=False):
         if data is None:
             with open(path, "rb") as f: data = f.read()
         raw = data.decode("utf-8", errors="replace")
@@ -115,7 +125,7 @@ class LocalFiles:
             body = re.sub(r"^\s*#{1,3}\s+.*\n?", "", sec, count=1) if h else sec
             for c in chunks(body):
                 self.docs.append({"title": sec_title, "text": c, "tok": tokens(sec_title + " " + c),
-                                  "id": "%s#%d" % (os.path.relpath(path, root), n), "document": os.path.relpath(path, root), "version": digest})
+                                  "id": "%s#%s%d" % (os.path.relpath(path, root), ("page-%d-" % page) if page else "", n), "document": os.path.relpath(path, root), "version": digest, "section": sec_title, "page": page, "ocr": ocr})
                 n += 1
 
     def search(self, query, k=6):
@@ -138,6 +148,39 @@ class LocalFiles:
                     s += self.idf.get(t, 0) * tf[t] * 2.2 / (tf[t] + 1.2 * (0.25 + 0.75 * len(d["tok"]) / (self.avg or 1)))
             if s > 0:
                 scored.append((s, d))
+        if getattr(self, "semantic_model", "") and self.docs:
+            if not self._semantic:
+                self._semantic = self._model(self.semantic_model, False)
+            if self._vector_revision != self.revision:
+                self._vectors = self._semantic.encode([d["title"] + " " + d["text"] for d in self.docs], normalize_embeddings=True)
+                self._vector_revision = self.revision
+            vector = self._semantic.encode([query], normalize_embeddings=True)[0]
+            semantic = sorted([(sum(float(a) * float(b) for a, b in zip(v, vector)), d) for v, d in zip(self._vectors, self.docs)], key=lambda x: -x[0])
+            keyword = sorted(scored, key=lambda x: -x[0])
+            # Reciprocal rank fusion: do not compare unlike lexical/vector scales.
+            merged = {}
+            for ranking in (keyword, semantic):
+                for rank, (_, doc) in enumerate(ranking):
+                    row = merged.setdefault(doc["id"], [0, doc]); row[0] += 1 / (60 + rank + 1)
+            scored = [tuple(v) for v in merged.values()]
         scored.sort(key=lambda x: -x[0])
+        if getattr(self, "rerank_model", "") and scored:
+            if not self._reranker: self._reranker = self._model(self.rerank_model, True)
+            candidate = scored[:min(30, max(k * 3, k))]
+            predictions = self._reranker.predict([(query, d["text"]) for _, d in candidate])
+            ranked = sorted([(float(value), d) for value, (_, d) in zip(predictions, candidate)], key=lambda x: -x[0])
+            scored = [(1.0 / (rank + 1), d) for rank, (_, d) in enumerate(ranked)]
         return [{**Evidence(d["title"], d["text"], "", [], "", "", self.id, s, d["id"]),
-                 **({"document": d["document"], "version": d["version"]} if "version" in d else {})} for s, d in scored[:k]]
+                 **({"document": d["document"], "version": d["version"], "section": d["section"], "page": d["page"], "ocr": d["ocr"]} if "version" in d else {})} for s, d in scored[:k]]
+
+    @staticmethod
+    def _model(path, rerank):
+        if not os.path.isabs(path) or not os.path.isdir(path):
+            raise ValueError("Optional retrieval models must be existing absolute local directories")
+        try:
+            from sentence_transformers import SentenceTransformer, CrossEncoder
+        except ImportError:
+            raise ValueError("Optional semantic retrieval needs customchat[semantic]") from None
+        # Explicit local paths and local_files_only prevent network model downloads.
+        cls = CrossEncoder if rerank else SentenceTransformer
+        return cls(path, local_files_only=True, trust_remote_code=False)
