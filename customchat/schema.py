@@ -7,6 +7,7 @@ import copy, json, os
 
 DEFAULTS = {
     "schema_version": 1,
+    "actions": {"allow": None, "writes": True},
     "budget": {"daily_questions": 0, "user_daily_questions": 0, "daily_model_calls": 0, "spend_cap_usd": None},
     "app": {
         "id": "my-chat",
@@ -120,6 +121,11 @@ def validate(raw):
         raise ConfigError("Config must be a mapping")
     if type(raw.get("schema_version", 1)) is not int or raw.get("schema_version", 1) != 1:
         raise ConfigError("schema_version must be 1; newer schemas are not supported by this release")
+    actions=raw.get('actions',{})
+    if not isinstance(actions,dict) or set(actions)-{'allow','writes'}:raise ConfigError('actions needs allow and writes options')
+    from .actions import REGISTRY
+    if actions.get('allow') is not None and (not isinstance(actions['allow'],list) or any(x not in REGISTRY for x in actions['allow'])):raise ConfigError('actions.allow needs registered tool IDs')
+    if not isinstance(actions.get('writes',True),bool):raise ConfigError('actions.writes must be true or false')
     unknown = set(raw) - set(DEFAULTS)
     if unknown:
         raise ConfigError("Unknown top-level keys: " + ", ".join(sorted(unknown)))
