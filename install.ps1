@@ -10,7 +10,9 @@ if (-not $uv) {
   $script = Join-Path ([IO.Path]::GetTempPath()) ([IO.Path]::GetRandomFileName() + '.ps1')
   try {
     Invoke-WebRequest https://astral.sh/uv/install.ps1 -OutFile $script
-    & powershell -ExecutionPolicy Bypass -File $script
+    # Keep the same engine as this script, rather than crossing pwsh/WindowsPowerShell module paths.
+    $engine = Join-Path $PSHOME $(if ($PSVersionTable.PSEdition -eq 'Core') { 'pwsh.exe' } else { 'powershell.exe' })
+    & $engine -NoProfile -ExecutionPolicy Bypass -File $script
     if ($LASTEXITCODE -ne 0) { throw 'uv bootstrap failed' }
   } finally { Remove-Item $script -ErrorAction SilentlyContinue }
   $exe = Join-Path $HOME '.local\bin\uv.exe'
