@@ -402,6 +402,24 @@ async function init() {
     $(".composer").prepend(f);
   }
   $("#scopeBtn").onclick=scopeDialog;
+  $("#actionsBtn").onclick=async()=>{
+   try {
+    const catalog=await api('/api/actions');const dialog=el('dialog',{class:'reading-dialog action-dialog'});
+    dialog.append(el('header',{class:'reading-head'},el('h2',{text:'Review an action'})));
+    const content=el('div',{class:'action-body'});dialog.append(content);
+    for(const tool of catalog) content.append(el('button',{class:'reading-done',onclick:()=>{
+     content.replaceChildren(el('h3',{text:tool.label}));const inputs={};
+     for(const [name,spec] of Object.entries(tool.fields)){const input=el(name==='text'?'textarea':'input',{maxlength:spec.maxLength,'aria-label':name});inputs[name]=input;content.append(el('label',{text:name}),input)}
+     content.append(el('button',{class:'reading-done',onclick:async()=>{try{
+      const args=Object.fromEntries(Object.entries(inputs).map(([k,v])=>[k,v.value]));const review=await api('/api/actions/prepare',{tool:tool.id,args});
+      content.replaceChildren(el('h3',{text:review.label}),el('p',{text:'Exact action: '+review.mode+' · '+review.tool}),el('pre',{text:JSON.stringify(review.args,null,2)}),el('p',{text:'Saved under this app identity. Shared-login modes share notes. Review expires in 5 minutes.'}));
+      content.append(el('button',{class:'reading-done',onclick:async(e)=>{e.currentTarget.disabled=true;try{const result=await api('/api/actions/execute',{ticket:review.ticket});content.replaceChildren(el('h3',{text:'Action complete'}),el('pre',{text:JSON.stringify(result,null,2)}))}catch(err){toast(err.message)}}},'Confirm action'));
+     }catch(err){toast(err.message)}}},'Preview action'));
+    }},tool.label));
+    if(!catalog.length)content.append(el('p',{text:'No actions enabled.'}));
+    dialog.append(el('footer',{},el('button',{class:'chip',onclick:()=>dialog.close()},'Close')));dialog.addEventListener('close',()=>{dialog.remove();$('#actionsBtn').focus()});document.body.append(dialog);dialog.showModal();
+   }catch(err){toast(err.message)}
+  };
   $("#hint").textContent = "Answers cite their sources. Check important facts.";
   $("#q").addEventListener("input", autosize);
   $("#q").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
