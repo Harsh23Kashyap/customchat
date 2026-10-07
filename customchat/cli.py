@@ -2,7 +2,7 @@
 import argparse, json, os, shutil, sys, urllib.request
 from . import schema, __version__
 
-TEMPLATE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "apps", "minimal")
+TEMPLATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "minimal")
 
 
 def main(argv=None):
@@ -19,6 +19,11 @@ def _main(argv=None):
     ap.add_argument("--version", action="version", version=__version__)
     sub = ap.add_subparsers(dest="cmd", required=True)
     i = sub.add_parser("init", help="scaffold a new app folder"); i.add_argument("name")
+    st = sub.add_parser("start", help="create a local Demo workspace if absent, then run it")
+    st.add_argument("--directory", default="customchat-app", help="persistent workspace, never the tool cache")
+    st.add_argument("--port", type=int, default=8080)
+    st.add_argument("--no-browser", action="store_true")
+    st.add_argument("--lock-config", action="store_true")
     v = sub.add_parser("validate", help="check an app file"); v.add_argument("app")
     r = sub.add_parser("run", help="serve an app"); r.add_argument("app"); r.add_argument("--host"); r.add_argument("--port", type=int)
     d = sub.add_parser("doctor", help="check provider and sources"); d.add_argument("app")
@@ -30,6 +35,9 @@ def _main(argv=None):
             sys.exit("%s already exists" % args.name)
         shutil.copytree(TEMPLATE, args.name, ignore=shutil.ignore_patterns("__pycache__", "*.db"))
         print("Created %s/. Next: customchat run %s/app.yaml" % (args.name, args.name))
+    elif args.cmd == "start":
+        from .launcher import start
+        start(args.directory, args.port, args.no_browser, args.lock_config)
     elif args.cmd == "validate":
         try:
             c = schema.load(args.app)
