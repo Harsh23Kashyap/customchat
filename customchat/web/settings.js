@@ -19,7 +19,7 @@ function draw() {
   document.querySelectorAll("#seg button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.p === cur.provider)));
   buildChips();
   provExtras();
-  for (const id of ["model", "apikey", "keysave", "keyclear", "modelPick", "refreshModels", "testconn", "base", "temp", "topk", "rewrite", "apply", "load", "saveLook", "resetAll", "imp"]) $("#" + id).disabled = !canEdit; $("#testconn").disabled = !canEdit || testBlocked;
+  for (const id of ["model", "apikey", "keysave", "keyclear", "modelPick", "refreshModels", "testconn", "base", "temp", "topk", "rewrite", "apply", "load", "saveLook", "resetAll", "imp", "exportApp"]) $("#" + id).disabled = !canEdit; $("#testconn").disabled = !canEdit || testBlocked;
 }
 const read = () => ({ provider: cur.provider, model: chosenModel(), base_url: $("#base").value.trim(), temperature: +$("#temp").value, top_k: +$("#topk").value, query_rewrite: $("#rewrite").checked });
 /* ---------- key, model picker, connection test ---------- */
@@ -428,7 +428,7 @@ function resetGroup(s) { const d = meta.default; for (const f of s.fields) { if 
 function setPvMode(m) { document.querySelectorAll("#pvmode button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.m === m))); }
 function buildMenu() {
   const m = $("#menu"); m.replaceChildren();
-  const items = [["presets", "Presets and states"], ["model", "Model"]].concat(SECTIONS.map((s) => [s.id, s.title]));
+  const items = [["presets", "Presets and states"], ["model", "Model"], ["portable", "Portable app"]].concat(SECTIONS.map((s) => [s.id, s.title]));
   items.forEach(([id, t]) => m.append(el("a", { href: "#sec-" + id, text: t })));
   const links = [...m.children]; links[0].classList.add("on");
   const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) { activeSec = e.target.id.replace("sec-", ""); pvFollow(); document.querySelectorAll("#menu a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id)); } }, { rootMargin: "-20% 0px -70% 0px" });
@@ -477,6 +477,27 @@ async function init() {
   $("#exp").addEventListener("click", () => { const a = el("a", { href: URL.createObjectURL(new Blob([JSON.stringify(theme, null, 1)], { type: "application/json" })), download: "customchat-look.json" }); document.body.append(a); a.click(); a.remove(); });
   $("#imp").addEventListener("change", async (e) => { const f = e.target.files[0]; if (!f) return; try { const j = JSON.parse(await f.text()); const t = Object.assign(clone(meta.default), j); t.light = Object.assign(clone(meta.default.light), j.light || {}); t.dark = Object.assign(clone(meta.default.dark), j.dark || {}); theme = t; drawLook(); changed(); say("Look imported into the preview. Press Save look to keep it."); } catch (x) { say("That file is not a CustomChat look file", true); } e.target.value = ""; });
 }
+// App export is separate from the saved-look JSON export.
+document.getElementById("exportApp").addEventListener("click", async function () {
+  if (!canEdit) return;
+  const status = document.getElementById("exportStatus");
+  if (!confirm("Include configured local documents in this app export? Review the ZIP before sharing. Keys and private session state are excluded.")) return;
+  this.disabled = true; status.textContent = "Preparing app export...";
+  try {
+    // Flush the current look so the ZIP matches the configuration on screen.
+    clearTimeout(autoTimer);
+    const snap = clone(theme); await api("/api/theme", { theme: snap }); saved = clone(snap);
+    const headers = {};
+    if (token) headers.Authorization = "Bearer " + token;
+    const response = await fetch("/api/app-export", { headers });
+    if (!response.ok) { const error = await response.json(); throw new Error(error.error || "Export failed"); }
+    const blob = await response.blob(), url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = "customchat-app.zip"; a.click(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+    status.textContent = "App ZIP downloaded. Review the included documents before sharing.";
+  } catch (error) { status.textContent = error.message; }
+  finally { this.disabled = !canEdit; }
+});
+
 init().then(() => { updateVis(); setTimeout(updateVis, 500); }).catch((e) => say(e.message, true));
 })();
 
@@ -499,4 +520,5 @@ document.addEventListener("click", (e) => { if (e.target && e.target.id === "res
 
 
 // Keep the settings preview in place while properties update.
-(function(){var m=document.querySelector('.menu');if(m){var on=function(){m.classList.toggle('end',m.scrollLeft+m.clientWidth>=m.scrollWidth-4)};m.addEventListener('scroll',on,{passive:true});on()}})();
+(function(){var m=document.querySelector('.menu');if(m){var on=function(){m.classList.toggle('end',m.scrollLeft+m.clientWidth>=m.scrollWidth-4)};m.addEventListener('scroll',on,{passive:true});on()}
+})();
