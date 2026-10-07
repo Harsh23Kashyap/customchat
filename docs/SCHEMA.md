@@ -23,7 +23,7 @@ Every key is optional. Unknown top-level keys are rejected so typos fail loudly.
 ## sources
 A list. Each entry has `type`, optional `id` and `label`.
 
-- `local_files`: `path` to a folder of .md .txt .json .csv files. Markdown headings become sections.
+- `local_files`: `path` to a folder of .md .txt .json .csv files. Markdown headings become sections. `refresh_interval` is seconds between on-question checks (default 30, 0 checks every question, max 86400). Content hashes detect changes even when file size/time stay the same.
 - `http_json`: `url` with `{query}` and `{k}`, `results_path` (dotted path to the result list), `fields` mapping `title text url authors year venue` to dotted paths in each result, optional `header_env: {Header-Name: ENV_VAR}`.
 - `pubmed`: optional `filter` (PubMed query syntax). Set `NCBI_API_KEY` for higher rate limits.
 - `arxiv`: optional `category`, for example `eess.SP`.
