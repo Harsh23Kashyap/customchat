@@ -77,7 +77,7 @@ class Engine:
     def standalone(self, question, history, summary=""):
         if not history or not FOLLOW_UP.search(question) or len(question.split()) > 14:
             return question
-        recent = "\n".join("Q: %s\nA: %s" % (h["question"], h["answer"][:300]) for h in history[-2:])
+        recent = "\n".join("Q: %s\nA: %s" % (h["question"], h["answer"]) for h in self.pack_history(history, question)[-8:])
         prompt = [{"role": "system", "content": self.prompts.text("standalone")},
                   {"role": "user", "content": "%s\nConversation so far: %s\nLast question: %s" % (recent, summary, question)}]
         try:
@@ -194,11 +194,34 @@ class Engine:
             self.store.q("INSERT OR REPLACE INTO evidence_cache VALUES(?,?,?)", (key, json.dumps(hit), time.time()), write=True)
 
     # (4) generation
+    def conversation_history(self, owner, chat, topic, question):
+        rows = self.store.turns(owner, chat)
+        rows = [r for r in rows if r["topic"] == topic]
+        return self.pack_history(rows, question)
+
+    @staticmethod
+    def pack_history(rows, question):
+        # Whole turns, never clipped answers. Recent continuity first; older relevant
+        # turns fill the remaining budget. Scope restrictions still clear all memory.
+        budget = 60000
+        if sum(len(r["question"]) + len(r["answer"]) for r in rows) <= budget:
+            return rows
+        words = set(re.findall(r"\w+", question.lower()))
+        ranked = sorted(enumerate(rows), key=lambda item: (item[0] >= len(rows)-4,
+            len(words & set(re.findall(r"\w+", (item[1]["question"]+" "+item[1]["answer"]).lower()))), item[0]), reverse=True)
+        chosen = []
+        for i, row in ranked:
+            size = len(row["question"]) + len(row["answer"])
+            if size <= budget:
+                chosen.append((i, row)); budget -= size
+        return [r for i, r in sorted(chosen)]
+
     def prompt(self, question, evidence, style, history, summary, profile=""):
+        history = self.pack_history(history, question)
         p = self.cfg["prompt"]
         ev = "\n".join("[%d] %s (%s). %s" % (e["n"], e["title"], e["year"] or "n.d.", e["text"][:3000]) for e in evidence)
-        mem = ("About the reader (self-reported background, not evidence): %s\n" % profile[:1500] if profile else "") + ("Conversation summary: %s\n" % summary if summary else "") + "".join(
-            "Earlier Q: %s\nEarlier A: %s\n" % (h["question"], h["answer"][:240]) for h in history[-self.cfg["memory"]["recent_turns"]:])
+        mem = ("About the reader (self-reported background, not evidence): %s\n" % profile[:3000] if profile else "") + ("Conversation summary: %s\n" % summary if summary else "") + "".join(
+            "Earlier Q: %s\nEarlier A: %s\n" % (h["question"], h["answer"]) for h in history)
         return [{"role": "system", "content": self.prompts.text("answer", p["system"]) + " " + p["style"].get(style, p["style"]["standard"])},
                 {"role": "user", "content": "%sQuestion: %s\n\nEvidence:\n%s" % (mem, question, ev)}]
 
@@ -418,8 +441,8 @@ class Engine:
         if temporary:
             # nothing is read from or written to the saved history, uploads or profile
             chat = topic = None
-            history = [{"question": str(h.get("question", ""))[:500], "answer": str(h.get("answer", ""))[:600]}
-                       for h in (temp_history or [])[-6:] if isinstance(h, dict)] if mem_on else []
+            history = [{"question": str(h.get("question", ""))[:2000], "answer": str(h.get("answer", ""))}
+                       for h in (temp_history or [])[-200:] if isinstance(h, dict)] if mem_on else []
             summary = ""
             if scope or permissions.restricted(self.cfg): history = []
             yield "progress", {"stage": "context", "label": "Preparing question context"}
@@ -435,10 +458,10 @@ class Engine:
                 topic = self.store.last_topic(chat)
             if not topic:
                 topic = self.store.new_topic(owner, q[:80])
-            history = self.store.topic_turns(owner, topic, 12) if mem_on else []
+            history = self.conversation_history(owner, chat, topic, q) if mem_on else []
             summary = self.store.topic(owner, topic)["summary"] if mem_on else ""
             if scope or permissions.restricted(self.cfg): history = []; summary = ""
-            profile = self.store.get_profile(owner) if use_profile and not permissions.restricted(self.cfg) else ""
+            profile = self.store.profile_context(owner) if use_profile and not permissions.restricted(self.cfg) else ""
             yield "progress", {"stage": "context", "label": "Preparing question context"}
             standalone = self.standalone(q, history, summary)
             blocked = self.check_question(standalone)
@@ -511,7 +534,7 @@ class Engine:
         if not topic:
             topic = self.store.new_topic(owner, q[:80])
         mem_on = self.cfg["memory"]["enabled"]
-        history = self.store.topic_turns(owner, topic, 12) if mem_on else []
+        history = self.conversation_history(owner, chat, topic, q) if mem_on else []
         summary = self.store.topic(owner, topic)["summary"] if mem_on else ""
         standalone = self.standalone(q, history, summary)
         evidence, errors = self.retrieve(standalone, sources, owner) if use_cache else self._fresh(standalone, sources, owner)
@@ -630,7 +653,7 @@ class Engine:
         turns = self.store.topic_turns(owner, topic, 50)
         if len(turns) % every:
             return
-        text = " | ".join(t["standalone"] for t in turns[-every:])
+        text = "Previous summary: " + self.store.topic(owner, topic)["summary"] + "\n" + "\n".join("Q: " + t["question"] + "\nA: " + t["answer"] for t in turns[-every:])
         if self.cfg["provider"]["type"] == "mock":
             self.store.set_summary(topic, "Topics so far: " + text[:500])
             return
