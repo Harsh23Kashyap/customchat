@@ -45,6 +45,10 @@
         <label class="check"><input id="rewrite" type="checkbox"> Rewrite follow-up questions before searching</label>
         <button class="go blue big" id="apply">Apply</button>
       </section>
+      <section class="tile" id="sec-portable"><div class="head"><span class="ic green">&#8599;</span><div><b>Portable app</b><small>Move this app to another computer</small></div></div>
+        <div class="help">Export app.yaml, the current model settings, saved look, prompts and configured local documents. Keys, accounts, conversations and personal uploads stay here. Review included documents before sharing. Python plugins and remote services still need their original setup.</div>
+        <button type="button" class="go green" id="exportApp">Download app ZIP</button><span id="exportStatus" role="status" aria-live="polite"></span>
+      </section>
       <div id="look"></div>
       <p class="msg" id="msg" role="status" aria-live="polite"></p>
     </div>
