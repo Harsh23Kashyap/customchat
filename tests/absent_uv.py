@@ -18,6 +18,11 @@ def main():
         opts=['--source',str(wheel),'--state',str(home/'private state'),'--directory',str(home/'my workspace'),'--no-browser','--lock-config','--verify-and-stop']
         if os.name=='nt':
             shell=shutil.which('powershell',path=env['PATH']);assert shell
+            # Surface Windows engine/module diagnostics before official bootstrap.
+            probe=subprocess.run([shell,'-NoProfile','-ExecutionPolicy','Bypass','-Command',
+                '$PSVersionTable; $PSHOME; $env:PSModulePath; Import-Module Microsoft.PowerShell.Security -Verbose -ErrorAction Stop; Get-ExecutionPolicy'],
+                env=env,text=True,capture_output=True)
+            print(probe.stdout,flush=True);print(probe.stderr,flush=True)
             cmd=[shell,'-NoProfile','-ExecutionPolicy','Bypass','-File',str(ROOT/'install.ps1'),*opts]
         else:cmd=['sh',str(ROOT/'install.sh'),*opts]
         result=subprocess.run(cmd,cwd=home,env=env,text=True,capture_output=True,timeout=300)
