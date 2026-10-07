@@ -651,3 +651,5 @@ html[data-motion=none] .hero .ex button,html[data-motion=none] .recent-questions
 @media(prefers-reduced-motion:no-preference){html.preview:not([data-motion=none]) body .thread,html.preview:not([data-motion=none]) body .composer{transition:max-width .22s ease}html.preview:not([data-motion=none]) body{transition:font-size .22s ease,background-color .18s ease,color .18s ease}}
 
 html.preview .thread:has(.hero){display:block}
+/* Device reduced-motion overrides every saved motion profile, including Subtle. */
+@media(prefers-reduced-motion:reduce){html[data-motion] *,html[data-motion] *::before,html[data-motion] *::after{transition:none!important;transition-duration:0s!important;animation:none!important;animation-duration:0s!important;scroll-behavior:auto!important}}
