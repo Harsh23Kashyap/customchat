@@ -10,7 +10,7 @@ For end users who should only chat. Set `CUSTOMCHAT_CONFIG=off` and the app serv
 
 1. Fork or push this repo to GitHub.
 2. In Render choose New, then Blueprint, and pick the repo. `render.yaml` sets the lock, a health check and a small disk for saved chats.
-3. Paste `OPENAI_API_KEY` when Render asks. The key stays in Render's environment.
+3. Configure the provider in your app YAML before deploying. The default minimal app uses offline Demo (`mock`); pasting a key alone does not switch it to AI. If you select OpenAI, paste `OPENAI_API_KEY` when Render asks. The key stays in Render's environment.
 4. To use your own app file, set `APP=apps/yourapp/app.yaml`. Tune the look and sources locally first, then commit the app folder.
 
 The lock was tested locally. A real Render deploy has not been run from here.
