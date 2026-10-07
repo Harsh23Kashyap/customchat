@@ -19,7 +19,7 @@ function draw() {
   document.querySelectorAll("#seg button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.p === cur.provider)));
   buildChips();
   provExtras();
-  for (const id of ["model", "apikey", "keysave", "keyclear", "modelPick", "refreshModels", "testconn", "base", "temp", "topk", "rewrite", "apply", "load", "saveLook", "resetAll", "imp", "exportApp"]) $("#" + id).disabled = !canEdit; $("#testconn").disabled = !canEdit || testBlocked;
+  for (const id of ["model", "apikey", "keysave", "keyclear", "modelPick", "refreshModels", "testconn", "base", "temp", "topk", "rewrite", "apply", "load", "saveLook", "resetAll", "imp", "exportApp", "checkDocs"]) $("#" + id).disabled = !canEdit; $("#testconn").disabled = !canEdit || testBlocked;
 }
 const read = () => ({ provider: cur.provider, model: chosenModel(), base_url: $("#base").value.trim(), temperature: +$("#temp").value, top_k: +$("#topk").value, query_rewrite: $("#rewrite").checked });
 /* ---------- key, model picker, connection test ---------- */
@@ -428,7 +428,7 @@ function resetGroup(s) { const d = meta.default; for (const f of s.fields) { if 
 function setPvMode(m) { document.querySelectorAll("#pvmode button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.m === m))); }
 function buildMenu() {
   const m = $("#menu"); m.replaceChildren();
-  const items = [["presets", "Presets and states"], ["model", "Model"], ["portable", "Portable app"]].concat(SECTIONS.map((s) => [s.id, s.title]));
+  const items = [["presets", "Presets and states"], ["model", "Model"], ["portable", "Portable app"], ["freshness", "Document freshness"]].concat(SECTIONS.map((s) => [s.id, s.title]));
   items.forEach(([id, t]) => m.append(el("a", { href: "#sec-" + id, text: t })));
   const links = [...m.children]; links[0].classList.add("on");
   const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) { activeSec = e.target.id.replace("sec-", ""); pvFollow(); document.querySelectorAll("#menu a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id)); } }, { rootMargin: "-20% 0px -70% 0px" });
@@ -498,7 +498,28 @@ document.getElementById("exportApp").addEventListener("click", async function ()
   finally { this.disabled = !canEdit; }
 });
 
-init().then(() => { updateVis(); setTimeout(updateVis, 500); }).catch((e) => say(e.message, true));
+async function docsFreshness(force) {
+  const box = $("#docsFreshness");
+  box.textContent = "Checking local documents...";
+  try {
+    const result = await api("/api/docs-freshness", force ? {} : undefined);
+    box.replaceChildren();
+    if (!result.sources.length) box.textContent = "No local document folders configured.";
+    for (const source of result.sources) {
+      const checked = source.checked_at ? new Date(source.checked_at * 1000).toLocaleString() : "not checked";
+      const line = document.createElement("p");
+      line.textContent = source.label + ": " + source.documents + " documents, " + source.chunks + " passages. Checked " + checked + ". " +
+        (source.error || ("Version " + source.revision.slice(0, 12) + ". Check interval: " + source.refresh_interval + "s."));
+      box.append(line);
+    }
+  } catch (error) { box.textContent = error.message; }
+}
+$("#checkDocs").addEventListener("click", async function () {
+  if (!canEdit) return; this.disabled = true;
+  try { await docsFreshness(true); } finally { this.disabled = !canEdit; }
+});
+
+init().then(() => { if (canEdit) docsFreshness(false); updateVis(); setTimeout(updateVis, 500); }).catch((e) => say(e.message, true));
 })();
 
 
