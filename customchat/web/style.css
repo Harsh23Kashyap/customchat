@@ -594,3 +594,10 @@ html[data-branded=on] .send{background:var(--brand)!important;color:var(--on-bra
 html[data-branded=on] .hero h1{color:var(--brand)}
 :root[data-theme=dark] .box{background:var(--paper)}
 :root[data-theme=dark] .send{background:var(--brand)!important;color:var(--on-brand)!important}
+/* Local reading preferences do not change saved branding. */
+.thread{max-width:none!important;padding-left:clamp(16px,4vw,54px);padding-right:clamp(16px,4vw,54px);scroll-behavior:auto}
+.thread>.wrap{max-width:var(--reading-width,720px)!important;width:100%}
+.thread .bubble .a,.thread #live{font-size:var(--reading-size,17px)!important;line-height:1.7}
+#readingBtn{display:inline-flex;font-weight:700;font-size:15px;min-width:44px}
+.reading-dialog{max-width:min(420px,calc(100vw - 32px));padding:24px;border:1px solid var(--line);border-radius:16px;color:var(--ink);background:var(--paper)}
+.reading-dialog::backdrop{background:#0006}.reading-dialog label{display:block;margin:16px 0}.reading-dialog p{font-size:14px;line-height:1.6;color:var(--mut)}.reading-dialog button,.reading-dialog select{padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--soft);color:var(--ink)}
