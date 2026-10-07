@@ -65,7 +65,7 @@ def run(args):
         if args.prepare_only:return
         # Holding the lock for server lifetime makes repeated invocations safe.
         log=root/'server.log'
-        cmd=[str(py),'-c',"import faulthandler,runpy;faulthandler.dump_traceback_later(20);runpy.run_module('customchat',run_name='__main__')",'start','--directory',str(Path(args.directory).expanduser().resolve()),'--port',str(args.port)]
+        cmd=[str(py),'-m','customchat','start','--directory',str(Path(args.directory).expanduser().resolve()),'--port',str(args.port)]
         if args.no_browser:cmd.append('--no-browser')
         if args.lock_config:cmd.append('--lock-config')
         with open(log,'w') as out:
