@@ -15,7 +15,7 @@ const el = (tag, props = {}, ...kids) => { const e = document.createElement(tag)
 /* ---------- model section (unchanged behaviour) ---------- */
 function draw() {
   $("#model").value = cur.model || ""; $("#base").value = cur.base_url || ""; $("#temp").value = cur.temperature; $("#topk").value = cur.top_k; $("#rewrite").checked = !!cur.query_rewrite;
-  $("#tv").textContent = (+cur.temperature).toFixed(2); $("#kv").textContent = cur.top_k;
+  $("#tv").textContent = (+cur.temperature).toFixed(2); $("#kv").textContent = cur.top_k; sliderVisuals();
   document.querySelectorAll("#seg button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.p === cur.provider)));
   buildChips();
   provExtras();
@@ -47,13 +47,18 @@ async function loadModels(force) {
   const demo = p === "mock"; sel.hidden = demo; $("#refreshModels").hidden = demo; { const ml = document.querySelector("label[for=modelPick]"); if (ml) ml.hidden = demo; } { const kr = sel.closest(".keyrow"); if (kr) kr.hidden = demo; } const typed = !demo && sel.value === OTHER; $("#model").hidden = !typed; if (typed) $("#model").value = m;
   $("#modelh").textContent = demo ? "The demo answers without a model." : list.length ? list.length + (list.length === 1 ? " model found." : " models found.") : (modelNote || "Type the model name your provider uses.");
 }
+function sliderVisuals(){
+  const t=document.getElementById("temperatureViz"), d=document.getElementById("sourcesViz");
+  if(t)t.style.setProperty("--heat",Math.max(0,Math.min(1,+$("#temp").value/2)));
+  if(d){const n=Math.min(5,Math.max(1,Math.ceil(+$("#topk").value/4)));d.replaceChildren(...Array.from({length:n},(_,i)=>el("i",{style:"--layer:"+i})));}
+}
 function pickChanged() { const v = $("#modelPick").value; const typed = v === OTHER; $("#model").hidden = !typed; if (!typed) { $("#model").value = v; cur.model = v; } }
 const chosenModel = () => ($("#modelPick").value === OTHER ? $("#model").value.trim() : $("#modelPick").value);
 const BRAND = { openai: ["#10a37f", "O"], claude: ["#d97757", "C"], gemini: ["#4285f4", "G"], ollama: ["#2b2b2b", "Ol"], deepseek: ["#4d6bfe", "D"], groq: ["#f55036", "Gq"], mistral: ["#fa520f", "M"], minimax: ["#e0245e", "Mx"], mimo: ["#ff6900", "Mi"], openrouter: ["#6467f2", "Or"], mock: ["#8a94a3", "\u2022"], openai_compatible: ["#5b6b7f", "+"] };
 const TOP = ["openai", "claude", "gemini", "deepseek", "ollama"];
 let chipsMore = false, chipList = [];
 const LOGOS = ["openai", "claude", "gemini", "deepseek", "ollama", "groq", "mistral", "openrouter", "minimax", "mimo"];
-function mark(p) { if (LOGOS.includes(p)) return el("img", { class: "plogo", src: "/logos/" + p + ".svg", alt: "", width: "20", height: "20" }); const b = BRAND[p] || ["#667", (NAMES[p] || p)[0]]; return el("span", { class: "pm", style: "background:" + b[0], "aria-hidden": "true", text: b[1] }); }
+function mark(p) { if (LOGOS.includes(p)) { const img=el("img", { class: "plogo", src: "/logos/" + p + ".svg", alt: "", width: "20", height: "20" }); img.addEventListener("error",()=>{const b=BRAND[p] || ["#667",p[0]];img.replaceWith(el("span",{class:"pm",style:"background:"+b[0],"aria-hidden":"true",text:b[1]}))},{once:true});return img; } const b = BRAND[p] || ["#667", (NAMES[p] || p)[0]]; return el("span", { class: "pm", style: "background:" + b[0], "aria-hidden": "true", text: b[1] }); }
 function buildChips(list) {
   if (list) chipList = list; const seg = $("#seg"); seg.replaceChildren();
   const top = TOP.filter((p) => chipList.includes(p)), rest = chipList.filter((p) => !top.includes(p));
@@ -252,7 +257,7 @@ function changed() {
 /* Logo: everything happens in the browser. The picture is shrunk, its plain background can be removed,
    and its edges are feathered so it melts into the page instead of sitting in a hard box. */
 function logoControl(f, current) {
-  let orig = null; const st = { feather: 25, strip: true };
+  let orig = null; const st = { feather: 25, strip: false };
   const prev = el("img", { class: "logoprev", alt: "Result", hidden: current ? undefined : "" }); if (current) prev.src = current;
   const before = el("img", { class: "logoprev", alt: "Original", hidden: "" }), onpage = el("div", { class: "logopage", hidden: current ? undefined : "" }), pgimg = el("img", { alt: "" }), pgname = el("span");
   onpage.append(pgimg, pgname); if (current) pgimg.src = current;
@@ -285,7 +290,7 @@ function logoControl(f, current) {
   file.addEventListener("change", () => {
     const fl = file.files[0]; if (!fl) return; if (fl.size > 4000000) { say("That picture is over 4 MB. Choose a smaller one.", true); return; }
     const u = URL.createObjectURL(fl), im = new Image();
-    im.onload = () => { orig = im; before.src = im.src; before.hidden = false; stage.hidden = false; fe.disabled = rb.disabled = false; note.textContent = "Soft edges and background removal run on this computer."; render(); /* keep the object URL while the Original tile shows it */ };
+    im.onload = () => { orig = im; before.src = im.src; before.hidden = false; stage.hidden = false; fe.disabled = rb.disabled = false; note.textContent = "Soft edges and background removal run on this computer."; render(); say("Picture added. The preview updates now."); /* keep the object URL while the Original tile shows it */ };
     im.onerror = () => { say("That file could not be read as a picture.", true); URL.revokeObjectURL(u); };
     im.src = u;
   });
@@ -316,8 +321,39 @@ function logoControl(f, current) {
   box.append(stage, el("div", { class: "logoctl" }, fileBtn, el("span", { class: "h dropnote", text: "or drag a picture here" }), file, el("label", { class: "check" }, rb, "Remove plain background"), el("label", { class: "h" }, "Edge softness", fe), derive, el("span", {class:"h",text:"Replaces both palettes in the preview. Save look to keep; edit Colors for overrides. Logo also becomes the favicon."}), note, rm));
   return box;
 }
+const EMOJI_GROUPS={
+ "Smileys":[["😀","grin happy"],["😃","smile"],["😄","laugh"],["😁","beaming"],["😂","joy tears"],["🥹","happy tears"],["😊","blush"],["😍","heart eyes love"],["🥰","love"],["😎","cool"],["🤓","nerd"],["🤔","thinking"],["🫡","salute"],["🤗","hug"],["🥳","party"],["🤯","mind blown"],["😴","sleep"],["😭","cry"],["😮","wow"],["😌","relief"]],
+ "People":[["👋","wave hello"],["👍","thumbs up yes"],["👎","thumbs down no"],["👏","clap"],["🙌","celebrate"],["🙏","thanks please"],["💪","strong"],["🤝","handshake"],["🧑‍💻","developer"],["🧑‍🚀","astronaut"],["🕺","dance"],["🤖","robot assistant"]],
+ "Nature":[["🐶","dog"],["🐱","cat"],["🦊","fox"],["🐼","panda"],["🐸","frog"],["🦋","butterfly"],["🌱","seedling plant"],["🌻","sunflower"],["🌈","rainbow"],["☀️","sun"],["🌙","moon"],["⭐","star"]],
+ "Food":[["☕","coffee"],["🍵","tea"],["🍕","pizza"],["🍔","burger"],["🍎","apple"],["🥑","avocado"],["🍪","cookie"],["🎂","cake"]],
+ "Objects":[["🚀","rocket launch"],["🎉","tada party"],["🎊","confetti"],["🔥","fire"],["💡","idea bulb"],["📚","books"],["📄","document"],["📎","attachment paperclip"],["💬","chat"],["🔍","search"],["🎯","target"],["⚡","lightning"],["✨","sparkles"],["🏆","trophy"]],
+ "Symbols":[["❤️","heart love"],["💚","green heart"],["💛","yellow heart"],["💜","purple heart"],["✅","check done"],["❌","cross no"],["➕","plus"],["➡️","arrow right send"],["⬆️","arrow up send"],["♾️","infinity"]]
+};
+function emojiControl(f,id,v){
+ const text=el("input",{id,type:"text",class:"emoji",maxlength:8,value:v||"","aria-label":f.label}),choose=el("button",{type:"button",class:"mini",text:"Choose emoji",disabled:canEdit?undefined:""}),box=el("div",{class:"emoji-control"},text,choose);
+ const animation=el("select",{"aria-label":f.label+" animation",disabled:canEdit?undefined:""}); for(const mode of ["none","bounce","pulse","wiggle"])animation.append(el("option",{value:mode,text:mode[0].toUpperCase()+mode.slice(1),selected:(theme[f.key+"_motion"]||"none")===mode?"":undefined}));animation.addEventListener("change",()=>{theme[f.key+"_motion"]=animation.value;changed()});box.append(animation);
+ text.addEventListener("input",()=>setv(f,text.value));
+ choose.addEventListener("click",()=>{
+  const dialog=el("dialog",{class:"emoji-dialog","aria-label":"Choose "+f.label.toLowerCase()}),search=el("input",{type:"search",placeholder:"Search emoji","aria-label":"Search emoji"}),tabs=el("div",{class:"emoji-tabs"}),grid=el("div",{class:"emoji-grid"}),close=el("button",{type:"button",class:"mini",text:"Close"}),clear=el("button",{type:"button",class:"mini",text:"Use app default"});
+  let group="Smileys";const draw=()=>{const q=search.value.trim().toLowerCase();grid.replaceChildren();const pairs=q?Object.values(EMOJI_GROUPS).flat().filter(([e,n])=>n.includes(q)||e===q):EMOJI_GROUPS[group];for(const [e,n] of pairs)grid.append(el("button",{type:"button",class:"emoji-option",text:e,title:n,"aria-label":n,onclick:()=>{text.value=e;setv(f,e);dialog.close();choose.focus()}}));if(!pairs.length)grid.append(el("small",{text:"No match. You can paste an emoji in the field."}));tabs.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(b.textContent===group&&!q)))};
+  for(const name of Object.keys(EMOJI_GROUPS))tabs.append(el("button",{type:"button",class:"mini",text:name,onclick:()=>{group=name;search.value="";draw()}}));search.addEventListener("input",draw);close.addEventListener("click",()=>dialog.close());clear.addEventListener("click",()=>{text.value="";setv(f,"");dialog.close();choose.focus()});dialog.addEventListener("close",()=>dialog.remove());dialog.append(el("div",{class:"emoji-head"},el("b",{text:"Choose an emoji"}),close),search,tabs,grid,clear);document.body.append(dialog);draw();dialog.showModal();search.focus();
+ });return box;
+}
+
+function compactHelp(){
+ document.querySelectorAll('.field>.h,.tile>.help,.logoctl>.h').forEach(help=>{
+  if(help.dataset.compact||help.textContent.length<110)return;help.dataset.compact='1';const text=help.textContent;
+  const btn=el('button',{type:'button',class:'info-tip','aria-label':'More information','aria-expanded':'false',text:'i'}),tip=el('div',{class:'info-pop',role:'tooltip',text,hidden:''}),host=help.closest('.field'),label=host?host.querySelector('.flabel'):(help.previousElementSibling?.querySelector('#budgetSpend')?help.previousElementSibling:help.parentElement.querySelector('.head b'));
+  help.replaceChildren(tip);if(label?.querySelector('input')){const title=el('span',{class:'label-title'});while(label.firstChild&&label.firstChild.nodeType===3)title.append(label.firstChild);title.append(btn);label.prepend(title)}else (label||help).append(btn);help.classList.add('compact-help');
+  const show=()=>{tip.hidden=false;btn.setAttribute('aria-expanded','true')},hide=()=>{tip.hidden=true;btn.setAttribute('aria-expanded','false')};let pinned=false;btn.addEventListener('click',()=>{pinned=!pinned;pinned?show():hide()});btn.addEventListener('mouseenter',show);btn.addEventListener('mouseleave',()=>{if(!pinned)hide()});btn.addEventListener('focus',show);btn.addEventListener('blur',()=>{pinned=false;hide()});btn.addEventListener('keydown',e=>{if(e.key==='Escape')hide()});
+ });
+}
+
 function control(f) {
   const id = "f-" + f.key; let input;
+  if(f.key === "bg_image"){
+    const link=el("input",{id,type:"text",value:get(f)||"",placeholder:"https://… or choose a picture","aria-label":f.label}),file=el("input",{type:"file",accept:"image/png,image/jpeg,image/webp","aria-label":"Background picture",disabled:canEdit?undefined:""});link.addEventListener("input",()=>setv(f,link.value));file.addEventListener("change",()=>{const chosen=file.files[0];if(!chosen)return;if(chosen.size>4000000){say("Choose a background picture under 4 MB.",true);return}const im=new Image(),url=URL.createObjectURL(chosen);im.onload=()=>{const c=document.createElement("canvas"),scale=Math.min(1,1000/im.width,1000/im.height);c.width=Math.round(im.width*scale);c.height=Math.round(im.height*scale);c.getContext("2d").drawImage(im,0,0,c.width,c.height);const data=c.toDataURL("image/jpeg",.75);if(data.length>600000){say("Picture is too detailed. Choose a smaller one.",true)}else{link.value=data;theme.bg_style="image";setv(f,data);say("Background picture added.")}URL.revokeObjectURL(url)};im.onerror=()=>{say("That picture could not be read.",true);URL.revokeObjectURL(url)};im.src=url});return el("div",{class:"field"},el("div",{class:"flabel",text:"Background picture"}),el("div",{class:"h",text:"Choose a local picture or paste an HTTPS image link."}),link,file);
+  }
   const v = get(f);
   if (f.type === "color") {
     const swatch = el("input", { type: "color", id, value: v || "#888888", "aria-label": f.label }), hex = el("input", { type: "text", class: "hex", value: v || "", maxlength: "7", "aria-label": f.label + " hex code", placeholder: "automatic" });
@@ -326,6 +362,8 @@ function control(f) {
     input = el("div", { class: "colorrow" }, swatch, hex); if (f.clearable) input.append(el("button", { type: "button", class: "mini", onclick: () => { hex.value = ""; setv(f, ""); } }, "Auto"));
   } else if (f.type === "logo") {
     input = logoControl(f, v);
+  } else if (f.type === "emoji") {
+    input=emojiControl(f,id,v);
   } else if (f.type === "select") {
     input = el("select", { id }); if (f.fonts) input.dataset.fonts = "1"; const opts = f.fonts ? Object.keys(meta.fonts).concat("custom") : meta.enums[f.key];
     opts.forEach((o) => input.append(el("option", { value: o, text: f.fonts ? FONTNAMES[o] || o : (LABELS[f.key] || {})[o] || o })));
@@ -341,9 +379,20 @@ function control(f) {
   } else {
     input = el("input", { type: "text", id, placeholder: f.ph || "", maxlength: f.type === "emoji" ? "8" : "300", class: f.type === "emoji" ? "emoji" : "" }); input.value = v || ""; input.addEventListener("input", () => setv(f, input.value)); input.addEventListener("blur", () => { const t = input.value.trim(); if (t !== input.value) { input.value = t; setv(f, t); } });
   }
-  if (!canEdit) input.querySelectorAll ? input.querySelectorAll("input,select,button").forEach((x) => (x.disabled = true)) : (input.disabled = true);
+  if (!canEdit) { if (input.matches("input,select,textarea,button")) input.disabled=true; input.querySelectorAll("input,select,textarea,button").forEach((x)=>x.disabled=true); }
   if (!canEdit && input.tagName === "SELECT") input.disabled = true;
-  return el("div", { class: "field" }, el("label", { for: id, class: "flabel" }, f.label), el("span", { class: "h", text: f.help }), input);
+  const field=el("div", { class: "field" }, el("label", { for: id, class: "flabel" }, f.label), el("span", { class: "h", text: f.help }), input);
+  if(["motion","entrance","speed","hover_lift"].includes(f.key)){
+    const demo=el("div",{class:"motion-sample",text:"Sample message"}),status=el("small",{class:"h"}),replay=el("button",{type:"button",class:"mini",text:"Try effect"});
+    const play=()=>{demo.getAnimations().forEach(a=>a.cancel());const quiet=matchMedia("(prefers-reduced-motion:reduce)").matches||["calm","none"].includes(theme.motion);status.textContent=quiet?"Motion off: showing the static sample":theme.entrance==="none"?"No message entrance effect":"Preview: "+theme.entrance;
+      if(quiet)return;
+      const effect=theme.entrance,frames=effect==="slide"?[{opacity:0,transform:"translateY(14px)"},{opacity:1,transform:"none"}]:effect==="pop"?[{opacity:0,transform:"scale(.92)"},{opacity:1,transform:"none"}]:effect==="fade"?[{opacity:0},{opacity:1}]:null;
+      if(frames)demo.animate(frames,{duration:(theme.motion==="subtle"?150:280)*100/theme.speed,easing:"ease-out"});
+    };
+    input.addEventListener("change",play);input.addEventListener("input",play);replay.addEventListener("click",play);demo.addEventListener("pointerenter",()=>{if(theme.hover_lift&&!matchMedia("(prefers-reduced-motion:reduce)").matches&&!["calm","none"].includes(theme.motion))demo.animate([{transform:"none"},{transform:"translateY(-3px)"},{transform:"none"}],{duration:350})});
+    field.append(el("div",{class:"motion-demo"},demo,replay,status));
+  }
+  return field;
 }
 async function saveSection(s) {
   try {
@@ -459,12 +508,12 @@ async function init() {
   const th = await api("/api/theme"); theme = th.theme; meta = th.meta; saved = clone(theme); canEdit = canEdit && th.can_edit !== false;
   const seg = $("#seg");
   buildChips(d.providers);
-  draw(); await states(); buildPresets(); drawLook();
+  draw(); await states(); buildPresets(); drawLook(); compactHelp();
   document.querySelectorAll("#pvmode button").forEach((b) => b.addEventListener("click", () => { setPvMode(b.dataset.m); pushPreview(); }));
   $("#pv").addEventListener("load", () => { setPvMode(theme.mode === "dark" ? "dark" : "light"); setTimeout(pushPreview, 250); });
   if (!canEdit) say("View only. Open this page on the computer running the app, or sign in as the admin, to change anything.");
-  $("#temp").addEventListener("input", () => ($("#tv").textContent = (+$("#temp").value).toFixed(2)));
-  $("#topk").addEventListener("input", () => ($("#kv").textContent = $("#topk").value));
+  $("#temp").addEventListener("input", () => {$("#tv").textContent = (+$("#temp").value).toFixed(2);sliderVisuals()});
+  $("#topk").addEventListener("input", () => {$("#kv").textContent = $("#topk").value;sliderVisuals()});
   $("#modelPick").addEventListener("change", pickChanged);
   $("#refreshModels").addEventListener("click", () => loadModels(true));
   $("#keysave").addEventListener("click", async () => { const v = $("#apikey").value.trim(); if (!v) { say("Paste a key first.", true); return; } try { const r = await api("/api/provider/key", { provider: cur.provider, key: v }); keyInfo[cur.provider] = r.key; $("#apikey").value = ""; await provExtras(); say("Key saved on this computer."); } catch (e) { say(e.message, true); } });
@@ -509,9 +558,11 @@ async function docsFreshness(force) {
     if (!result.sources.length) box.textContent = "No local document folders configured.";
     for (const source of result.sources) {
       const checked = source.checked_at ? new Date(source.checked_at * 1000).toLocaleString() : "not checked";
-      const line = document.createElement("p");
-      line.textContent = source.label + ": " + source.documents + " documents, " + source.chunks + " passages. Checked " + checked + ". " +
-        (source.error || ("Version " + source.revision.slice(0, 12) + ". Check interval: " + source.refresh_interval + "s."));
+      const line=el("div",{class:"status-card"},el("b",{text:source.label}),
+        el("div",{class:"status-stats"},el("span",{text:source.documents+" "+(source.documents===1?"document":"documents")}),el("span",{text:source.chunks+" "+(source.chunks===1?"passage":"passages")})),
+        el("small",{text:"Last checked: "+checked}));
+      if(source.error)line.append(el("p",{class:"bad",text:source.error}));
+      else line.append(el("details",{},el("summary",{text:"Index details"}),el("small",{text:"Version "+source.revision.slice(0,12)+" · Checks on questions, at most every "+source.refresh_interval+" seconds"})));
       box.append(line);
     }
   } catch (error) { box.textContent = error.message; }
@@ -521,13 +572,26 @@ $("#checkDocs").addEventListener("click", async function () {
   try { await docsFreshness(true); } finally { this.disabled = !canEdit; }
 });
 
+function budgetVisuals(){
+ for(const [id,icon] of [["budgetQuestions","?"] ,["budgetUser","♙"],["budgetCalls","✦"],["budgetSpend","$"]]){
+  const input=document.getElementById(id);if(!input)continue;const label=input.closest("label");
+  let v=label.querySelector(".budget-viz");if(!v){v=el("span",{class:"budget-viz","aria-hidden":"true"});label.append(v)}
+  const count=id==="budgetSpend" ? (input.value===""?0:1) : Math.min(5,Math.max(0,Math.ceil(Math.log10(1+Math.max(0,+input.value))*2)));
+  v.replaceChildren(...Array.from({length:count},()=>el("i",{text:icon})),el("small",{text:id==="budgetSpend"?(input.value===""?"No dollar cap":"Non-Demo answers blocked"):(+input.value===0?"No daily limit":input.value+" per day")}));
+  if(!matchMedia("(prefers-reduced-motion:reduce)").matches&&! ["calm","none"].includes(theme.motion))v.animate([{transform:"translateY(2px)",opacity:.6},{transform:"translateY(0)",opacity:1}],{duration:160});
+ }
+}
+for(const id of ["budgetQuestions","budgetUser","budgetCalls","budgetSpend"])document.getElementById(id)?.addEventListener("input",budgetVisuals);
 async function loadBudget() {
   const data = await api("/api/budget"), limits = data.limits;
   $("#budgetQuestions").value = limits.daily_questions;
   $("#budgetUser").value = limits.user_daily_questions;
   $("#budgetCalls").value = limits.daily_model_calls;
-  $("#budgetSpend").value = limits.spend_cap_usd === null ? "" : limits.spend_cap_usd;
-  $("#budgetStatus").textContent = data.day + " UTC: " + (data.used.question || 0) + " questions, " + (data.used.model || 0) + " model invocations. " + data.spend_note;
+  $("#budgetSpend").value = limits.spend_cap_usd === null ? "" : limits.spend_cap_usd; budgetVisuals();
+  const q=data.used.question||0,m=data.used.model||0;
+  $("#budgetStatus").replaceChildren(el("div",{class:"status-card"},el("b",{text:"Today's usage"}),
+    el("div",{class:"status-stats"},el("span",{text:q+" "+(q===1?"question":"questions")}),el("span",{text:m+" "+(m===1?"model call":"model calls")})),
+    el("small",{text:"Usage day: "+data.day+" · Resets at midnight UTC"}),el("details",{},el("summary",{text:"How dollar limits work"}),el("p",{text:data.spend_note}))));
 }
 $("#saveBudget").addEventListener("click", async function () {
   if (!canEdit) return; this.disabled = true;
@@ -540,6 +604,7 @@ $("#saveBudget").addEventListener("click", async function () {
   finally { this.disabled = !canEdit; }
 });
 
+let helpQueued=false;new MutationObserver(()=>{if(helpQueued)return;helpQueued=true;queueMicrotask(()=>{helpQueued=false;compactHelp()})}).observe(document.getElementById("look"),{childList:true,subtree:true});
 init().then(() => { if (canEdit) { docsFreshness(false); loadBudget().catch((e) => { $("#budgetStatus").textContent = e.message; }); } updateVis(); setTimeout(updateVis, 500); }).catch((e) => say(e.message, true));
 })();
 
