@@ -24,6 +24,20 @@ class Engine:
         self._cache = {}
         self.prompts = promptmod.PromptStore("")
 
+    def validate_scope(self, scope):
+        if not scope: return None
+        if not isinstance(scope, dict) or set(scope) - {"source", "document"}:
+            raise ValueError("Scope needs a source and optional local document")
+        sid = scope.get("source"); doc = scope.get("document")
+        if sid not in self.connectors: raise ValueError("Unknown scoped source")
+        if doc:
+            conn = self.connectors[sid]
+            if not hasattr(conn, "docs") or not isinstance(doc, str) or len(doc) > 400:
+                raise ValueError("Document scope requires a local document")
+            if doc not in {d.get("document") for d in conn.docs}:
+                raise ValueError("Scoped document no longer exists")
+        return {"source": sid, **({"document": doc} if doc else {})}
+
     # optional live web source, switched on from the Configuration page
     WEB_ID = "web"
 
@@ -105,8 +119,10 @@ class Engine:
         lf.avg = sum(len(d["tok"]) for d in lf.docs) / n
         return lf.search(question, self.cfg["retrieval"]["top_k"])
 
-    def retrieve(self, question, source_ids=None, owner=None):
-        ids = [s for s in (source_ids or list(self.connectors)) if s in self.connectors]
+    def retrieve(self, question, source_ids=None, owner=None, scope=None):
+        ids = [s for s in (list(self.connectors) if source_ids is None else source_ids) if s in self.connectors]
+        if scope:
+            ids = [scope["source"]] if scope["source"] in ids else []
         refresh_errors = {}
         for sid in list(ids):
             conn = self.connectors[sid]
@@ -116,8 +132,8 @@ class Engine:
                 except OSError:
                     ids.remove(sid); refresh_errors[sid] = "Local folder unavailable"
                     self._cache.clear()
-        extra = self._uploads_evidence(owner, question)
-        key = (question.lower().strip(), tuple(sorted(ids)), owner if extra else None, len(extra),
+        extra = self._uploads_evidence(owner, question) if source_ids is None and not scope else []
+        key = (json.dumps(scope, sort_keys=True), question.lower().strip(), tuple(sorted(ids)), owner if extra else None, len(extra),
                tuple((sid, getattr(self.connectors[sid], "revision", "")) for sid in sorted(ids)))
         if key in self._cache and not refresh_errors:
             return self._cache[key]
@@ -130,10 +146,12 @@ class Engine:
             out = []
             for qq in qs:
                 ck = hashlib.sha1(("%s|%s|%d" % (sid, qq.lower(), k)).encode()).hexdigest()
-                hit = self._disk_get(ck, sid)
+                hit = None if scope else self._disk_get(ck, sid)
                 if hit is None:
-                    hit = self.connectors[sid].search(qq, k)
-                    self._disk_put(ck, hit, sid)
+                    if scope and scope.get("document"):
+                        hit = self.connectors[sid].search(qq, k, documents=[scope["document"]])
+                    else: hit = self.connectors[sid].search(qq, k)
+                    if not scope: self._disk_put(ck, hit, sid)
                 out += hit
             return sid, out
 
@@ -383,12 +401,13 @@ class Engine:
             lines.append("- " + t + " [" + str(e.get("n")) + "]")
         return "\n\n".join([lines[0], "\n".join(lines[1:])]) if len(lines) > 1 else lines[0]
 
-    def ask_stream(self, owner, chat, question, sources=None, style="standard", topic=None, new_topic=False, use_cache=True, temporary=False, temp_history=None, use_profile=False):
+    def ask_stream(self, owner, chat, question, sources=None, style="standard", topic=None, new_topic=False, use_cache=True, temporary=False, temp_history=None, use_profile=False, scope=None):
         """Yield ('meta', {...}), ('token', str)..., ('done', result). Same behaviour as ask()."""
         t0 = time.time()
         q = str(question or "").strip()
         if not q or len(q) > 2000:
             raise ValueError("Question must be 1-2000 characters")
+        scope = self.validate_scope(scope)
         mem_on = self.cfg["memory"]["enabled"]
         profile = ""
         if temporary:
@@ -401,7 +420,7 @@ class Engine:
             standalone = self.standalone(q, history, summary)
             blocked = self.check_question(standalone)
             yield "progress", {"stage": "sources", "label": "Checking selected sources"}
-            evidence, errors = ([], []) if blocked else self.retrieve(standalone, sources, None)
+            evidence, errors = ([], []) if blocked else self.retrieve(standalone, sources, None, scope)
         else:
             self.store.chat(owner, chat)
             if topic:
@@ -412,12 +431,13 @@ class Engine:
                 topic = self.store.new_topic(owner, q[:80])
             history = self.store.topic_turns(owner, topic, 12) if mem_on else []
             summary = self.store.topic(owner, topic)["summary"] if mem_on else ""
+            if scope: history = []; summary = ""
             profile = self.store.get_profile(owner) if use_profile else ""
             yield "progress", {"stage": "context", "label": "Preparing question context"}
             standalone = self.standalone(q, history, summary)
             blocked = self.check_question(standalone)
             yield "progress", {"stage": "sources", "label": "Checking selected sources"}
-            evidence, errors = ([], []) if blocked else (self.retrieve(standalone, sources, owner) if use_cache else self._fresh(standalone, sources, owner))
+            evidence, errors = ([], []) if blocked else (self.retrieve(standalone, sources, owner, scope) if use_cache else self._fresh(standalone, sources, owner, scope))
         yield "progress", {"stage": "ranking", "label": "Selecting relevant passages"}
         evidence = self.filter_relevant(standalone, evidence)
         yield "meta", {"standalone": standalone, "evidence": evidence, "source_errors": errors}
@@ -461,6 +481,7 @@ class Engine:
             tid = None
         else:
             tid = self.store.add_turn(chat, topic, q, standalone, answer, evidence, ledger, style)
+            if scope: self.store.save_state(owner, "scope-" + tid, scope)
             if mem_on:
                 self._summarize(owner, topic)
             if self.store.chat(owner, chat)["title"] == "New chat":
@@ -468,7 +489,7 @@ class Engine:
         yield "progress", {"stage": "followups", "label": "Finding related questions"}
         fu = self.followups(q, answer, evidence, [t.get("question", "") for t in history[-6:]])
         yield "done", {"seconds": round(time.time() - t0, 1), "followups": fu, "id": tid, "chat": chat, "topic": topic, "question": q, "standalone": standalone, "answer": answer,
-                       "evidence": evidence, "ledger": ledger, "style": style, "source_errors": errors, "temporary": temporary}
+                       "evidence": evidence, "ledger": ledger, "style": style, "source_errors": errors, "temporary": temporary, "scope": scope}
 
     def ask(self, owner, chat, question, sources=None, style="standard", topic=None, new_topic=False, use_cache=True):
         q = str(question or "").strip()
@@ -535,9 +556,9 @@ class Engine:
                 seen.add(r["question"]); out.append({"turn": r["id"], "chat": r["chat"], "question": r["question"], "score": round(score, 2)})
         return sorted(out, key=lambda x: -x["score"])[:limit]
 
-    def _fresh(self, q, sources, owner=None):
+    def _fresh(self, q, sources, owner=None, scope=None):
         self._cache.clear()
-        return self.retrieve(q, sources, owner)
+        return self.retrieve(q, sources, owner, scope)
 
     _STOP = set("what which when where does about this that with from your have into tell more than then them they their there were will would could should the and for are how why who is it of to in on a an do did can".split())
 
