@@ -1,6 +1,7 @@
 """Small threaded HTTP server: static UI plus a JSON API. Standard library only."""
 import uuid, hmac, json, mimetypes, os, re, sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from socketserver import TCPServer
 from urllib.parse import urlparse, parse_qs
 import base64
 from . import websearch, schema, providers, fetch, pdfread, secrets, hardware, theme as themes, generators, prompts as promptmod
@@ -478,6 +479,13 @@ def _esc(s):
     return re.sub(r"[<>\"'&]", lambda m: "&#%d;" % ord(m.group()), str(s))
 
 
+class LocalHTTPServer(ThreadingHTTPServer):
+    def server_bind(self):
+        # HTTPServer's reverse-DNS lookup is unused here and can stall on macOS.
+        TCPServer.server_bind(self)
+        self.server_name, self.server_port = self.server_address[:2]
+
+
 def serve(path, host=None, port=None):
     cfg = schema.load(path)
     store = Store(os.path.join(cfg["_dir"], cfg["storage"]["path"]) if not os.path.isabs(cfg["storage"]["path"]) else cfg["storage"]["path"])
@@ -500,7 +508,7 @@ def serve(path, host=None, port=None):
         pass
     engine.prompts = promptmod.PromptStore(os.path.dirname(os.path.abspath(store.path)) if store.path != ":memory:" else "")
     host, port = host or cfg["server"]["host"], port or cfg["server"]["port"]
-    srv = ThreadingHTTPServer((host, port), make_handler(cfg, engine))
+    srv = LocalHTTPServer((host, port), make_handler(cfg, engine))
     print("%s running at http://%s:%d  (provider: %s)" % (cfg["app"]["title"], host, port, cfg["provider"]["type"]))
     try:
         srv.serve_forever()
