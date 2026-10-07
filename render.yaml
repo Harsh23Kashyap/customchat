@@ -1,6 +1,7 @@
 # One-click Render deploy: chat only, no configuration page.
 # 1. Push this repo to your GitHub. 2. In Render choose New > Blueprint and pick the repo.
-# 3. Paste your OPENAI_API_KEY when asked (it stays in Render, never in the repo).
+# 3. Select the AI provider in app.yaml first. Default minimal app = offline Demo.
+#    A key alone does not switch mock to OpenAI. Paste a key only for the selected provider.
 services:
   - type: web
     name: customchat
