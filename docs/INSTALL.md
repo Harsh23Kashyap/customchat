@@ -2,27 +2,21 @@
 
 Choose uvx as the main route. It runs a Python tool in an isolated cached environment and can obtain Python if missing. CustomChat keeps your workspace outside that cache. You need uv first; the Git route also needs Git and internet. This is a prerequisite-based choice, not a claim that most people already have uv installed.
 
-## Available now, no package registry publication
+## Published package and one-command start
 
-After installing uv from its official instructions, run:
-
-```sh
-uvx --from git+https://github.com/Harsh23Kashyap/customchat.git@main customchat start
-```
-
-This creates `customchat-app` in your current directory and starts offline Demo on localhost. It opens a browser where supported. Read the printed URL; 8080 may be busy. Press Ctrl+C to stop. Run the same command again to keep using the same workspace. Existing app files are never overwritten; an existing directory without app.yaml is rejected rather than changed.
+CustomChat 0.1.0 is published at https://pypi.org/project/customchat-app/ . With uv already installed:
 
 ```sh
-# Different workspace, no browser launch, chat-only interface:
-uvx --from git+https://github.com/Harsh23Kashyap/customchat.git@main customchat start --directory my-chat --no-browser --lock-config
-# Keep the command installed on PATH instead:
-uv tool install git+https://github.com/Harsh23Kashyap/customchat.git@main
-customchat start
+uvx customchat-app start
+# Pin a release:
+uvx customchat-app@0.1.0 start
+# Choose a workspace and hide configuration:
+uvx customchat-app start --directory my-chat --no-browser --lock-config
 ```
 
-`main` is a moving source, not a release pin. For reproducibility, replace `main` with a verified commit or tag. This installs software from the repo, not from PyPI. Do not run an unqualified `uvx customchat` yet: no registry release was made here and ownership/name availability has not been verified.
+For a fresh computer, use the README's OS-specific one-command bootstrap. It downloads uv and managed Python if absent, then runs the pinned package with `uv tool run`, the same operation as uvx. Git is not needed. The app starts offline Demo, opens or prints its local URL and preserves your workspace outside the tool environment. Ctrl+C stops it. API keys are only needed if you choose a live AI provider.
 
-The default is Demo, with local passages and no key or model call. For AI, configure your workspace's app.yaml provider or use the unlocked Configuration page. Keys stay in named environment variables/private local storage, never YAML or git. `--lock-config` hides configuration for this run; remove it on restart to configure. No public hosting, account creation or cloud spend is involved.
+Do not use `uvx customchat` or `pip install customchat`: that distribution belongs to another project.
 
 ## Installer entry scripts
 
@@ -66,7 +60,7 @@ The pipx route follows its documented source-install syntax but was not executed
 
 A wheel and source distribution were built locally. In a new home/workspace and empty uv cache, the wheel installed independently of the repo and served health 200, mock provider, a Demo answer with 2 local citations, and 404 for settings in locked mode. The Git source command was also executed with a new home and empty uv cache, resolving commit eecc832bf57821692d1cceddf04f995624090d77, and passed the same health/chat/lock checks. Packaged web assets and Demo template were inspected. API-verified; browser pixels not inspected for this install path. Existing source tests plus launcher regressions pass. The original uvx test was Linux only. The later installer matrix passed on real Ubuntu/macOS/Windows runners, each with uv preinstalled; WSL, Docker and public hosting remain unverified.
 
-Packaging is prepared, not published. Before a short PyPI command: verify package-name ownership/availability, choose a release version, test the release artifact, then get approval to publish. No PyPI/npm credentials or publishing were used.
+Version 0.1.0 passed build and six artifact/bootstrap acceptance jobs on Ubuntu/macOS/Windows with Python 3.10/3.12: https://github.com/Harsh23Kashyap/customchat/actions/runs/37623429389 . The published package was then installed and run in a fresh Linux home/cache with no uv/Python/Git available, passing health 200 and cited Demo. Publication completed after account verification and token-free trusted-publisher setup.
 
 ## Sources checked October 7, 2026
 
@@ -83,4 +77,4 @@ Packaging is prepared, not published. Before a short PyPI command: verify packag
 
 The README now uses `start.sh` / `start.ps1`: they detect or install uv, obtain managed Python 3.12, and invoke `uv tool run` (uvx) in an isolated tool environment. The archive source does not require Git. This differs from the older `install.sh` route above, which uses an installer-owned venv. Both keep user workspaces outside the software environment.
 
-`tests/start_bootstrap.py` runs the new bootstrap in a disposable home and empty cache, with uv, uvx, Python and Git absent from PATH, then checks health 200 and a Demo answer with citations. Linux passed with both the wheel and the real remote archive. macOS/Windows are checked by the release workflow; do not treat Linux alone as proof for those OSes. The pip venv artifact test also passed dependency checks, offline Demo and isolation from a deliberately broken host yaml package.
+`tests/start_bootstrap.py` runs the new bootstrap in a disposable home and empty cache, with uv, uvx, Python and Git absent from PATH, then checks health 200 and a Demo answer with citations. Linux passed with the wheel, real remote archive and published PyPI package. The wheel bootstrap also passed on macOS/Windows in the six-job release workflow. The remote PyPI bootstrap was executed locally on Linux only. The pip venv artifact test also passed dependency checks, offline Demo and isolation from a deliberately broken host yaml package.
