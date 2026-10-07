@@ -55,7 +55,7 @@ customchat run my-chat/app.yaml
 
 When using the manual route, prefix these commands with `python -m` instead of the `customchat` executable. Edit `app.yaml` and add documents in the app folder. [Configuration reference](docs/DESIGN.md).
 
-For a chat-only interface, use `customchat start --lock-config` or set `CUSTOMCHAT_CONFIG=off`. Configuration pages and settings/key/model endpoints then return404. Remove the lock on restart to configure again.
+For a chat-only interface, use `customchat start --lock-config` or set `CUSTOMCHAT_CONFIG=off`. Configuration pages and settings/key/model endpoints then return 404. Remove the lock on restart to configure again.
 
 ## 📚 More
 
@@ -68,4 +68,4 @@ CustomChat is the conversation counterpart of [Custom-Nerd](https://github.com/H
 
 ## Authors and license
 
-Harsh Kashyap and contributors. See [LICENSE](LICENSE).
+Harsh Kashyap, Shela Wu. Advisor: Dennis Shasha. MIT license. See [LICENSE](LICENSE).
