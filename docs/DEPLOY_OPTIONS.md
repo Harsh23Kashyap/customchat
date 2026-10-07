@@ -14,7 +14,7 @@ Written comparison only. Nothing here was deployed. Prices and free tiers change
 
 ## Recommendation
 - Client wants it on their laptop or office machine: **B**. It already handles Python checks, a private virtual environment, retries, and a key prompt.
-- Client wants a public link with the least work and no server skills: **C**. One blueprint, key pasted in Render, nothing else to run. It needs a paid instance because of the disk; check the current price.
+- Client wants a public link with the least work and no server skills: **C**. Configure the app provider first, then use the blueprint and paste the key in Render. The default minimal app is offline Demo (mock); a key alone does not switch it to AI. It needs a paid instance because of the disk; check the current price.
 - Client insists on their own AWS: **D**. It is one box, which is the simplest AWS story. Skip E unless they need the static files served from S3.
 
 ## E: why the S3 frontend is not the easy path
@@ -26,8 +26,8 @@ Idea: the client's own coding agent does B or D for them. Untested, so treat it 
 ```
 Set up CustomChat for me.
 1. Clone https://github.com/Harsh23Kashyap/customchat and open the folder.
-2. Run: python3 setup_and_run.py --check   (fix anything it reports, then run it without --check).
-3. When it asks for an OpenAI API key, stop and ask me to type it myself. Do not print it, store it in the repo, or send it anywhere.
+2. Run: python3 setup_and_run.py --no-key-prompt --no-browser (first start creates the environment). Check /api/health, then stop it. Run python3 setup_and_run.py --check.
+3. Ask whether I want offline Demo or an AI provider. For AI, configure the app provider before --lock-config and ask me to enter any key privately. A key alone does not change the default mock provider. Do not print keys or store them in the repo.
 4. Start it in chat-only mode: python3 setup_and_run.py --port 8080 --lock-config
 5. Open http://localhost:8080 and tell me when the chat answers.
 Do not create cloud accounts, buy anything, or open ports to the internet unless I say so.
