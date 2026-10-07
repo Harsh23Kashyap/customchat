@@ -634,3 +634,6 @@ html[data-motion=none] .hero .ex button,html[data-motion=none] .recent-questions
 .branch-notice button{background:var(--lime);color:#17213d;border-radius:10px;padding:9px 14px;text-decoration:none;font-weight:700;white-space:nowrap}
 @media(max-width:760px){.branch-notice{flex-wrap:wrap;gap:10px;font-size:13px}.branch-notice button{min-height:40px}}
 .hero .ex button::after,.recent-questions .ex button::after{color:inherit!important;background:currentColor!important}
+.pipeline-status{padding:8px 20px;font-size:12px;line-height:1.5;color:var(--brand);background:var(--soft);border-bottom:1px solid var(--line);min-height:34px}.pipeline-status[hidden]{display:none}
+#readingDialog,#pipelineStatus{scroll-margin:12px}
+@media(prefers-reduced-motion:reduce){.tk{animation:none!important}.thread{scroll-behavior:auto!important}}
