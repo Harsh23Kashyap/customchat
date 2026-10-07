@@ -8,7 +8,7 @@ from . import websearch, schema, providers, fetch, pdfread, secrets, hardware, t
 from .pipeline import Engine
 from .store import Store
 from .accounts import Accounts
-from .exports import bibtex, pdf_bytes, chat_markdown
+from .exports import bibtex, pdf_bytes, chat_markdown, answer_markdown
 import time, collections
 
 WEB = os.path.join(os.path.dirname(__file__), "web")
@@ -492,9 +492,12 @@ def make_handler(cfg, engine):
                 t = permissions.view(cfg,o,store.turn(o, qs.get("turn", "")))
                 return self._send(200, bibtex(t["evidence"]).encode(), "text/plain; charset=utf-8",
                                   {"Content-Disposition": 'attachment; filename="references.bib"'})
+            if path == "/api/answer-markdown":
+                t=permissions.view(cfg,o,store.turn(o,qs.get('turn','')))
+                return self._send(200,answer_markdown(cfg['app'],t).encode(),'text/markdown; charset=utf-8',{'Content-Disposition':'attachment; filename="answer.md"'})
             if path == "/api/pdf":
                 t = permissions.view(cfg,o,store.turn(o, qs.get("turn", "")))
-                return self._send(200, pdf_bytes(cfg["app"]["title"], t), "application/pdf",
+                return self._send(200, pdf_bytes(cfg["app"]["title"], t,themestore.value.get("light",{}).get("brand",cfg["app"]["accent"]),cfg["app"].get("tagline","")), "application/pdf",
                                   {"Content-Disposition": 'attachment; filename="answer.pdf"'})
             return self._send(404, {"error": "Not found"})
 
