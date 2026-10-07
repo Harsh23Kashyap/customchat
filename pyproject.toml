@@ -22,3 +22,7 @@ customchat = ["web/*", "templates/minimal/app.yaml", "templates/minimal/docs/*.m
 
 [project.urls]
 Repository = "https://github.com/Harsh23Kashyap/customchat"
+
+[project.optional-dependencies]
+documents = ["pypdf>=4"]
+semantic = ["sentence-transformers>=3"]
