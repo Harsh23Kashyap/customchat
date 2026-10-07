@@ -77,7 +77,7 @@ function promptsPanel(host) {
   const sel = el("select", { "aria-label": "Step to try" });
   const keys = [["answer", "Answer"], ["queries", "Search queries"], ["standalone", "Standalone question"], ["relevance", "Relevance filter"], ["faithfulness", "Support check"], ["followups", "Follow-ups"], ["question_check", "Question check"], ["summary", "Summary"]];
   keys.forEach(([k, t]) => sel.append(el("option", { value: k, text: t })));
-  const q = el("input", { placeholder: "Sample question", "aria-label": "Sample question", value: "What does the refund policy say?" });
+  const q = el("input", { placeholder: "Sample question", "aria-label": "Sample question", value: "What are the main points in this document?" });
   const ps = el("textarea", { rows: "4", placeholder: "Sample passages (optional), one per line", "aria-label": "Sample passages" });
   const out = el("div", { class: "review", role: "status", "aria-live": "polite" });
   const stat = el("small", { class: "h" }); const diff = el("div", { class: "diff" });
@@ -95,7 +95,7 @@ function promptsPanel(host) {
 let keyStatus = {};
 async function codePanel(host) {
   host.replaceChildren(el("div", { class: "pvhead" }, el("b", { text: "Sources and search keys" })), el("p", { class: "h", text: "Optional. Keys stay on this computer." }));
-  host.append(el("div", { class: "gcard why2" }, whySvg(), el("p", { class: "h", text: "A key lets answers use the live web too." })));
+
   let src = { on: false, provider: "" }, cat = [];
   try { const d = await api("/api/websearch/status"); keyStatus = Object.fromEntries(d.providers.map((p) => [p.id, p.has_key])); src = d.source || src; cat = d.catalog || []; } catch (e) { }
   const sst = el("small", { class: "h", role: "status" });
@@ -120,23 +120,24 @@ async function codePanel(host) {
     const card = (el("details", { class: "stage" }, el("summary", {}, el("b", { text: p.name }), el("small", { text: keyStatus[p.id] ? "Key saved" : "No key" })), el("div", { class: "sbody" }, el("p", { text: p.pro }), el("p", { class: "h", text: p.free }), el("div", { class: "keyrow" }, key, save, test, clear), st, stepsBlock({ url: p.url, help: p.docs, steps: STEPS })))); cards.push(card); host.append(card);
   }
   const mb = el("button", { type: "button", class: "chipmore", onclick: () => { more = !more; cards.forEach((c, i) => (c.hidden = i >= 3 && !more)); mb.textContent = more ? "View fewer" : "View more"; } }, "View more"); cards.forEach((c, i) => (c.hidden = i >= 3));
-  if (cards.length > 3) host.append(mb);
+  cards.forEach(c=>c.hidden=false);
+  const catalogs=host.querySelector(".gcard");const web=host.querySelectorAll(".gcard")[1];
+  const catOptions=el("details",{class:"source-options"},el("summary",{text:"Add reference sources"}),catalogs);
+  const keys=el("details",{class:"source-options"},el("summary",{text:"Search provider keys"}),...cards);
+  const providers=web.querySelector(".picks");const moreProviders=el("details",{class:"source-options"},el("summary",{text:"Choose search providers"}),providers);web.append(moreProviders);
+  host.replaceChildren(el("div",{class:"head"},el("div",{},el("b",{text:"Sources and APIs"}),el("small",{text:"Your documents work without extra keys."}))),web,keys,catOptions);
+  catalogs.querySelectorAll("small")[0].textContent="Optional reference libraries.";
+  for(const c of cards){const key=c.querySelector("input");const open=c.querySelector("summary");open.addEventListener("click",()=>{if(!c.open)setTimeout(()=>key.focus(),100)});}
+
 }
 
 function boot() {
-  if (!$("#pvbox") || !$("#sec-prompts")) return setTimeout(boot, 200);
+  if (!$("#pvbox") || !$("#menu a")) return setTimeout(boot, 200);
   modelGuide();
-  const ctx = ctxBox();
-  const state = { which: "" };
-  const apply = async (w) => {
-    if (w === state.which) return; state.which = w;
-    if (w) document.querySelectorAll("#menu a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#sec-" + w));
-    $("#pvbox").hidden = w === "prompts" || w === "code"; ctx.hidden = !(w === "prompts" || w === "code");
-    if (w === "prompts") promptsPanel(ctx); else if (w === "code") await codePanel(ctx);
-  };
-  const ids = ["sec-prompts", "sec-code"];
-  const io = new IntersectionObserver((es) => { for (const e of es) { if (e.isIntersecting) apply(e.target.id.replace("sec-", "")); else if (state.which === e.target.id.replace("sec-", "")) apply(""); } }, { rootMargin: "-25% 0px -60% 0px" });
-  ids.forEach((i) => io.observe($("#" + i)));
+  const host=el("section",{class:"tile",id:"sec-search"});
+  $("#sec-model").after(host);codePanel(host);
+
+  const io=new IntersectionObserver(es=>{for(const e of es)if(e.isIntersecting){$("#pvbox").hidden=false;document.querySelectorAll("#menu a").forEach(a=>a.classList.toggle("on",a.getAttribute("href")==="#sec-search"));}},{rootMargin:"-20% 0px -70% 0px"});io.observe(host);
 }
 boot();
 })();

@@ -63,7 +63,7 @@ function buildChips(list) {
   if (list) chipList = list; const seg = $("#seg"); seg.replaceChildren();
   const top = TOP.filter((p) => chipList.includes(p)), rest = chipList.filter((p) => !top.includes(p));
   if (rest.includes(cur.provider)) chipsMore = true;
-  for (const p of top.concat(chipsMore ? rest : [])) { const b = el("button", { type: "button", "data-p": p, role: "radio", "aria-checked": String(p === cur.provider) }, mark(p), NAMES[p] || p); b.addEventListener("click", () => { if (canEdit) { cur = { ...read(), provider: p, model: "" }; draw(); pvFollow(); } }); seg.append(b); }
+  for (const p of top.concat(chipsMore ? rest : [])) { const b = el("button", { type: "button", "data-p": p, role: "radio", "aria-checked": String(p === cur.provider) }, mark(p), NAMES[p] || p); b.addEventListener("click", () => { if (canEdit) { cur = { ...read(), provider: p, model: "" };$("#testres").textContent="";$("#testres").className="testres"; draw(); pvFollow(); } }); seg.append(b); }
   if (rest.length) { const m = el("button", { type: "button", class: "chipmore" }, chipsMore ? "Show fewer" : "Load more"); m.addEventListener("click", () => { chipsMore = !chipsMore; buildChips(); }); seg.append(m); }
 }
 /* ---------- local model suggestions (Ollama) ---------- */
@@ -77,11 +77,11 @@ const CLOUD_PICKS = [
 async function ollamaPanel() {
   const box = $("#ollamabox"); if (activeSec !== "model") return; box.hidden = false; box.dataset.loaded = "1";
   box.replaceChildren(el("div", { class: "h", text: "Looking at this computer..." }));
-  let r; try { r = await api("/api/hardware?base_url=" + encodeURIComponent($("#base").value.trim())); } catch (e) { box.replaceChildren(el("div", { class: "h", text: e.message })); return; }
+  let r; try { r = await api("/api/hardware?base_url=" + encodeURIComponent($("#base").value.trim())); } catch (e) { box.dataset.loaded="";box.replaceChildren(el("b",{text:"Suggested local models"}),el("div",{class:"h",text:e.message}),el("button",{type:"button",class:"mini",text:"Retry local suggestions",onclick:ollamaPanel})); return; }
   const hw = r.hardware, rec = r.recommendation, det = hwView === "tech";
   const tabs = el("div", { class: "seg mini", role: "radiogroup", "aria-label": "Detail level" });
   for (const [v, t] of [["simple", "Simple"], ["tech", "Details"]]) tabs.append(el("button", { type: "button", role: "radio", "aria-checked": String(hwView === v), onclick: () => { hwView = v; ollamaPanel(); } }, t));
-  const head = el("div", { class: "ohead" }, el("b", { text: "Best models for this computer" }), tabs);
+  const head = el("div", { class: "ohead" }, el("b", { text: "Suggested local models" }), tabs);
   const cards = el("div", { class: "ocards" });
   if (!rec.picks.length) cards.append(el("div", { class: "h", text: rec.note || "No suggestion available." }));
   rec.picks.forEach((p) => {
@@ -102,7 +102,7 @@ async function ollamaPanel() {
 }
 function modelAction(tag, installed) {
   const wrap = el("div", { class: "mact" });
-  const use = () => { cur.model = tag; loadModels(true).then(() => { $("#modelPick").value = tag; pickChanged(); pvFollow(); }); };
+  const use = () => { cur = {...read(),provider:"ollama",model:tag,base_url:cur.provider==="ollama"?$("#base").value.trim():"http://localhost:11434"};draw();loadModels(true).then(() => { const pick=$("#modelPick");pick.value=[...pick.options].some(o=>o.value===tag)?tag:OTHER;$("#model").value=tag;pickChanged();pvFollow(); }); };
   if (installed) { wrap.append(el("span", { class: "okt", text: "Installed" }), el("button", { type: "button", class: "mini", onclick: use }, "Use this model")); return wrap; }
   const bar = el("div", { class: "pbar", hidden: "" }, el("i")), msg = el("span", { class: "h" });
   const btn = el("button", { type: "button", class: "mini dl", disabled: canEdit ? undefined : "" }, "Download");
@@ -173,7 +173,7 @@ const SECTIONS = [
     { key: "density", label: "Spacing", help: "Compact fits more on screen. Roomy is airy.", type: "select" },
     { key: "shadow", label: "Shadow", help: "Depth of the main panel.", type: "select" },
     { key: "bubble", label: "Message style", help: "Soft: filled bubbles. Flat: no bubble for answers. Outline: thin borders.", type: "select" } ] },
-  { id: "emoji", icon: "\u263A", tone: "purple", title: "Emojis and icons", sub: "Avatars and buttons", help: "Type or paste one emoji. Leave empty for the default icon.", fields: [
+  { id: "emoji", icon: "\u263A", tone: "purple", title: "Emojis and icons", sub: "Avatars and buttons", help: "Choose an emoji. Use app default to reset.", fields: [
     { key: "emoji_bot", label: "Assistant avatar", help: "Next to every answer.", type: "emoji", ph: "Optional" },
     { key: "emoji_you", label: "Your avatar", help: "Next to your messages.", type: "emoji", ph: "Optional" },
     { key: "emoji_hero", label: "Welcome emoji", help: "On an empty chat. Falls back to the assistant avatar.", type: "emoji", ph: "Optional" },
@@ -240,7 +240,7 @@ function pushPreview() {
   const frame=$("#pv");const reduced=matchMedia("(prefers-reduced-motion:reduce)").matches||["calm","none"].includes(t.motion);
   if(!reduced){frame.classList.add("preview-changing");setTimeout(()=>frame.classList.remove("preview-changing"),160)}
   const w = $("#pv").contentWindow; if (w) w.postMessage({ ccTheme: t }, location.origin);
-  const w2 = $("#pv").contentWindow; if (w2 && w2.CCTheme) { /* same-origin: also apply the wording/emoji source */ w2.CCTheme.value = t; }
+  const w2 = $("#pv").contentWindow; if (w2 && w2.CCTheme) { /* same-origin: also apply the wording/emoji source */ w2.CCTheme.apply(t); }
 }
 function updateVis() {
   if (!theme) return; const st = theme.bg_style, pt = theme.pattern;
@@ -264,7 +264,7 @@ function logoControl(f, current) {
   const paintPage = () => { const c = theme.light || {}; onpage.style.background = c.bg || "#f8f4e9"; onpage.style.color = c.ink || "#222"; pgname.textContent = theme.txt_title || "Your app"; };
   paintPage();
   const stage = el("div", { class: "logostage", hidden: current ? undefined : "" }, el("figure", {}, before, el("figcaption", { text: "Original" })), el("figure", {}, prev, el("figcaption", { text: "After blending" })), el("figure", {}, onpage, el("figcaption", { text: "In your app" })));
-  const file = el("input", { type: "file", accept: "image/png,image/jpeg,image/webp,image/gif", id: "f-logo-file", "aria-label": "Choose a logo picture" }); file.style.cssText = "position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"; const fileBtn = el("label", { class: "go ghost filebtn", for: "f-logo-file" }, "Choose a picture");
+  const file = el("input", { type: "file", accept: ".png,.jpg,.jpeg,.webp,.gif,image/*", id: "f-logo-file", "aria-label": "Choose a logo picture" }); file.style.cssText = "position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"; const fileBtn = el("label", { class: "go ghost filebtn", for: "f-logo-file" }, "Choose a picture");
   const fe = el("input", { type: "range", min: "0", max: "50", value: "25", "aria-label": "Edge softness", disabled: "" });
   const rb = el("input", { type: "checkbox", disabled: "" });
   const note = el("div", { class: "h", text: current ? "Choose a new picture to adjust it." : "PNG, JPG, WebP or GIF. Stays on this computer." });
@@ -288,11 +288,11 @@ function logoControl(f, current) {
     prev.src = url; prev.hidden = false; pgimg.src = url; onpage.hidden = false; paintPage(); rm.hidden = false; setv(f, url);
   }
   file.addEventListener("change", () => {
-    const fl = file.files[0]; if (!fl) return; if (fl.size > 4000000) { say("That picture is over 4 MB. Choose a smaller one.", true); return; }
-    const u = URL.createObjectURL(fl), im = new Image();
-    im.onload = () => { orig = im; before.src = im.src; before.hidden = false; stage.hidden = false; fe.disabled = rb.disabled = false; note.textContent = "Soft edges and background removal run on this computer."; render(); say("Picture added. The preview updates now."); /* keep the object URL while the Original tile shows it */ };
-    im.onerror = () => { say("That file could not be read as a picture.", true); URL.revokeObjectURL(u); };
-    im.src = u;
+    const fl = file.files[0]; if (!fl) return;file.value="";if(fl.size>20000000){note.textContent="That picture is over 20 MB. Choose a smaller one.";say(note.textContent,true);return}note.textContent="Reading "+fl.name+"...";
+    const im = new Image();
+    im.onload = () => { orig = im; before.src = im.src; before.hidden = false; stage.hidden = false; fe.disabled = rb.disabled = false; note.textContent = "Soft edges and background removal run on this computer."; try{render();derive.disabled=false;note.textContent="Added "+fl.name+". Preview updated.";say(note.textContent)}catch(error){note.textContent="Could not process this picture: "+error.message;say(note.textContent,true)}; /* keep the object URL while the Original tile shows it */ };
+    im.onerror=()=>{note.textContent="Could not decode "+fl.name+". Export it as PNG or JPG and try again.";say(note.textContent,true)};
+    const reader=new FileReader();reader.onload=()=>{im.src=reader.result};reader.onerror=()=>{note.textContent="Cannot read "+fl.name+". Download it from iCloud locally, then try again.";say(note.textContent,true)};reader.readAsDataURL(fl);
   });
   fe.addEventListener("input", () => { st.feather = +fe.value; render(); });
   rb.addEventListener("change", () => { st.strip = rb.checked; render(); });
@@ -330,14 +330,13 @@ const EMOJI_GROUPS={
  "Symbols":[["❤️","heart love"],["💚","green heart"],["💛","yellow heart"],["💜","purple heart"],["✅","check done"],["❌","cross no"],["➕","plus"],["➡️","arrow right send"],["⬆️","arrow up send"],["♾️","infinity"]]
 };
 function emojiControl(f,id,v){
- const text=el("input",{id,type:"text",class:"emoji",maxlength:8,value:v||"","aria-label":f.label}),choose=el("button",{type:"button",class:"mini",text:"Choose emoji",disabled:canEdit?undefined:""}),box=el("div",{class:"emoji-control"},text,choose);
- const animation=el("select",{"aria-label":f.label+" animation",disabled:canEdit?undefined:""}); for(const mode of ["none","bounce","pulse","wiggle"])animation.append(el("option",{value:mode,text:mode[0].toUpperCase()+mode.slice(1),selected:(theme[f.key+"_motion"]||"none")===mode?"":undefined}));animation.addEventListener("change",()=>{theme[f.key+"_motion"]=animation.value;changed()});box.append(animation);
- text.addEventListener("input",()=>setv(f,text.value));
- choose.addEventListener("click",()=>{
-  const dialog=el("dialog",{class:"emoji-dialog","aria-label":"Choose "+f.label.toLowerCase()}),search=el("input",{type:"search",placeholder:"Search emoji","aria-label":"Search emoji"}),tabs=el("div",{class:"emoji-tabs"}),grid=el("div",{class:"emoji-grid"}),close=el("button",{type:"button",class:"mini",text:"Close"}),clear=el("button",{type:"button",class:"mini",text:"Use app default"});
-  let group="Smileys";const draw=()=>{const q=search.value.trim().toLowerCase();grid.replaceChildren();const pairs=q?Object.values(EMOJI_GROUPS).flat().filter(([e,n])=>n.includes(q)||e===q):EMOJI_GROUPS[group];for(const [e,n] of pairs)grid.append(el("button",{type:"button",class:"emoji-option",text:e,title:n,"aria-label":n,onclick:()=>{text.value=e;setv(f,e);dialog.close();choose.focus()}}));if(!pairs.length)grid.append(el("small",{text:"No match. You can paste an emoji in the field."}));tabs.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(b.textContent===group&&!q)))};
-  for(const name of Object.keys(EMOJI_GROUPS))tabs.append(el("button",{type:"button",class:"mini",text:name,onclick:()=>{group=name;search.value="";draw()}}));search.addEventListener("input",draw);close.addEventListener("click",()=>dialog.close());clear.addEventListener("click",()=>{text.value="";setv(f,"");dialog.close();choose.focus()});dialog.addEventListener("close",()=>dialog.remove());dialog.append(el("div",{class:"emoji-head"},el("b",{text:"Choose an emoji"}),close),search,tabs,grid,clear);document.body.append(dialog);draw();dialog.showModal();search.focus();
- });return box;
+ const tile=el("button",{id,type:"button",class:"emoji-tile",disabled:canEdit?undefined:"","aria-label":"Choose "+f.label.toLowerCase()}),choose=el("button",{type:"button",class:"mini",text:"Choose emoji",disabled:canEdit?undefined:""}),box=el("div",{class:"emoji-control"},tile,choose);tile.value=v||"";
+ const paint=()=>{tile.replaceChildren(theme[f.key]?CCEmoji.node(theme[f.key],theme[f.key+"_animated"],"",["calm","none"].includes(theme.motion)):document.createTextNode("+"));};paint();
+ const open=()=>{
+  const dialog=el("dialog",{class:"emoji-dialog","aria-label":"Choose "+f.label.toLowerCase()}),search=el("input",{type:"search",placeholder:"Search emoji","aria-label":"Search emoji"}),tabs=el("div",{class:"emoji-tabs"}),grid=el("div",{class:"emoji-grid"}),close=el("button",{type:"button",class:"mini",text:"Close"}),clear=el("button",{type:"button",class:"mini",text:"Use app default"});let group="Animated";
+  const draw=()=>{const q=search.value.trim().toLowerCase();grid.replaceChildren();const pairs=group==="Animated"?Object.entries(CCEmoji.assets).map(([e,a])=>[e,a.name.toLowerCase()]):EMOJI_GROUPS[group];for(const [e,n] of pairs.filter(([e,n])=>!q||n.includes(q)||e===q)){const animated=group==="Animated",b=el("button",{type:"button",class:"emoji-option",title:n,"aria-label":n,onclick:()=>{tile.value=e;theme[f.key+"_animated"]=animated;setv(f,e);paint();dialog.close();choose.focus()}});b.append(CCEmoji.node(e,animated,n,["calm","none"].includes(theme.motion)));grid.append(b)}if(!grid.children.length)grid.append(el("small",{text:"No matching emoji"}));tabs.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(b.textContent===group)))};
+  for(const name of ["Animated",...Object.keys(EMOJI_GROUPS)])tabs.append(el("button",{type:"button",class:"mini",text:name,onclick:()=>{group=name;search.value="";draw()}}));search.addEventListener("input",draw);close.addEventListener("click",()=>dialog.close());clear.addEventListener("click",()=>{tile.value="";theme[f.key+"_animated"]=false;setv(f,"");paint();dialog.close();choose.focus()});dialog.addEventListener("close",()=>dialog.remove());dialog.append(el("div",{class:"emoji-head"},el("b",{text:"Choose an emoji"}),close),search,tabs,grid,el("small",{class:"h",text:"Animated Noto Emoji by Google Fonts · CC BY 4.0. Motion stops with Calm, None or reduced motion."}),clear);document.body.append(dialog);draw();dialog.showModal();search.focus();
+ };choose.addEventListener("click",open);tile.addEventListener("click",open);return box;
 }
 
 function compactHelp(){
@@ -383,21 +382,14 @@ function control(f) {
   if (!canEdit && input.tagName === "SELECT") input.disabled = true;
   const field=el("div", { class: "field" }, el("label", { for: id, class: "flabel" }, f.label), el("span", { class: "h", text: f.help }), input);
   if(["motion","entrance","speed","hover_lift"].includes(f.key)){
-    const demo=el("div",{class:"motion-sample",text:"Sample message"}),status=el("small",{class:"h"}),replay=el("button",{type:"button",class:"mini",text:"Try effect"});
-    const play=()=>{demo.getAnimations().forEach(a=>a.cancel());const quiet=matchMedia("(prefers-reduced-motion:reduce)").matches||["calm","none"].includes(theme.motion);status.textContent=quiet?"Motion off: showing the static sample":theme.entrance==="none"?"No message entrance effect":"Preview: "+theme.entrance;
-      if(quiet)return;
-      const effect=theme.entrance,frames=effect==="slide"?[{opacity:0,transform:"translateY(14px)"},{opacity:1,transform:"none"}]:effect==="pop"?[{opacity:0,transform:"scale(.92)"},{opacity:1,transform:"none"}]:effect==="fade"?[{opacity:0},{opacity:1}]:null;
-      if(frames)demo.animate(frames,{duration:(theme.motion==="subtle"?150:280)*100/theme.speed,easing:"ease-out"});
-    };
-    input.addEventListener("change",play);input.addEventListener("input",play);replay.addEventListener("click",play);demo.addEventListener("pointerenter",()=>{if(theme.hover_lift&&!matchMedia("(prefers-reduced-motion:reduce)").matches&&!["calm","none"].includes(theme.motion))demo.animate([{transform:"none"},{transform:"translateY(-3px)"},{transform:"none"}],{duration:350})});
-    field.append(el("div",{class:"motion-demo"},demo,replay,status));
+    const play=()=>{pushPreview();setTimeout(()=>{const w=$("#pv").contentWindow;if(w?.ccPreviewMotion)w.ccPreviewMotion(theme)},60)};input.addEventListener("change",play);input.addEventListener("input",play);
   }
   return field;
 }
 async function saveSection(s) {
   try {
     const base = clone(saved);
-    for (const f of s.fields) { if (f.colors) { base.light[f.key] = theme.light[f.key]; base.dark[f.key] = theme.dark[f.key]; } else base[f.key] = theme[f.key]; }
+    for (const f of s.fields) { if (f.colors) { base.light[f.key] = theme.light[f.key]; base.dark[f.key] = theme.dark[f.key]; } else {base[f.key] = theme[f.key];if(f.type==="emoji")base[f.key+"_animated"]=theme[f.key+"_animated"];} }
     saved = clone((await api("/api/theme", { theme: base })).theme); changed(); say(s.title + " saved. Other sections keep their last saved values.");
   } catch (e) { say(e.message, true); }
 }
@@ -417,7 +409,7 @@ function pvExtra() {
       el("div", { class: "h", text: "Contrast ratio. 4.5 or more is easy to read (green), 3 to 4.5 only for large text (blue), below 3 is too low (red)." }));
   } else {
     let fam = {}; try { const d = $("#pv").contentDocument, h = d.querySelector(".hero h1, .hero b, h1") || d.body; fam = { body: getComputedStyle(d.body).fontFamily, head: getComputedStyle(h).fontFamily }; } catch (e) { fam = { body: "inherit", head: "inherit" }; }
-    host.replaceChildren(el("b", { text: "Font sample" }), el("div", { class: "fs-h", style: "font-family:" + fam.head, text: "How can I help today?" }), el("div", { class: "fs-b", style: "font-family:" + fam.body, text: "Refunds are available within 30 days of purchase. After that, store credit is offered instead. 0123456789" }), el("div", { class: "h", text: "Headline font above, answer font below." }));
+    host.replaceChildren(el("b", { text: "Font sample" }), el("div", { class: "fs-h", style: "font-family:" + fam.head, text: "How can I help today?" }), el("div", { class: "fs-b", style: "font-family:" + fam.body, text: "A good answer explains itself, then shows where it came from. 0123456789" }), el("div", { class: "h", text: "Headline font above, answer font below." }));
   }
 }
 function pvFollow() {
@@ -434,7 +426,7 @@ function pvFollow() {
       el("div", { class: "pvm-row", text: keyTxt }),
       el("div", { class: "pvm-badge " + st, text: st === "ok" ? "Connected" : (st === "bad" ? "Not working" : "Not tested yet") }),
       el("div", { class: "pvm-row " + st, text: (r && r.textContent) || "Press Test connection to check the key and model." }));
-    if (r && r.textContent && !/^Press/.test(r.textContent) && !(testLog[0] && testLog[0].m === r.textContent + st)) { testLog.unshift({ m: r.textContent + st, t: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), p: NAMES[cur.provider] || cur.provider, ok: st === "ok" }); testLog.length = Math.min(testLog.length, 5); r.dataset.logged = "1"; }
+
   }
   pvExtra();
   { let cp = $("#pvcloud"); if (!cp) { cp = el("div", { id: "pvcloud", class: "pvcloud" }); card.after(cp); }
@@ -444,7 +436,7 @@ function pvFollow() {
       el("div", { class: "h" }, "Taken from ", el("a", { href: "https://developers.openai.com/api/docs/models", target: "_blank", rel: "noopener" }, "OpenAI"), " and ", el("a", { href: "https://ai.google.dev/gemini-api/docs/models", target: "_blank", rel: "noopener" }, "Google"), " model pages on 5 Oct 2026. Names change, so use Refresh list after adding a key.")); }
   { const box = $("#ollamabox"); if (box) { const cpn = $("#pvcloud"); if (box.previousElementSibling !== cpn) cpn.after(box); box.hidden = !m; if (m && !box.dataset.loaded) ollamaPanel(); }
     let hist = $("#pvhist"); if (!hist) { hist = el("div", { id: "pvhist", class: "pvhist" }); card.parentNode.append(hist); }
-    hist.hidden = !(m && testLog.length); hist.replaceChildren(el("b", { text: "Recent tests" }), ...testLog.map((x) => el("div", { class: "pvh-row" }, el("span", { class: "fitdot " + (x.ok ? "green" : "red") }), el("span", { text: x.p + (x.ok ? " worked" : " failed") }), el("span", { class: "h", text: x.t })))); }
+    hist.hidden = !(m && testLog.length); hist.replaceChildren(el("b", { text: "Recent tests" }), ...testLog.map((x) => el("div", { class: "pvh-row" }, el("span", { class: "fitdot " + (x.ok ? "green" : "red") }), el("span", { text: x.p + (x.ok ? " worked" : " failed"),title:x.detail || "" }), el("span", { class: "h", text: x.t })))); }
 }
 function pvPop() { const f = document.getElementById("pv"); if (!f || matchMedia("(prefers-reduced-motion:reduce)").matches || ["calm","none"].includes(theme.motion)) return; f.animate([{ opacity: .55, transform: "scale(.985)" }, { opacity: 1, transform: "scale(1)" }], { duration: 220, easing: "ease-out" }); }
 function drawLook() {
@@ -455,7 +447,7 @@ function drawLook() {
     sec.append(head, el("div", { class: "help", text: s.help }));
     if (s.modeTabs) {
       const tabs = el("div", { class: "seg mini", role: "radiogroup", "aria-label": "Color set being edited" });
-      for (const m of ["light", "dark"]) tabs.append(el("button", { type: "button", "data-m": m, role: "radio", "aria-checked": String(editMode === m), onclick: () => { editMode = m; setPvMode(m); drawLook(); } }, "Editing: " + (m === "light" ? "Light" : "Dark")));
+      for (const m of ["light", "dark"]) tabs.append(el("button", { type: "button", "data-m": m, role: "radio", "aria-checked": String(editMode === m), onclick: () => { editMode = m; setPvMode(m); drawLook(); pushPreview(); } }, "Editing: " + (m === "light" ? "Light" : "Dark")));
       sec.append(tabs);
     }
     const byKey = Object.fromEntries(s.fields.map((f) => [f.key, f])); const gs = GROUPS[s.id];
@@ -479,9 +471,11 @@ function resetGroup(s) { const d = meta.default; for (const f of s.fields) { if 
 function setPvMode(m) { document.querySelectorAll("#pvmode button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.m === m))); }
 function buildMenu() {
   const m = $("#menu"); m.replaceChildren();
-  const items = [["presets", "Presets and states"], ["model", "Model"], ["portable", "Portable app"], ["freshness", "Document freshness"], ["budget", "Budget"]].concat(SECTIONS.map((s) => [s.id, s.title]));
-  items.forEach(([id, t]) => m.append(el("a", { href: "#sec-" + id, text: t })));
-  const links = [...m.children]; links[0].classList.add("on");
+  const groups=[["config","Configuration",[["model","Model and key"],["search","Sources and APIs"]]],["frontend","Frontend",[["presets","Presets and states"],...SECTIONS.map(s=>[s.id,s.title])]], ["manage","App management",[["freshness","Document freshness"],["budget","Budget"],["portable","Portable app"],["finish","All set"]]]];
+  groups.forEach(([id,title,items])=>{const group=el("div",{class:"nav-group","data-group":id});group.append(el("b",{class:"nav-label",text:title}));items.forEach(([id,t])=>group.append(el("a",{href:"#sec-"+id,text:t})));m.append(group);});
+  m.querySelector("a").classList.add("on");
+  const col=$("#col");const order=["model","search","presets","look","freshness","budget","portable","finish"];
+  order.forEach(id=>{const sec=id==="look"?$("#look"):$("#sec-"+id);if(sec)col.insertBefore(sec,$("#msg"));});
   const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) { activeSec = e.target.id.replace("sec-", ""); pvFollow(); document.querySelectorAll("#menu a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id)); } }, { rootMargin: "-20% 0px -70% 0px" });
   const watch = () => document.querySelectorAll("section.tile[id^=sec-]").forEach((n) => io.observe(n)); watch(); setTimeout(watch, 800); setTimeout(watch, 2500);
 }
@@ -518,7 +512,18 @@ async function init() {
   $("#refreshModels").addEventListener("click", () => loadModels(true));
   $("#keysave").addEventListener("click", async () => { const v = $("#apikey").value.trim(); if (!v) { say("Paste a key first.", true); return; } try { const r = await api("/api/provider/key", { provider: cur.provider, key: v }); keyInfo[cur.provider] = r.key; $("#apikey").value = ""; await provExtras(); say("Key saved on this computer."); } catch (e) { say(e.message, true); } });
   $("#keyclear").addEventListener("click", async () => { try { const r = await api("/api/provider/key", { provider: cur.provider, clear: true }); keyInfo[cur.provider] = r.key; await provExtras(); say("Key removed."); } catch (e) { say(e.message, true); } });
-  $("#testconn").addEventListener("click", async () => { const t = $("#testres"); t.className = "testres busy"; t.textContent = "Testing..."; try { const r = await api("/api/provider/test", { provider: cur.provider, model: chosenModel(), base_url: $("#base").value.trim() }); t.className = "testres " + (r.ok ? "ok" : "bad"); t.textContent = (r.ok ? "Passed. " : "Failed. ") + r.message; pvFollow(); } catch (e) { t.className = "testres bad"; t.textContent = "Failed. " + e.message; } });
+  $("#testconn").addEventListener("click", async () => { const t=$("#testres"),provider=cur.provider,model=chosenModel(),base=$("#base").value.trim();t.className="testres busy";t.textContent="Testing...";let ok=false,message="";try{const r=await api("/api/provider/test",{provider,model,base_url:base});ok=r.ok;message=r.message}catch(e){message=e.message}testLog.unshift({p:NAMES[provider]||provider,ok,detail:message,t:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})});testLog.length=Math.min(testLog.length,5);if(cur.provider===provider){t.className="testres "+(ok?"ok":"bad");t.textContent=(ok?"Passed. ":"Failed. ")+message}pvFollow(); });
+  const finishList=$("#finishList");
+  if(finishList){const row=(ok,t,d)=>el("div",{class:"finrow",role:"listitem"},el("span",{class:"findot "+(ok?"ok":""),"aria-hidden":"true"}),el("div",{},el("b",{text:t}),el("small",{text:d})));
+    const drawFinish=async()=>{const rows=[];
+      const pname=NAMES[cur.provider]||cur.provider||"Demo";
+      const demo=!cur.provider||cur.provider==="mock";
+      rows.push(row(!demo||true,"Answers",demo?"Demo answers, offline, no key needed":pname+(cur.model?" · "+cur.model:"")+(keyInfo[cur.provider]?" · key saved":" · no key yet")));
+      try{const d=await api("/api/websearch/status");const on=d.source&&d.source.on;rows.push(row(!!on,"Live web",on?"On · "+(d.source.providers||[]).join(", "):"Off · answers use your documents"));}catch(e){rows.push(row(false,"Live web","Off · answers use your documents"));}
+      rows.push(row(true,"Look",theme?(LABELS.mode[theme.mode]||"Light")+" mode":"Default look"));
+      finishList.replaceChildren(...rows);};
+    drawFinish();new MutationObserver(()=>drawFinish()).observe($("#seg"),{subtree:true,attributes:true,attributeFilter:["aria-checked"]});
+  }
   $("#apply").addEventListener("click", async () => { try { cur = (await api("/api/settings", { settings: read() })).settings; draw(); say("Applied. New questions use these settings."); } catch (e) { say(e.message, true); } });
   $("#save").addEventListener("click", async () => { try { const n = (await api("/api/states/save", { name: $("#sname").value })).name; await states(); say("Saved as \u201c" + n + "\u201d."); } catch (e) { say(e.message, true); } });
   $("#load").addEventListener("click", async () => { const n = $("#states").value; if (!n) return say("Choose a saved state first", true); try { cur = (await api("/api/states/load", { name: n })).settings; draw(); say("Loaded \u201c" + n + "\u201d."); } catch (e) { say(e.message, true); } });

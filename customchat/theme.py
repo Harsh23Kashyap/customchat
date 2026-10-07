@@ -43,7 +43,7 @@ ENUMS = {
 }
 
 DEFAULT = {
-    "mode": "auto", "light": dict(LIGHT), "dark": dict(DARK),
+    "mode": "light", "light": dict(LIGHT), "dark": dict(DARK),
     "bg_style": "solid", "bg_color2": "#e6f0d0", "bg_angle": 160, "bg_image": "",
     "pattern": "none", "pattern_opacity": 12, "pattern_size": 24, "pattern_color": "",
     "font": "dm-sans", "heading_font": "fraunces", "custom_font": "", "font_size": 100, "line_height": 150,
@@ -103,6 +103,7 @@ def clean(raw):
     t["logo"] = lg if re.fullmatch(r"data:image/png;base64,[A-Za-z0-9+/=]{20,300000}", lg) else ""
     for k in ("emoji_bot", "emoji_you", "emoji_hero", "emoji_send", "emoji_attach", "emoji_temp"):
         t[k] = _emoji(raw.get(k))
+        t[k+"_animated"] = bool(raw.get(k+"_animated", False))
         t[k+"_motion"] = raw.get(k+"_motion") if raw.get(k+"_motion") in ("bounce", "pulse", "wiggle") else "none"
     limits = {"txt_title": 60, "txt_tagline": 160, "txt_examples": 600, "txt_placeholder": 80, "txt_footer": 200, "txt_disclaimer": 120, "txt_hint": 120, "txt_sidebar": 40}
     for k, n in limits.items():

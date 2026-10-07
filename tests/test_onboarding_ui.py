@@ -21,7 +21,7 @@ class OnboardingUI(unittest.TestCase):
 
  def test_designed_status_and_picker(self):
   s=(Path(__file__).resolve().parents[1]/'customchat/web/settings.js').read_text()
-  for term in ('status-card','source.documents===1','Usage day:','emojiControl','dialog.showModal()','motion-sample','prefers-reduced-motion:reduce'):
+  for term in ('status-card','source.documents===1','Usage day:','emojiControl','dialog.showModal()','ccPreviewMotion','prefers-reduced-motion:reduce'):
    self.assertIn(term,s)
  def test_compact_fields_and_dropdown_layer(self):
   s=(Path(__file__).resolve().parents[1]/'customchat/web/settings.css').read_text()

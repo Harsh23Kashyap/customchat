@@ -36,7 +36,7 @@ A list. Each entry has `type`, optional `id` and `label`.
 `system`, `style` (named answer depths, default quick/standard/deep), `no_evidence` (reply when nothing is found), `answer_note` (a fixed line added after every answer that has sources, e.g. a disclaimer).
 
 ## memory
-`enabled`, `recent_turns` (how many earlier turns go into the prompt), `summary_every` (turns between rolling-summary refreshes).
+`enabled`, `recent_turns` (recent turns prioritised in context), `summary_every` (turns between chat-local summary refreshes), `context_chars` (character allowance; see Conversation context below).
 
 ## citations
 `required`, `ledger`.
@@ -46,3 +46,13 @@ A list. Each entry has `type`, optional `id` and `label`.
 
 ## storage / server
 `storage.path` (SQLite file, relative to the app file), `server.host`, `server.port`.
+
+### Conversation context
+
+`memory.enabled` controls saved and temporary conversation context. Context stays within the current owner, chat and conversation; switching conversations does not import another chat's answers. Scoped-document answers are excluded from later general context.
+
+- `recent_turns` (1-20, default 4): prioritise the newest turns before older matching turns.
+- `summary_every` (1-50, default 6): refresh a chat-local summary every N visible, unscoped turns. Deleting a source turn invalidates its summary.
+- `context_chars` (8000-2000000, default 60000): character allowance for answer context, with space reserved for the question, instructions and current evidence. Set a lower allowance for small local models. This is not an exact token count or automatic model-window discovery. Evidence alone can exceed a very small allowance.
+
+Recent history and older keyword matches are selected from storage; the entire thread is not sent to the model. Complete answers are kept when they fit. An oversized latest answer uses a marked head/tail excerpt. Summaries are lossy context, not evidence or unlimited recall. Demo mode does not perform model-based follow-up rewriting.

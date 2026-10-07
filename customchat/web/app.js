@@ -34,7 +34,7 @@ const TV = (k) => ((window.CCTheme && window.CCTheme.value) || {})[k] || "";
 const PREVIEW = !!window.__ccPreview;
 function avatar(kind) {
   const e = TV(kind === "bot" ? "emoji_bot" : "emoji_you"), a = S.cfg.app;
-  return el("div", { class: "av " + kind + (e ? " emo emo-"+TV((kind === "bot" ? "emoji_bot" : "emoji_you")+"_motion") : ""), text: e || (kind === "bot" ? (TV("txt_title") || a.title || "AI").replace(/[^A-Za-z]/g, "").slice(0, 2) : "You") });
+  return el("div", { class: "av " + kind + (e ? " emo" : "") },e?CCEmoji.node(e,TV((kind==="bot"?"emoji_bot":"emoji_you")+"_animated"),"",["calm","none"].includes(TV("motion"))):document.createTextNode(kind==="bot"?(TV("txt_title")||a.title||"AI").replace(/[^A-Za-z]/g,"").slice(0,2):"You"));
 }
 async function api(path, body) {
   const h = { "Content-Type": "application/json" };
@@ -246,7 +246,7 @@ function gettingStarted() {
 function heroView() {
   const a = S.cfg.app;
   const he = TV("emoji_hero") || TV("emoji_bot"), exs = TV("txt_examples") ? TV("txt_examples").split("\n").map((x) => x.trim()).filter(Boolean).slice(0, 8) : (S.suggestions ? S.suggestions.questions : a.examples);
-  return el("div", { class: "hero" + (PREVIEW ? " mini" : "") }, TV("logo") ? el("img", { class: "hero-logo", src: TV("logo"), alt: "" }) : el("div", { class: "av bot" + (he ? " emo emo-"+TV((TV("emoji_hero")?"emoji_hero":"emoji_bot")+"_motion") : ""), text: he || (TV("txt_title") || a.title || "AI").replace(/[^A-Za-z]/g, "").slice(0, 2) }), el("div", {}, el("h1", { text: TV("txt_title") || a.title }), el("p", { text: TV("txt_tagline") || a.tagline }),
+  return el("div", { class: "hero" + (PREVIEW ? " mini" : "") }, TV("logo") ? el("img", { class: "hero-logo", src: TV("logo"), alt: "" }) : el("div", { class: "av bot" + (he ? " emo emo-"+TV((TV("emoji_hero")?"emoji_hero":"emoji_bot")+"_motion") : ""), },he?CCEmoji.node(he,TV((TV("emoji_hero")?"emoji_hero":"emoji_bot")+"_animated"),"",["calm","none"].includes(TV("motion"))):document.createTextNode((TV("txt_title")||a.title||"AI").replace(/[^A-Za-z]/g,"").slice(0,2))), el("div", {}, el("h1", { text: TV("txt_title") || a.title }), el("p", { text: TV("txt_tagline") || a.tagline }),
     el("div", { class: "ex" }, exs.map((x) => el("button", { onclick: () => { $("#q").value = x; send(); } }, x))), gettingStarted()));
 }
 function chartCard() {
@@ -598,11 +598,12 @@ function applyWording() {
 }
 function applyIcons() {
   for (const [id, key, name] of [["#send", "emoji_send", "send"], ["#upload", "emoji_attach", "clip"], ["#tempBtn", "emoji_temp", "temp"]]) {
-    const b = $(id); if (!b) continue; const e = TV(key); if (id === "#send" && S.busy) continue; b.classList.remove("emo-bounce","emo-pulse","emo-wiggle");if(e&&["bounce","pulse","wiggle"].includes(TV(key+"_motion")))b.classList.add("emo-"+TV(key+"_motion"));b.replaceChildren(e ? document.createTextNode(e) : svg(name));
+    const b = $(id); if (!b) continue; const e = TV(key); if (id === "#send" && S.busy) continue; b.classList.remove("emo-bounce","emo-pulse","emo-wiggle");if(e&&["bounce","pulse","wiggle"].includes(TV(key+"_motion")))b.classList.add("emo-"+TV(key+"_motion"));b.replaceChildren(e ? CCEmoji.node(e,TV(key+"_animated"),"",["calm","none"].includes(TV("motion"))) : svg(name));
   }
 }
 function pvBottom() { const t = $("#thread"); if (t) { t.style.scrollBehavior = "auto"; t.scrollTop = t.scrollHeight; } }
 function previewMode() {
+  window.ccPreviewMotion=(t)=>{const node=document.querySelector('.row.bot:last-of-type')||document.querySelector('.msg.bot')||document.querySelector('#thread');if(!node)return;node.getAnimations().forEach(a=>a.cancel());if(matchMedia('(prefers-reduced-motion:reduce)').matches||['calm','none'].includes(t.motion)||t.entrance==='none')return;const frames=t.entrance==='slide'?[{opacity:0,transform:'translateY(18px)'},{opacity:1,transform:'none'}]:t.entrance==='pop'?[{opacity:0,transform:'scale(.94)'},{opacity:1,transform:'none'}]:[{opacity:0},{opacity:1}];node.animate(frames,{duration:(t.motion==='subtle'?180:420)*100/t.speed,easing:'ease-out'})};
   document.body.inert = true;
   document.querySelectorAll("input,textarea,select,button").forEach(control => { control.disabled=true; control.tabIndex=-1; });
   $("#q").placeholder="Visual preview only";

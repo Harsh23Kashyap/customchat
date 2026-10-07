@@ -1,5 +1,5 @@
 """SQLite storage (MySQL optional, see mysqlstore.py). Chats are sessions; conversations (topics) are threads of thought that can span chats."""
-import json, os, sqlite3, time, uuid
+import json, os, re, sqlite3, time, uuid
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS chats(id TEXT PRIMARY KEY, owner TEXT, title TEXT, pinned INTEGER DEFAULT 0, deleted REAL, created REAL);
@@ -135,6 +135,7 @@ class Store:
 
     def delete_chat(self, owner, chat):
         self.chat(owner, chat)
+        self.delete_state(owner, "memory-" + chat)
         self.q("UPDATE chats SET deleted=? WHERE id=?", (time.time(), chat), write=True)
 
     def restore_chat(self, owner, chat, window=30):
@@ -181,6 +182,28 @@ class Store:
         self.chat(owner, chat)
         return [self._turn(r) for r in self.q("SELECT * FROM turns WHERE chat=? AND style NOT LIKE 'deleted:%' ORDER BY created", (chat,))]
 
+    @staticmethod
+    def _history_where():
+        return (" FROM turns t JOIN chats c ON c.id=t.chat WHERE c.owner=? AND c.id=? AND c.deleted IS NULL "
+                "AND t.topic=? AND t.style NOT LIKE 'deleted:%' AND NOT EXISTS "
+                "(SELECT 1 FROM states s WHERE s.owner=c.owner AND SUBSTR(s.name,1,6)='scope-' AND SUBSTR(s.name,7)=t.id) ")
+
+    def history_ids(self, owner, chat, topic):
+        self.chat(owner, chat); self.topic(owner, topic)
+        return [r["id"] for r in self.q("SELECT t.id" + self._history_where() + "ORDER BY t.created, t.id", (owner, chat, topic))]
+
+    def history_turns(self, owner, chat, topic, question):
+        self.chat(owner, chat); self.topic(owner, topic)
+        where = self._history_where(); args = (owner, chat, topic)
+        # Bound text loaded from storage, but retrieve older matching turns too.
+        rows = self.q("SELECT t.id,t.question,t.answer,t.created" + where + "ORDER BY t.created DESC,t.id DESC LIMIT 200", args)
+        words = sorted(set(re.findall(r"[^\W_]{3,}", question.lower())))[:12]
+        if words:
+            match = " OR ".join("(lower(t.question) LIKE ? OR lower(t.answer) LIKE ?)" for _ in words)
+            values = tuple(v for w in words for v in ("%" + w + "%", "%" + w + "%"))
+            rows += self.q("SELECT t.id,t.question,t.answer,t.created" + where + "AND (" + match + ") ORDER BY t.created DESC,t.id DESC LIMIT 40", args + values)
+        return sorted({r["id"]: r for r in rows}.values(), key=lambda r: (r["created"], r["id"]))
+
     def topic_turns(self, owner, topic, limit=200):
         self.topic(owner, topic)
         return [self._turn(r) for r in self.q("SELECT * FROM turns WHERE topic=? AND style NOT LIKE 'deleted:%' ORDER BY created DESC LIMIT ?", (topic, limit))][::-1]
@@ -201,6 +224,7 @@ class Store:
     # turns: delete / restore
     def delete_turn(self, owner, turn):
         t = self.turn(owner, turn)
+        self.delete_state(owner, "memory-" + t["chat"])
         self.q("UPDATE turns SET style=? WHERE id=?", ("deleted:" + t["style"], turn), write=True)
 
     def restore_turn(self, owner, turn):

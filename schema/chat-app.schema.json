@@ -181,10 +181,19 @@
           "type": "boolean"
         },
         "recent_turns": {
-          "type": "integer"
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
         },
         "summary_every": {
-          "type": "integer"
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50
+        },
+        "context_chars": {
+          "type": "integer",
+          "minimum": 8000,
+          "maximum": 2000000
         }
       }
     },
@@ -294,4 +303,4 @@
       }
     }
   }
-        }
+}

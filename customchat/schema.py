@@ -46,7 +46,7 @@ DEFAULTS = {
         "revise": False,
         "no_evidence": "I could not find evidence for that in the configured sources.",
     },
-    "memory": {"enabled": True, "recent_turns": 4, "summary_every": 6},
+    "memory": {"enabled": True, "recent_turns": 4, "summary_every": 6, "context_chars": 60000},
     "citations": {"required": True, "ledger": True},
     "auth": {"mode": "none", "token_env": "", "signup": True},   # none | token | accounts
     "storage": {"path": "data/customchat.db"},
@@ -187,6 +187,13 @@ def validate(raw):
         raise ConfigError("auth.mode must be none, token or accounts")
     if cfg["retrieval"]["top_k"] < 1 or cfg["retrieval"]["top_k"] > 50:
         raise ConfigError("retrieval.top_k must be 1-50")
+    memory = cfg["memory"]
+    if not isinstance(memory, dict) or not isinstance(memory.get("enabled"), bool):
+        raise ConfigError("memory.enabled must be true or false")
+    for key, low, high in (("recent_turns", 1, 20), ("summary_every", 1, 50), ("context_chars", 8000, 2000000)):
+        value = memory.get(key)
+        if type(value) is not int or not low <= value <= high:
+            raise ConfigError("memory.%s must be %s-%s" % (key, low, high))
     return cfg
 
 

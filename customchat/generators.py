@@ -77,7 +77,7 @@ def generate_prompt(provider, cfg, stage, brief, current="", fallback_default=""
         raise ValueError("Describe your area and your readers first, for example: nutrition advice for adults, plain language")
     example = prompts.STAGES[stage]["default"] or fallback_default
     if not _real(provider, cfg):
-        return {"prompt": prompt_template(stage, brief), "rationale": ["No AI model is connected, so this is the built-in prompt with your area added. Connect a model on the Model tab for a fully tailored prompt."], "model_used": False}
+        return {"prompt": prompt_template(stage, brief), "rationale": ["Demo template. Connect a model to tailor it."], "model_used": False}
     system = ("You are an expert prompt engineer for a question answering app that cites its sources.\n"
               "Write one prompt for the pipeline step \"%s\" (%s).\n"
               "Keep the structure, tone, output format and strictness of the example prompt, but tailor it to the user's area. "

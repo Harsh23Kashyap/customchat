@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Configuration</title>
 <link rel="stylesheet" href="/settings.css"><link rel="stylesheet" href="/motion.css"><script src="/motion.js" defer></script><link rel="stylesheet" href="/customselect.css"><script src="/customselect.js" defer></script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&display=swap"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap"><link rel="stylesheet" href="/customselect.css"><script src="/customselect.js" defer></script></head>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&display=swap"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap"><link rel="stylesheet" href="/customselect.css"><script src="/customselect.js" defer></script><script src="/emoji.js"></script></head>
 <body>
 <nav class="toolbar"><a href="/">Chat</a><a href="/settings.html" class="on">Configuration</a></nav>
 <main class="card">
   <h1 id="h">Configuration</h1>
-  <p class="lead" id="lead">Everything here is explained in plain words, and the live preview shows each change as you make it. Keys stay on the computer running CustomChat. Use an environment variable, or paste one on the Model tab to save it in a private local file. It is never shown again.</p>
+  <p class="lead" id="lead">Set up your model, sources and appearance. Keys stay on this computer.</p>
   <div class="modebar"><div class="seg" id="cfgmode" role="radiogroup" aria-label="Settings level"><button type="button" role="radio" data-m="simple">Simple</button><button type="button" role="radio" data-m="advanced">Advanced</button></div><span id="modehelp"></span></div>
   <div class="layout">
     <nav class="menu" id="menu" aria-label="Sections"></nav>
@@ -63,6 +63,11 @@
         <div class="help">Dollar accounting is not available yet. Setting any dollar cap blocks non-Demo answer-pipeline calls rather than guessing a bill. It does not limit owner-run configuration tests, external search fees or embedding costs. Set provider-side billing limits before publishing.</div>
         <button type="button" class="go green" id="saveBudget">Save budget</button><div id="budgetStatus" role="status" aria-live="polite"></div>
       </section>
+      <section class="tile" id="sec-finish"><div class="head"><span class="ic green">&#10003;</span><div><b>All set?</b><small>A quick check before people use it</small></div></div>
+        <div class="help">Everything here saves by itself. This is the current setup at a glance.</div>
+        <div class="finishlist" id="finishList" role="list"></div>
+        <div class="keyrow"><a class="go green big" href="/">Open your chat</a></div>
+      </section>
       <div id="look"></div>
       <p class="msg" id="msg" role="status" aria-live="polite"></p>
     </div>
@@ -76,12 +81,12 @@
   </div>
   <div class="savebar clean" id="savebar"><span id="dirty">No unsaved changes</span><button class="go ghost" id="resetAll">Reset look to default</button><button class="go blue" id="saveLook">Save look</button></div>
 </main>
-<script src="/brand.js"></script><script src="/settings.js"></script><script src="/codeeditor.js" defer></script><script src="/pipeline.js" defer></script><script src="/panels.js" defer></script>
+<script src="/brand.js"></script><script src="/settings.js"></script><script src="/panels.js" defer></script>
 <button type="button" id="pvfab" aria-label="Show live preview" hidden>Preview</button>
 <script>(function(){var b=document.getElementById("pvfab");if(!b)return;b.hidden=false;b.addEventListener("click",function(){var o=document.body.classList.toggle("pvopen");b.textContent=o?"Close preview":"Preview";b.setAttribute("aria-label",o?"Close live preview":"Show live preview")})})()</script>
 <script>(function(){var K="cc_cfg_mode",bar=document.getElementById("cfgmode"),help=document.getElementById("modehelp");if(!bar)return;
 function set(m){document.body.classList.toggle("simple",m==="simple");[].forEach.call(bar.querySelectorAll("button"),function(b){var on=b.dataset.m===m;b.setAttribute("aria-checked",on?"true":"false");b.classList.toggle("on",on)});
-help.textContent=m==="simple"?"The everyday settings, in plain words.":"Adds prompts, code helpers and fine controls.";try{localStorage.setItem(K,m)}catch(e){}}
+help.textContent=m==="simple"?"The everyday settings, in plain words.":"Adds design and fine controls.";try{localStorage.setItem(K,m)}catch(e){}}
 var m="simple";try{m=localStorage.getItem(K)||"simple"}catch(e){}set(m);
 bar.addEventListener("click",function(e){var b=e.target.closest("button");if(b)set(b.dataset.m)})})()</script>
 </body>
