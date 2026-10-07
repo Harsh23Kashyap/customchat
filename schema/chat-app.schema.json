@@ -238,6 +238,35 @@
           "type": "integer"
         }
       }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "daily_questions": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000000
+        },
+        "user_daily_questions": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000000
+        },
+        "daily_model_calls": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000000
+        },
+        "spend_cap_usd": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1000000
+        }
+      }
     }
   }
 }
