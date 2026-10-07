@@ -21,7 +21,7 @@ def main():
             py=state/'venv'/('Scripts/python.exe' if os.name=='nt' else 'bin/python');py.unlink();prep();counts['broken_venv']+=1
             assert 'skipped' in prep(['--offline']);counts['offline_rerun']+=1
             with socket.socket() as blocker:
-                blocker.bind(('127.0.0.1',0));port=blocker.getsockname()[1]
+                blocker.bind(('127.0.0.1',0));port=blocker.getsockname()[1];blocker.listen(1)
                 if port>65515:raise RuntimeError('Random test port out of range')
                 log=state/'test.log'
                 with open(log,'w') as out:p=subprocess.Popen(cmd+['--port',str(port),'--no-browser','--lock-config','--offline','--stop-after-seconds','4'],stdout=out,stderr=subprocess.STDOUT)
