@@ -166,6 +166,18 @@ def make_handler(cfg, engine):
                 if not can_edit(self):
                     return self._send(403, {"error": "The look can only be changed from this computer or by the admin"})
                 return self._send(200, {"theme": themestore.reset() if b.get("reset") else themestore.save(b.get("theme"))})
+            if path == "/api/docs-freshness" and method in ("GET", "POST"):
+                if not can_edit(self):
+                    raise PermissionError("Only the app owner can check document freshness.")
+                rows = []
+                for conn in engine.connectors.values():
+                    if hasattr(conn, "refresh") and hasattr(conn, "status"):
+                        try:
+                            if conn.refresh(force=method == "POST"): engine._cache.clear()
+                        except OSError:
+                            engine._cache.clear()
+                        rows.append(conn.status())
+                return self._send(200, {"sources": rows, "mode": "Checks on questions and owner refresh; no background polling"})
             if path == "/api/app-export" and method == "GET":
                 if not can_edit(self):
                     raise PermissionError("Only the app owner can export configuration.")
@@ -486,7 +498,7 @@ ERR_PAGES = {
 # Config lock: CUSTOMCHAT_CONFIG=off serves the chat only. No settings page, no config or key endpoints.
 LOCKED = os.environ.get("CUSTOMCHAT_CONFIG", "").strip().lower() in ("off", "0", "false", "locked", "disabled")
 LOCKED_PAGES = {"/settings.html", "/settings.js", "/settings.css", "/panels.js", "/pipeline.js", "/codeeditor.js", "/codeeditor.LICENSE.txt"}
-LOCKED_API = ("/api/app-export", "/api/settings", "/api/provider", "/api/hardware", "/api/prompts", "/api/codegen", "/api/websearch", "/api/catalog", "/api/ollama", "/api/states")
+LOCKED_API = ("/api/docs-freshness", "/api/app-export", "/api/settings", "/api/provider", "/api/hardware", "/api/prompts", "/api/codegen", "/api/websearch", "/api/catalog", "/api/ollama", "/api/states")
 
 
 def _esc(s):
