@@ -56,7 +56,7 @@ function inline(parent, text, evidence) {
   let afterCite = false;
   text.split(/(\*\*[^*]+\*\*|`[^`]+`|\[\d+\])/).forEach((p) => {
     let m; const wasCite = afterCite; afterCite = false;
-    if ((m = p.match(/^\[(\d+)\]$/)) && evidence.some((e) => e.n === +m[1])) { parent.append(el("button", { class: "cite", title: "Show source " + m[1], onclick: () => showSources(evidence, +m[1]) }, "[" + m[1] + "]")); afterCite = true; }
+    if ((m = p.match(/^\[(\d+)\]$/)) && evidence.some((e) => e.n === +m[1])) { parent.append(el("button", { class: "cite", title: "Show source " + m[1], onclick: (ev) => showSources(evidence, +m[1], ev.currentTarget) }, "[" + m[1] + "]")); afterCite = true; }
     else if (/^\*\*[^*]+\*\*$/.test(p)) parent.append(el("strong", { text: p.slice(2, -2) }));
     else if (/^`[^`]+`$/.test(p)) parent.append(el("code", { text: p.slice(1, -1) }));
     else if (p) parent.append(document.createTextNode((wasCite && /^[.,;:!?)]/.test(p) ? "\u2060" : "") + p));
@@ -93,7 +93,7 @@ function closeSources() {
   sourceExit = pane.animate([{opacity:1, transform:"translateX(0)"}, {opacity:0, transform:"translateX(12px)"}], {duration:160, easing:"ease-in"});
   sourceExit.onfinish = () => { $("#app").classList.remove("src"); sourceExit = null; };
 }
-function showSources(evidence, hl) {
+function showSources(evidence, hl, trigger) {
   const terms = [...new Set(((S.turns[S.turns.length - 1] || {}).standalone || "").toLowerCase().match(/[a-z0-9]{4,}/g) || [])].slice(0, 8);
   const pane = $("#sources");
   if (sourceExit) { sourceExit.onfinish = null; sourceExit.cancel(); sourceExit = null; }
@@ -105,7 +105,7 @@ function showSources(evidence, hl) {
   const draw = (only) => {
     list.replaceChildren(...evidence.filter((e) => !only || e.source === only).map((e) => el("div", { class: "src" + (e.n === hl ? " hl" : "") },
       el("b", { text: e.n + ". " + e.title }),
-      el("small", { text: [e.authors.slice(0, 3).join(", "), e.year, e.venue, e.document, e.page ? "page " + e.page : e.section, e.version ? "version " + e.version.slice(0, 12) : "", e.ocr ? "OCR text, check original" : ""].filter(Boolean).join(" · ") }),
+      el("small", { text: [(e.authors || []).slice(0, 3).join(", "), e.year, e.venue, e.document, e.page ? "page " + e.page : e.section, e.version ? "version " + e.version.slice(0, 12) : "", e.ocr ? "OCR text, check original" : ""].filter(Boolean).join(" · ") }),
       highlight(el("p"), e.text, terms),
       e.url ? el("a", { href: e.url, target: "_blank", rel: "noopener noreferrer", text: "Open source" }) : null)));
   };
@@ -117,6 +117,8 @@ function showSources(evidence, hl) {
   draw(null);
   if (opening && motionAllowed() && pane.animate) pane.animate([{opacity:0, transform:"translateX(16px)"}, {opacity:1, transform:"translateX(0)"}], {duration:240, easing:"cubic-bezier(.2,.8,.2,1)"});
   const selected = list.querySelector(".hl");
+  document.querySelectorAll(".cite.cite-selected").forEach(x=>x.classList.remove("cite-selected"));
+  if(trigger?.classList.contains("cite")) trigger.classList.add("cite-selected");
   if (selected) {
     selected.scrollIntoView({block:"nearest", behavior:motionAllowed() ? "smooth" : "auto"});
     if (motionAllowed() && selected.animate) selected.animate([{opacity:.7, transform:"translateY(2px)"},{opacity:1, transform:"none"}],{duration:180,easing:"ease-out"});
@@ -259,7 +261,7 @@ async function loadList() {
   try {
     if (S.tab === "chats") {
       const rows = await api("/api/chats?q=" + encodeURIComponent($("#search").value)); if (seq !== loadList.seq) return;
-      if (!rows.length) list.append(el("div", { class: "empty", text: "No chats yet." }));
+      if (!rows.length) list.append(el("div", { class: "empty", text: "Your conversations will appear here. Ask a question to start." }));
       let lastGroup = "";
       const cnt = {}; rows.forEach((c) => { cnt[c.title] = (cnt[c.title] || 0) + 1; });
       rows.forEach((c) => { const g = c.pinned ? "Pinned" : dayLabel(c.created); if (g !== lastGroup) { list.append(el("div", { class: "group", text: g })); lastGroup = g; } list.append(el("div", { class: "item" + (c.id === S.chat ? " on" : ""), title: c.title, onclick: () => openChat(c.id) },
@@ -312,7 +314,7 @@ async function stream(body, onEvent) {
 }
 async function send() {
   const q = $("#q").value.trim(); if (!q || S.busy) return;
-  const status = $("#pipelineStatus"); status.hidden = false; status.textContent = "Waiting for the app";
+  const status = $("#pipelineStatus"); status.hidden = false; status.dataset.state="working"; status.textContent = "Preparing your answer";
   S.busy = true; sendIcon("stop", "Stop"); $("#q").value = ""; autosize(); S.lastQ = q;
   const w = $("#thread .wrap") || $("#thread");
   w.querySelector(".hero")?.remove();
@@ -348,7 +350,7 @@ async function send() {
     const u = el("div", { class: "toast", onclick: () => { u.remove(); $("#q").value = q; send(); } }, (err || "Something went wrong").replace(/[.?!]+$/, "") + ". Click to retry"); centerToast(u);
     document.body.append(u); setTimeout(() => u.remove(), 7000);
   }
-  status.textContent = result ? "Answer ready" : (err || "Reply interrupted"); setTimeout(() => { if (!S.busy) status.hidden = true; }, 2500);
+  status.dataset.state=result?"done":"error"; status.textContent = result ? "Reply ready" : (err || "Reply interrupted"); setTimeout(() => { if (!S.busy) status.hidden = true; }, 2500);
   S.busy = false; applyIcons(); sendIcon("send", "Send"); drawThread(); loadList(); $("#q").focus();
   if (!result) {
     // keep what the user typed, and any text that did arrive, instead of losing both
