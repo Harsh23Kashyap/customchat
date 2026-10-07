@@ -17,4 +17,4 @@ class Progress(unittest.TestCase):
   with self.assertRaises(PermissionError):next(e.ask_stream('a','not-owned','Valid question?'))
  def test_status_live_region_and_scroll(self):
   w=Path(__file__).resolve().parents[1]/'customchat/web'
-  self.assertIn('aria-atomic="true"',(w/'index.html').read_text());self.assertIn('Waiting for the app',(w/'app.js').read_text())
+  self.assertIn('aria-atomic="true"',(w/'index.html').read_text());self.assertIn('Preparing your answer',(w/'app.js').read_text())
