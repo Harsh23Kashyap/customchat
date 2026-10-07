@@ -31,14 +31,15 @@ def main():
                         if p.poll() is not None:raise RuntimeError(log.read_text())
                         if (state/'server.json').exists():url=json.loads((state/'server.json').read_text())['url'];break
                         time.sleep(.1)
-                    assert url and not url.endswith(':'+str(port));counts['occupied_port']+=1
+                    assert url and not url.endswith(':'+str(port)), 'Readiness/port failed; installer log: '+log.read_text()+'; server log: '+((state/'server.log').read_text() if (state/'server.log').exists() else 'missing');counts['occupied_port']+=1
                     assert 'Already running' in prep(['--offline']);counts['active_rerun']+=1
                     req=urllib.request.Request(url+'/api/ask',data=b'{"question":"What is CustomChat?"}',headers={'Content-Type':'application/json'})
                     result=json.load(urllib.request.urlopen(req));assert '[1]' in result['answer'] and len(result['evidence'])==2
                     try:urllib.request.urlopen(url+'/api/settings');raise AssertionError('lock failed')
                     except urllib.error.HTTPError as e:assert e.code==404
                 finally:
-                    p.wait(timeout=15)
+                    try:p.wait(timeout=15)
+                    except subprocess.TimeoutExpired:p.terminate();p.wait(timeout=10)
             # Hold actual OS lock, ensure competing invocation exits without writes.
             sys.path.insert(0,str(ROOT/'scripts'));import install
             with install.locked(state/'install.lock'):
