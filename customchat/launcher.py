@@ -26,6 +26,8 @@ def start(directory,port=8080,no_browser=False,lock_config=False):
     url='http://127.0.0.1:'+str(chosen)
     if lock_config:os.environ['CUSTOMCHAT_CONFIG']='off'
     from .server import serve
+    from .terminal import start_banner
+    start_banner(str(app.parent),url)
     print('Workspace: '+str(app.parent),flush=True)
     print('Starting CustomChat at '+url+' (Ctrl+C to stop)',flush=True)
     if not no_browser:
