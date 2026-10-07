@@ -41,3 +41,8 @@ class Suggestions(unittest.TestCase):
             self.assertEqual(call(True)['recent'],[])
             self.assertTrue(call(False)['questions'])
         finally:srv.shutdown();srv.server_close()
+    def test_recent_ui_cross_group_dedupe(self):
+        from pathlib import Path
+        js=(Path('customchat/web')/'app.js').read_text()
+        self.assertIn('recent.filter(x=>!shown.has',js)
+        self.assertIn('TV("txt_examples")',js)
