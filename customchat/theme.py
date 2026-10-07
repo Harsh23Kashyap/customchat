@@ -98,11 +98,12 @@ def clean(raw):
     cf = str(raw.get("custom_font") or "").strip()
     t["custom_font"] = cf if re.fullmatch(r"[A-Za-z0-9 \-]{2,40}", cf) else ""
     img = str(raw.get("bg_image") or "").strip()
-    t["bg_image"] = img if re.match(r"^https://[^\s\"'()<>]{4,300}$", img) else ""
+    t["bg_image"] = img if re.match(r"^https://[^\s\"'()<>]{4,300}$", img) or re.fullmatch(r"data:image/jpeg;base64,[A-Za-z0-9+/=]{20,600000}", img) else ""
     lg = str(raw.get("logo") or "")
     t["logo"] = lg if re.fullmatch(r"data:image/png;base64,[A-Za-z0-9+/=]{20,300000}", lg) else ""
     for k in ("emoji_bot", "emoji_you", "emoji_hero", "emoji_send", "emoji_attach", "emoji_temp"):
         t[k] = _emoji(raw.get(k))
+        t[k+"_motion"] = raw.get(k+"_motion") if raw.get(k+"_motion") in ("bounce", "pulse", "wiggle") else "none"
     limits = {"txt_title": 60, "txt_tagline": 160, "txt_examples": 600, "txt_placeholder": 80, "txt_footer": 200, "txt_disclaimer": 120, "txt_hint": 120, "txt_sidebar": 40}
     for k, n in limits.items():
         v = str(raw.get(k) or "").replace("\r", "").strip()[:n]
