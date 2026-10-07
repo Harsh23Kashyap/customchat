@@ -403,6 +403,7 @@ async function init() {
     $(".composer").prepend(f);
   }
   $("#scopeBtn").onclick=scopeDialog;
+  $("#q").addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key==="Enter"){e.preventDefault();send()}});
   $("#actionsBtn").onclick=async()=>{
    try {
     const catalog=await api('/api/actions');const dialog=el('dialog',{class:'reading-dialog action-dialog'});
