@@ -15,7 +15,8 @@ def editor_schema():
         if v is None: return {}
         return {'type':'string'}
     out=node(schema.DEFAULTS);out.update({'$schema':'https://json-schema.org/draft/2020-12/schema','title':'CustomChat app configuration'})
-    props=out['properties'];p=props['provider']['properties'];p['type']['enum']=sorted(schema.PROVIDERS)
+    props=out['properties'];props['schema_version']['const']=1
+    p=props['provider']['properties'];p['type']['enum']=sorted(schema.PROVIDERS)
     fallback=copy.deepcopy(p);fallback.pop('fallback',None)
     p['fallback']={'anyOf':[{'type':'null'}, {'type':'object','properties':fallback,'additionalProperties':False}]}
     props['auth']['properties']['mode']['enum']=sorted(schema.AUTH_MODES)
