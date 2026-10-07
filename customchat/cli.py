@@ -26,6 +26,8 @@ def _main(argv=None):
     st.add_argument("--lock-config", action="store_true")
     v = sub.add_parser("validate", help="check an app file"); v.add_argument("app")
     r = sub.add_parser("run", help="serve an app"); r.add_argument("app"); r.add_argument("--host"); r.add_argument("--port", type=int)
+    sub.add_parser("config-schema", help="print JSON Schema for editor autocomplete")
+    cd = sub.add_parser("config-doctor", help="offline line/key configuration checks"); cd.add_argument("app")
     d = sub.add_parser("doctor", help="check provider and sources"); d.add_argument("app")
     ev = sub.add_parser("eval", help="run questions from a file and report citation coverage"); ev.add_argument("app"); ev.add_argument("questions", help="text file, one question per line")
     a = sub.add_parser("ask", help="ask one question from the terminal"); a.add_argument("app"); a.add_argument("question"); a.add_argument("--json", action="store_true")
@@ -34,6 +36,13 @@ def _main(argv=None):
     if argv is None: argv = sys.argv[1:]
     if not argv: argv = ["start"]
     args = ap.parse_args(argv)
+    if args.cmd == "config-schema":
+        from .configdoctor import editor_schema
+        print(json.dumps(editor_schema(), indent=2)); return
+    if args.cmd == "config-doctor":
+        from .configdoctor import report
+        if not report(args.app): raise SystemExit(1)
+        return
     if args.cmd == "init":
         if os.path.exists(args.name):
             sys.exit("%s already exists" % args.name)
