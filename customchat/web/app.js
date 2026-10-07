@@ -81,9 +81,19 @@ function highlight(node, text, terms) {
   text.split(re).forEach((p, i) => node.append(i % 2 ? el("mark", { text: p }) : document.createTextNode(p)));
   return node;
 }
+function motionAllowed() { return document.documentElement.dataset.motion !== "none" && !matchMedia("(prefers-reduced-motion: reduce)").matches; }
+let sourceExit;
+function closeSources() {
+  const pane = $("#sources");
+  if (!motionAllowed() || !pane.animate) { $("#app").classList.remove("src"); return; }
+  sourceExit = pane.animate([{opacity:1, transform:"translateX(0)"}, {opacity:0, transform:"translateX(12px)"}], {duration:160, easing:"ease-in"});
+  sourceExit.onfinish = () => { $("#app").classList.remove("src"); sourceExit = null; };
+}
 function showSources(evidence, hl) {
   const terms = [...new Set(((S.turns[S.turns.length - 1] || {}).standalone || "").toLowerCase().match(/[a-z0-9]{4,}/g) || [])].slice(0, 8);
-  const pane = $("#sources"); pane.replaceChildren();
+  const pane = $("#sources");
+  if (sourceExit) { sourceExit.onfinish = null; sourceExit.cancel(); sourceExit = null; }
+  const opening = !$("#app").classList.contains("src"); pane.replaceChildren();
   $("#app").classList.add("src");
   const types = [...new Set(evidence.map((e) => e.source))];
   const filters = el("div", { class: "filters" });
@@ -98,10 +108,15 @@ function showSources(evidence, hl) {
   if (types.length > 1) types.forEach((t) => filters.append(el("button", { class: "chip", onclick: (ev) => {
     const on = ev.target.classList.toggle("on"); filters.querySelectorAll(".chip").forEach((c) => c !== ev.target && c.classList.remove("on")); draw(on ? t : null);
   } }, (S.cfg.sources.find((s) => s.id === t) || {}).label || t)));
-  pane.append(el("button", { class: "icon", style: "float:right", "aria-label": "Close", onclick: () => $("#app").classList.remove("src") }, svg("close")),
+  pane.append(el("button", { class: "icon", style: "float:right", "aria-label": "Close", onclick: closeSources }, svg("close")),
     el("h3", { text: "Sources" }), el("div", { class: "sub", text: evidence.length + " used for this answer" }), filters, list);
   draw(null);
-  if (hl) setTimeout(() => list.querySelector(".hl")?.scrollIntoView({ block: "center" }), 50);
+  if (opening && motionAllowed() && pane.animate) pane.animate([{opacity:0, transform:"translateX(16px)"}, {opacity:1, transform:"translateX(0)"}], {duration:240, easing:"cubic-bezier(.2,.8,.2,1)"});
+  const selected = list.querySelector(".hl");
+  if (selected) {
+    selected.scrollIntoView({block:"nearest", behavior:motionAllowed() ? "smooth" : "auto"});
+    if (motionAllowed() && selected.animate) selected.animate([{opacity:.7, transform:"translateY(2px)"},{opacity:1, transform:"none"}],{duration:180,easing:"ease-out"});
+  }
 }
 
 function turnView(t, prev) {
@@ -253,7 +268,16 @@ async function send() {
   let text = "", result = null, err = null;
   try {
     await stream({ chat: S.temp ? null : S.chat, question: q, style: $("#style").value, topic: S.topic, new_topic: S.newTopic, sources: S.sources.size ? [...S.sources] : null, temporary: S.temp, history: S.temp ? S.turns.slice(-6).map((t) => ({ question: t.question, answer: t.answer })) : undefined, use_profile: S.useProfile && !S.temp }, (ev) => {
-      if (ev.type === "token") { $("#think")?.remove(); text += ev.data; const sp = document.createElement("span"); sp.className = "tk"; sp.textContent = ev.data; live.append(sp); th.scrollTop = th.scrollHeight; }
+      if (ev.type === "token") {
+        const thinking = $("#think");
+        if (thinking) {
+          if (motionAllowed() && thinking.animate) {
+            thinking.removeAttribute("id"); thinking.style.position = "absolute";
+            const fade = thinking.animate([{opacity:1,transform:"scale(1)"},{opacity:0,transform:"translateY(-2px) scale(.92)"}],{duration:120}); fade.onfinish = () => thinking.remove();
+            live.classList.add("answer-arrive");
+          } else thinking.remove();
+        }
+        text += ev.data; const sp = document.createElement("span"); sp.className = "tk"; sp.textContent = ev.data; live.append(sp); th.scrollTop = th.scrollHeight; }
       else if (ev.type === "done") result = ev.data;
       else if (ev.type === "error") err = ev.data;
     });
