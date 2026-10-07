@@ -1,0 +1,27 @@
+name: installer matrix
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  installer:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v6
+      - run: uv build
+      - name: Repeat shared installer scenarios 10 times
+        shell: bash
+        run: python tests/installer_matrix.py --uv uv --wheel "$(ls dist/*.whl)" --repeat 10
+      - name: POSIX entry point
+        if: runner.os != 'Windows'
+        run: sh install.sh --state "$RUNNER_TEMP/entry" --source "$(ls dist/*.whl)" --no-browser --lock-config --verify-and-stop
+      - name: Windows entry point
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./install.ps1 --state "$env:RUNNER_TEMP/entry" --source (Get-ChildItem dist/*.whl).FullName --no-browser --lock-config --verify-and-stop
