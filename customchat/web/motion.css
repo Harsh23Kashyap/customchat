@@ -65,7 +65,9 @@ details>summary{transition:color var(--m-hover)}details[open]>*:not(summary){ani
 @media(hover:none){.srcs button.s:hover,.ex button:hover,.preset:hover,.menu a:hover{transform:none;box-shadow:none}.srcs button.s:active,.ex button:active{transform:scale(.985)}:root{--m-dist:4px}}
 /* subtle: <=4px, short */
 html[data-motion=subtle]{--m-dist:3px}
-html[data-motion=subtle] *,html[data-motion=subtle] *::before{animation-duration:.12s!important;animation-delay:0s!important}
+/* Subtle shortens entrances only. Looping assets keep a calm cadence. */
+html[data-motion=subtle] .fresh,html[data-motion=subtle] .tile,html[data-motion=subtle] .toast{animation-duration:.12s!important;animation-delay:0s!important}
+html[data-motion=subtle] .bar .pulse,html[data-motion=subtle] .av,html[data-motion=subtle] .brand-icon{animation:none!important}
 html[data-motion=none] *,html[data-motion=none] *::before,html[data-motion=none] *::after{animation:none!important;transition:none!important}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 

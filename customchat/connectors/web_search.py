@@ -20,11 +20,12 @@ class WebSearch:
             return pid, []
 
     def search(self, query, k=6):
-        if not self.providers:
+        active = [p for p in self.providers if websearch.has_key(p)]
+        if not active:
             return []
-        with ThreadPoolExecutor(max_workers=len(self.providers)) as ex:
-            results = list(ex.map(lambda p: self._one(p, query, k), self.providers))
-        if not any(items for _, items in results) and self._errs and all(p in self._errs for p in self.providers):
+        with ThreadPoolExecutor(max_workers=len(active)) as ex:
+            results = list(ex.map(lambda p: self._one(p, query, k), active))
+        if not any(items for _, items in results) and self._errs and all(p in self._errs for p in active):
             # every provider failed: say so (the other sources still answer), instead of looking like "no results"
             raise websearch.SearchError("; ".join(self._errs.values()))
         self._errs = {}

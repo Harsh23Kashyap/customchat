@@ -232,7 +232,7 @@ function gettingStarted() {
     ["3", "How do I choose what to search?", "Limit the next answer to one collection or document.", scopeDialog],
     ["4", "How do I change the reading view?", "Choose your text size and answer width.", () => $("#readingBtn").click()],
   ];
-  if (document.querySelector('.tb-link[href="/settings.html"]')) cards.push(
+  if (document.querySelector('.common-nav a[href="/settings.html"]')) cards.push(
     ["5", "How do I connect an AI model?", "Demo is offline. Choose a provider and test it in Configuration.", () => { location.href="/settings.html#sec-model"; }]);
   cards.push([String(cards.length+1), "How do I try an action?", "Preview a local note action. Nothing is saved until you confirm.", () => $("#actionsBtn").click()]);
   const box = el("section", {class:"getting-started", "aria-label":"Getting started"}, el("h2", {text:"Start here"}),
@@ -243,10 +243,32 @@ function gettingStarted() {
   return box;
 }
 function temporaryScene(){const n=el("div");n.innerHTML='<div class="temp-concept"><div class="ephemeral-scene" aria-hidden="true"><svg viewBox="0 0 540 230"><defs><linearGradient id="vapour" x2="0" y2="1"><stop stop-color="#eee9f7"/><stop offset="1" stop-color="#f7f4ec"/></linearGradient></defs><ellipse cx="270" cy="190" rx="165" ry="15" fill="#e5dfeb"/><g class="bubble bubble-one"><rect x="100" y="57" width="144" height="73" rx="18" fill="url(#vapour)"/><path d="m126 130-13 15v-26"/><path d="M123 80h88M123 98h65" class="ink-line"/></g><g class="bubble bubble-two"><rect x="285" y="98" width="145" height="65" rx="18" fill="#e7edf0"/><path d="m399 163 12 14v-24"/><path d="M307 119h96M307 136h73" class="ink-line"/></g><g class="clock-loop"><circle cx="278" cy="65" r="29" fill="#fffdf7"/><path d="M278 47v19l12 7"/><path d="M250 63a28 28 0 0 1 47-19m-5-11 5 11-12-1"/></g><g class="paper-drift"><path d="M75 125h29l10 10v44H75zM104 125v10h10" fill="#fffdf7"/><path d="M83 145h23M83 154h18"/></g><g class="star star-one"><path d="m441 40 3 10 11 3-11 3-3 10-3-10-10-3 10-3z" fill="#d6bc78" stroke="none"/></g><g class="star star-two"><path d="m220 169 3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="#b1c1b0" stroke="none"/></g><g class="vapour dots"><circle cx="128" cy="79" r="3"/><circle cx="157" cy="64" r="2"/><circle cx="186" cy="43" r="3"/></g></svg><span class="scene-caption">Here for the conversation. Gone from your history.</span></div><span class="temp-eyebrow">A LITTLE LESS PERMANENT</span><h1>Temporary chat</h1><p>This conversation is not saved.<br>Your profile and uploaded sources stay out of it.</p><button type="button">Back to saved chats ↗</button></div>';n.querySelector("button").addEventListener("click",()=>document.querySelector("#tempPill").click());return n.firstChild;}
+function playgroundLanding(a, exs) {
+  const scene=el("div",{class:"playground-scene","aria-hidden":"true"});
+  scene.innerHTML="<svg class=\"doc-scene\" viewBox=\"0 0 220 180\"><circle cx=\"112\" cy=\"89\" r=\"70\" fill=\"#edf1df\"/><g class=\"doc-left\"><rect x=\"38\" y=\"37\" width=\"90\" height=\"115\" rx=\"13\" fill=\"#fffdf7\" stroke=\"#b9cbb8\"/><text x=\"54\" y=\"65\" fill=\"#173f35\">[1]</text><path d=\"M54 80h57M54 93h49M54 106h35\" stroke=\"#d3dfcc\" stroke-width=\"4\" stroke-linecap=\"round\"/></g><g class=\"doc-right\"><rect x=\"98\" y=\"22\" width=\"90\" height=\"115\" rx=\"13\" fill=\"#fffdf7\" stroke=\"#b9cbb8\"/><text x=\"114\" y=\"50\" fill=\"#173f35\">[2]</text><path d=\"M114 65h57M114 78h49M114 91h35\" stroke=\"#d3dfcc\" stroke-width=\"4\" stroke-linecap=\"round\"/></g><path class=\"doc-trail\" d=\"M64 112Q95 148 148 134\" stroke=\"#91a478\" stroke-width=\"2\" fill=\"none\" stroke-dasharray=\"3 5\"/><g class=\"doc-spark\"><rect x=\"145\" y=\"109\" width=\"50\" height=\"50\" rx=\"15\" fill=\"#d7e6a8\"/><path d=\"M170 120q1 11 12 13-11 2-12 13-2-11-13-13 11-2 13-13\" fill=\"#173f35\"/></g></svg>";
+  const custom=TV("logo"), emoji=TV("emoji_hero")||TV("emoji_bot");
+  if(custom)scene.prepend(el("img",{class:"playground-logo",src:custom,alt:""}));
+  else if(emoji)scene.prepend(CCEmoji.node(emoji,TV((TV("emoji_hero")?"emoji_hero":"emoji_bot")+"_animated"),"",["calm","none"].includes(TV("motion"))));
+  const actions=[
+    ["↥","Add documents","Bring your own sources",uploadDialog],
+    ["⌕","Choose sources","Focus the next answer",scopeDialog],
+    ["Aa","Make it yours","Set your reading view",()=>$("#readingBtn").click()]
+  ];
+  if(document.querySelector('.common-nav a[href="/settings.html"]'))actions.push(["✦","Connect a model","When you're ready",()=>{location.href="/settings.html#sec-model"}]);
+  return el("section",{class:"hero playground"},
+    el("div",{class:"playground-intro"},el("div",{},
+      el("div",{class:"playground-eyebrow",text:S.cfg.provider.type==="mock"?"Offline playground":"Your document playground"}),
+      el("h1",{text:TV("txt_title")||a.title}),el("p",{text:TV("txt_tagline")||a.tagline})),scene),
+    exs.length?el("div",{},el("h2",{class:"playground-label",text:"Follow your curiosity"}),
+      el("div",{class:"playground-questions"},exs.map(x=>el("button",{class:"playground-question",onclick:()=>{$("#q").value=x;send()}},el("span",{text:x}),el("b",{"aria-hidden":"true",text:"↗"}))))):null,
+    el("div",{class:"playground-actions"},actions.map(([icon,title,detail,action])=>el("button",{class:"playground-action",onclick:action},el("em",{"aria-hidden":"true",text:icon}),el("b",{text:title}),el("small",{text:detail})))),
+    el("p",{class:"playground-quiet",text:S.cfg.provider.type==="mock"?"Demo uses built-in answers. No model or paid calls.":"Answers use your configured sources and model."}));
+}
 function heroView() {
   if(S.temp&&!PREVIEW)return temporaryScene();
   const a = S.cfg.app;
   const he = TV("emoji_hero") || TV("emoji_bot"), exs = TV("txt_examples") ? TV("txt_examples").split("\n").map((x) => x.trim()).filter(Boolean).slice(0, 8) : (S.suggestions ? S.suggestions.questions : a.examples);
+  if(!PREVIEW)return playgroundLanding(a,exs);
   return el("div", { class: "hero" + (PREVIEW ? " mini" : "") }, TV("logo") ? el("img", { class: "hero-logo", src: TV("logo"), alt: "" }) : el("div", { class: "av bot" + (he ? " emo emo-"+TV((TV("emoji_hero")?"emoji_hero":"emoji_bot")+"_motion") : ""), },he?CCEmoji.node(he,TV((TV("emoji_hero")?"emoji_hero":"emoji_bot")+"_animated"),"",["calm","none"].includes(TV("motion"))):document.createTextNode((TV("txt_title")||a.title||"AI").replace(/[^A-Za-z]/g,"").slice(0,2))), el("div", {}, el("h1", { text: S.temp ? "Temporary chat" : TV("txt_title") || a.title }), el("p", { text: S.temp ? "This chat is not saved. Your profile and uploaded sources are not used." : TV("txt_tagline") || a.tagline }),
     el("div", { class: "ex" }, exs.map((x) => el("button", { onclick: () => { $("#q").value = x; send(); } }, x))), gettingStarted()));
 }
@@ -607,7 +629,7 @@ async function accountGate() {
 }
 function applyWording() {
   const a = S.cfg.app;
-  { const b = $("#brand"); b.textContent = TV("txt_title") || a.title; const lg = TV("logo"); if (lg) { const im = document.createElement("img"); im.className = "tb-logo"; im.alt = ""; im.src = lg; b.prepend(im); } } document.title = TV("txt_title") || a.title;
+  { const b = $("#brand"); b.textContent = TV("txt_title") || a.title; const lg = TV("logo") || (a.title==="CustomChat"?"/icons/customchat.svg":""); if (lg) { const im = document.createElement("img"); im.className = "tb-logo"; im.alt = ""; im.src = lg; b.prepend(im); } } document.title = TV("txt_title") || a.title;
   $("#noteName").textContent = TV("txt_title") || a.title; $("#noteText").textContent = TV("txt_footer") || a.footer;
   $("#q").placeholder = TV("txt_placeholder") || "Ask a question"; $("#hint").textContent = TV("txt_hint") || "Answers cite their sources. Check important facts.";
   const d = document.querySelector(".cmeta span:last-child"); if (d) d.textContent = TV("txt_disclaimer") || "Not a substitute for professional advice.";

@@ -13,3 +13,6 @@ dist/
 *.egg-info/
 # Default local quickstart workspace
 customchat-app/
+
+# Private public-package launcher environment
+.customchat-venv/

@@ -30,6 +30,24 @@ python3 -m venv .venv
 
 On Windows use `py -3 -m venv .venv` and `.\.venv\Scripts\python.exe`. The package is `customchat-app`; `customchat` on PyPI is a different project. Both install paths use an isolated environment, so nothing touches your system Python.
 
+## macOS with Homebrew Python
+
+From this repository folder, one command installs 0.1.5 in a private environment and opens the app:
+
+```sh
+python3 start_local.py
+```
+
+This handles Homebrew's `externally-managed-environment` error without sudo, global pip, activation, or `--break-system-packages`. Requires Python 3.10+ and internet for installation. It reuses `.customchat-venv`; it never deletes or resets your app, chats or keys. Ctrl+C stops the app. Run the same command from the same folder to resume.
+
+To reopen a different existing workspace, pass its folder (the one containing `app.yaml`):
+
+```sh
+python3 start_local.py --directory /path/to/my-chat
+```
+
+Starts offline Demo for a new workspace. Existing workspaces keep their settings. Add `--no-browser` or `--port 8081` if needed. This installs the published package, not uncommitted source changes in your clone.
+
 ## Make it yours
 
 ```sh
@@ -47,6 +65,10 @@ Edit `my-chat/app.yaml`, add documents, and open Configuration to pick a model, 
 - Budget limits, document freshness checks and a portable app export.
 
 Demo is the default. Choose and test a live provider in Configuration to use paid or local models.
+
+## Prompts and code helpers
+
+Open Configuration, then **Prompts** or **Code helpers** in the sidebar. Both are visible in Simple and Advanced. Prompts can be edited or generated for review. Code helpers generate Python, check compilation and safety, and only run when you press Try it. In offline Demo, generation returns a starter template, not model-written code.
 
 ## More
 

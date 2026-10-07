@@ -2,9 +2,9 @@ from pathlib import Path
 import unittest
 R=Path(__file__).resolve().parents[1]
 class FeedbackPatch(unittest.TestCase):
- def test_settings_groups_no_helper_loader(self):
+ def test_settings_groups_with_helper_loader(self):
   html=(R/'customchat/web/settings.html').read_text();js=(R/'customchat/web/settings.js').read_text()
-  self.assertNotIn('src="/pipeline.js"',html);self.assertNotIn('src="/codeeditor.js"',html)
+  self.assertIn('src="/pipeline.js"',html);self.assertNotIn('src="/codeeditor.js"',html)
   for x in ('Configuration','Frontend','App management','Sources and APIs'):self.assertIn(x,js)
  def test_real_assets_and_package(self):
   files=list((R/'customchat/web/emoji').glob('*.webp'));self.assertEqual(len(files),17)

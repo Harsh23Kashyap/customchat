@@ -786,7 +786,9 @@ def test_open_sources():
         assert [x["title"] for x in w] == ["Sun", "Vitamin D"] and w[0]["url"].endswith("/wiki/Sun")
         c = make_connector({"id": "c", "label": "C", "type": "crossref", "mailto": "a@b.org"}).search("q", 3)
         assert len(c) == 1 and c[0]["text"] == "Hello world" and c[0]["year"] == "2021" and "mailto=a%40b.org" in calls[-1]
-        a = make_connector({"id": "a", "label": "A", "type": "openalex"}).search("q", 3)
+        from unittest.mock import patch
+        with patch("customchat.secrets.saved", return_value="fixture-key"):
+            a = make_connector({"id": "a", "label": "A", "type": "openalex"}).search("q", 3)
         assert len(a) == 1 and a[0]["text"] == "Hello world" and a[0]["year"] == "2020"
     finally:
         o._get = real

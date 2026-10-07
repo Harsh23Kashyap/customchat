@@ -1,9 +1,9 @@
-"""Free, key-free search sources: Wikipedia, Crossref and OpenAlex.
+"""Reference search sources: key-free Wikipedia/Crossref and keyed OpenAlex.
 
 Shapes were checked against live responses on 5 Oct 2026. Each connector is tolerant of missing fields and
 raises on network errors, which the pipeline reports as a source error without blocking other sources.
 Crossref asks polite users to send a contact address; set `mailto` on the source block to do that.
-OpenAlex works without a key for light use; set `api_key` through the OPENALEX_API_KEY environment variable for more.
+OpenAlex keys come from the private store or OPENALEX_API_KEY. No key pauses searches.
 """
 import json, os, re, urllib.parse, urllib.request
 from .base import Evidence
@@ -89,7 +89,10 @@ class OpenAlex:
 
     def search(self, query, k=6):
         args = {"search": query, "per-page": k, "select": "id,title,publication_year,abstract_inverted_index,doi,authorships,primary_location"}
-        key = os.environ.get("OPENALEX_API_KEY", "")
+        from .. import secrets
+        key = secrets.saved("catalog:openalex") or os.environ.get("OPENALEX_API_KEY", "")
+        if not key:
+            return []
         if key:
             args["api_key"] = key
         data = _get("https://api.openalex.org/works?" + urllib.parse.urlencode(args))

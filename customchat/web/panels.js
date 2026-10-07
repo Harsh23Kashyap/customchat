@@ -94,42 +94,39 @@ function promptsPanel(host) {
 
 let keyStatus = {};
 async function codePanel(host) {
-  host.replaceChildren(el("div", { class: "pvhead" }, el("b", { text: "Sources and search keys" })), el("p", { class: "h", text: "Optional. Keys stay on this computer." }));
-
-  let src = { on: false, provider: "" }, cat = [];
-  try { const d = await api("/api/websearch/status"); keyStatus = Object.fromEntries(d.providers.map((p) => [p.id, p.has_key])); src = d.source || src; cat = d.catalog || []; } catch (e) { }
-  const sst = el("small", { class: "h", role: "status" });
-  const CAT = [["pubmed", "PubMed", "Medical papers"], ["arxiv", "arXiv", "Science preprints"], ["wikipedia", "Wikipedia", "General background"], ["crossref", "Crossref", "Papers by DOI"], ["openalex", "OpenAlex", "Open paper index"]];
-  const have = new Set(cat); const cst = el("small", { class: "h", role: "status" });
-  const pushCat = async () => { try { const r = await api("/api/catalog", { types: [...have] }); cst.textContent = r.types.length ? "Added: " + r.types.join(", ") : "None added."; } catch (e) { cst.textContent = e.message; } };
-  host.append(el("div", { class: "gcard" }, el("b", { text: "Ready-made sources" }), el("small", { class: "h", text: "Free, no key. Tick to add." }), el("small", { class: "h", text: "OpenAlex needs an API key (set OPENALEX_API_KEY) and is paid per use." }), el("div", { class: "picks" }, ...CAT.map(([id, n, d]) => { const cb = el("input", { type: "checkbox", "aria-label": n }); cb.checked = have.has(id); cb.addEventListener("change", () => { cb.checked ? have.add(id) : have.delete(id); pushCat(); }); return el("label", { class: "pick", title: d }, cb, " " + n); })), cst));
-  const chosen = new Set(src.providers || []);
-  const tog = el("input", { type: "checkbox", id: "websrc" }); tog.checked = !!src.on;
-  const push = async () => { try { const r = await api("/api/websearch/source", { on: tog.checked, providers: [...chosen] }); sst.textContent = r.on ? "On. Answers also use live results from " + r.providers.join(", ") + ". Each one is optional: if it fails, the others and your local sources still answer." : "Off."; } catch (e) { tog.checked = false; sst.textContent = e.message; } };
-  tog.addEventListener("change", () => { if (tog.checked && !chosen.size) { const f = SEARCH.find((p) => keyStatus[p.id]); if (f) chosen.add(f.id); } push(); });
-  const picks = el("div", { class: "picks" });
-  const drawPicks = () => { picks.replaceChildren(...SEARCH.map((p) => { const cb = el("input", { type: "checkbox", "aria-label": "Use " + p.name }); cb.checked = chosen.has(p.id); cb.disabled = !keyStatus[p.id]; cb.addEventListener("change", () => { cb.checked ? chosen.add(p.id) : chosen.delete(p.id); if (tog.checked) push(); }); return el("label", { class: "pick", title: keyStatus[p.id] ? "" : "Save a key below first" }, cb, " " + p.name + (keyStatus[p.id] ? "" : " (no key)")); })); };
-  drawPicks();
-  host.append(el("div", { class: "gcard" }, el("label", { class: "check sw" }, tog, " Add live web results to answers"), el("small", { class: "h", text: "Pick one or more. Results are merged." }), picks, sst));
-  const cards = []; let more = false;
-  for (const p of SEARCH) {
-    const st = el("span", { class: "testres", role: "status" }); const key = el("input", { type: "password", placeholder: keyStatus[p.id] ? "Key saved" : "Paste key", autocomplete: "off", "aria-label": p.name + " key" });
-    const save = el("button", { type: "button", class: "go blue", text: "Save", onclick: async () => { try { const r = await api("/api/websearch/key", { id: p.id, key: key.value }); key.value = ""; key.placeholder = r.has_key ? "Key saved" : "Paste key"; keyStatus[p.id] = r.has_key; drawPicks(); st.textContent = "Saved."; } catch (e) { st.textContent = e.message; } } });
-    const test = el("button", { type: "button", class: "go ghost", text: "Test", onclick: async () => { st.textContent = "Testing..."; try { const r = await api("/api/websearch/test", { id: p.id, query: "NASA open APIs", ...(key.value.trim() ? { key: key.value.trim() } : {}) }); st.textContent = r.ok ? (key.value.trim() ? "Typed key works (not saved): " : "Saved key works: ") + r.items.length + " results" + (r.items[0] ? ". First: " + r.items[0].title.slice(0, 60) : "") : r.error; } catch (e) { st.textContent = e.message; } } });
-    const clear = el("button", { type: "button", class: "go ghost", text: "Remove", onclick: async () => { await api("/api/websearch/key", { id: p.id, clear: true }); keyStatus[p.id] = false; chosen.delete(p.id); drawPicks(); key.placeholder = "Paste key"; st.textContent = "Removed."; } });
-    const card = (el("details", { class: "stage" }, el("summary", {}, el("b", { text: p.name }), el("small", { text: keyStatus[p.id] ? "Key saved" : "No key" })), el("div", { class: "sbody" }, el("p", { text: p.pro }), el("p", { class: "h", text: p.free }), el("div", { class: "keyrow" }, key, save, test, clear), st, el("div", { class: "provider-links" }, link(p.url, "Open key page"), link(p.docs, "Official guide"))))); cards.push(card); host.append(card);
+  let state;
+  try {state=await api("/api/websearch/status")}catch(e){host.textContent=e.message;return}
+  const selected=new Set(state.source.providers||[]), libraries=new Set(state.catalog||[]);
+  keyStatus=Object.fromEntries(state.providers.map(p=>[p.id,p.has_key]));
+  let webOn=!!state.source.on;
+  const notice=el("p",{class:"h",role:"status"});
+  const persistWeb=async()=>{try{await api("/api/websearch/source",{on:webOn,providers:[...selected]})}catch(e){notice.textContent=e.message}};
+  const persistLibraries=async()=>{try{await api("/api/catalog",{types:[...libraries]})}catch(e){notice.textContent=e.message}};
+  host.replaceChildren(el("div",{class:"head"},el("div",{},el("b",{text:"Sources and search keys"}),el("small",{text:"Your documents work without extra keys."}))),
+    el("p",{class:"h",text:"Turn a service on, then add its key here. Missing keys pause that service, not your other sources. Keys are saved privately on this server."}));
+  const webToggle=el("input",{type:"checkbox","aria-label":"Add live web results"});webToggle.checked=webOn;
+  webToggle.addEventListener("change",()=>{webOn=webToggle.checked;if(!selected.size){notice.textContent="Choose a service below first.";webOn=false;webToggle.checked=false;return}persistWeb()});
+  host.append(el("label",{class:"check sw"},webToggle," Add live web results to answers"),notice,el("h3",{text:"Web search"}));
+  function service(id,name,library,keyfree,url){
+    const set=library?libraries:selected;
+    let has=keyfree||(library?!!(state.catalog_keys||{})[id]:!!keyStatus[id]);
+    const cb=el("input",{type:"checkbox","aria-label":"Enable "+name});cb.checked=set.has(id);
+    const badge=el("span",{class:"source-key-badge"});const status=el("small",{class:"h",role:"status"});
+    const card=el("section",{class:"source-key-card"});
+    const input=el("input",{type:"password",autocomplete:"off",spellcheck:"false","aria-label":name+" API key",placeholder:"Paste "+name+" API key"});
+    const keyrow=el("div",{class:"keyrow source-inline-key"});const help=el("small",{class:"h"});
+    const refresh=()=>{badge.textContent=keyfree?"Key-free":has?"Key saved":"Key needed";status.textContent=!cb.checked?"Off. Turn on to set up.":has?"Ready to use.":"Selected. Paused until a key is saved.";keyrow.hidden=help.hidden=keyfree||!cb.checked;help.textContent=has?"A key is saved. Leave blank to keep it, or paste a replacement.":"Needs a key before it can search. No requests sent until saved.";remove.hidden=!has||keyfree;};
+    const endpoint=library?"/api/catalog/key":"/api/websearch/key";
+    const save=el("button",{type:"button",class:"go blue",text:"Save key",onclick:async()=>{if(!input.value.trim()){status.textContent="Paste a key first. Existing key kept.";return}try{const r=await api(endpoint,{id,key:input.value});input.value="";has=r.has_key;refresh()}catch(e){status.textContent=e.message}}});
+    const remove=el("button",{type:"button",class:"go ghost",text:"Remove key",onclick:async()=>{try{const r=await api(endpoint,{id,clear:true});has=r.has_key;refresh()}catch(e){status.textContent=e.message}}});
+    keyrow.append(input,save,link(url,"Get a key ↗"),remove);
+    cb.addEventListener("change",()=>{cb.checked?set.add(id):set.delete(id);refresh();library?persistLibraries():persistWeb()});
+    card.append(el("div",{class:"source-key-top"},el("label",{class:"check sw"},cb,el("b",{text:name})),badge),status,keyrow,help);refresh();host.append(card);
   }
-  const mb = el("button", { type: "button", class: "chipmore", onclick: () => { more = !more; cards.forEach((c, i) => (c.hidden = i >= 3 && !more)); mb.textContent = more ? "View fewer" : "View more"; } }, "View more"); cards.forEach((c, i) => (c.hidden = i >= 3));
-  cards.forEach(c=>c.hidden=false);
-  const catalogs=host.querySelector(".gcard");const web=host.querySelectorAll(".gcard")[1];
-  const catOptions=el("details",{class:"source-options"},el("summary",{text:"Add reference sources"}),catalogs);
-  const keys=el("details",{class:"source-options"},el("summary",{text:"Search provider keys"}),...cards);
-  const providers=web.querySelector(".picks");const moreProviders=el("details",{class:"source-options"},el("summary",{text:"Choose search providers"}),providers);web.append(moreProviders);
-  const helper=el("details",{class:"source-options shared-key-help"},el("summary",{text:"How to add an API key"}),el("div",{class:"gbody"},svgSteps(),el("ol",{class:"gsteps"},...STEPS.map(t=>el("li",{text:t}))),el("small",{class:"h",text:"Use each provider’s official key page and guide below. Some providers need extra setup."})));
-  host.replaceChildren(el("div",{class:"head"},el("div",{},el("b",{text:"Sources and APIs"}),el("small",{text:"Your documents work without extra keys."}))),web,helper,keys,catOptions);
-  catalogs.querySelectorAll("small")[0].textContent="Optional reference libraries.";
-  for(const c of cards){const key=c.querySelector("input");const open=c.querySelector("summary");open.addEventListener("click",()=>{if(!c.open)setTimeout(()=>key.focus(),100)});}
-
+  SEARCH.forEach(p=>service(p.id,p.name,false,false,p.url));
+  host.append(el("h3",{text:"Reference libraries"}));
+  [["pubmed","PubMed"],["arxiv","arXiv"],["wikipedia","Wikipedia"],["crossref","Crossref"],["openalex","OpenAlex"]].forEach(([id,name])=>service(id,name,true,id!=="openalex","https://openalex.org/settings/api"));
+  host.append(el("p",{class:"h",text:"Key-free libraries work without adding a secret. OpenAlex uses its own API key; check its pricing before enabling requests."}));
 }
 
 function boot() {

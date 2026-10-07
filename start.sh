@@ -15,6 +15,6 @@ if [ -z "$UV" ]; then
   [ -x "$UV" ] || { echo 'uv install failed; inspect the message above.' >&2; exit 1; }
 fi
 # uv tool run is uvx. Archive source works without Git until the PyPI release.
-SOURCE=${CUSTOMCHAT_INSTALL_SOURCE:-customchat-app==0.1.3}
+SOURCE=${CUSTOMCHAT_INSTALL_SOURCE:-customchat-app==0.1.5}
 unset PYTHONPATH PYTHONHOME
 exec "$UV" tool run --python 3.12 --from "$SOURCE" customchat start "$@"

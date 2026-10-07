@@ -113,6 +113,7 @@ def review_marks(kind, code):
         return [(1, "The code is too long (limit 12000 characters).")]
     try:
         tree = ast.parse(code)
+        compile(tree, "generated_helper.py", "exec")
     except SyntaxError as e:
         return [(e.lineno or 1, "Not valid Python: %s" % e.msg)]
     has = False
@@ -218,6 +219,8 @@ def generate_code(provider, cfg, kind, brief, sample="", research=""):
     brief = str(brief or "").strip()[:MAX_BRIEF]
     if not brief:
         raise ValueError("Describe what it should do first, for example the API address and what its results look like.")
+    if re.search(r"\b(?:tvly-|sk-|AIza)[A-Za-z0-9_-]{12,}", brief):
+        raise ValueError("Move API keys to the separate private key field, not the description.")
     sample = str(sample or "")[:6000]
     research = str(research or "")[:5000]
     if not _real(provider, cfg):
@@ -332,3 +335,71 @@ def fetch_sample(url, query):
             body = r.read(8000).decode("utf-8", "replace"); return {"status": r.status, "type": r.headers.get("Content-Type", ""), "body": body[:6000]}
     except Exception as e:
         raise ValueError("The request failed: %s" % (getattr(e, "reason", None) or getattr(e, "code", None) or type(e).__name__))
+
+
+def infer_search(brief, key=''):
+    """Local matching only. Keys never go to a model or a guessed host."""
+    from . import websearch
+    text = str(brief or '').lower()
+    named = [pid for pid in websearch.PROVIDERS if re.search(r'\b' + pid + r'\b', text)]
+    if len(named) == 1:
+        return named[0]
+    if not named and str(key or '').startswith('tvly-'):
+        return 'tavily'
+    return ''
+
+
+def known_search_template(pid):
+    """Standalone helper from already-supported request/response contracts."""
+    from . import websearch
+    if pid not in websearch.PROVIDERS:
+        raise ValueError('Name the API or provide its docs URL first.')
+    provider = websearch.PROVIDERS[pid]
+    bodies = {'tavily': '{"query": query, "max_results": limit}',
+              'exa': '{"query": query, "numResults": limit, "contents": {"highlights": True}}',
+              'firecrawl': '{"query": query, "limit": limit}',
+              'parallel': '{"objective": query, "search_queries": [query]}'}
+    auth = '"Authorization": "Bearer " + key' if provider['auth'] == 'bearer' else '"x-api-key": key'
+    rows = 'data.get("data", {}).get("web", [])' if pid == 'firecrawl' else 'data.get("results", [])'
+    fields = {'tavily': 'item.get("content")', 'exa': 'item.get("text") or item.get("highlights") or item.get("summary")',
+              'firecrawl': 'item.get("description") or item.get("markdown")', 'parallel': 'item.get("excerpts")'}
+    return '''import json, os, urllib.request, urllib.error, time
+
+
+def search(query, limit=6):
+    key = os.environ.get(%r, "")
+    if not key:
+        return []
+    payload = %s
+    headers = {"Content-Type": "application/json", "User-Agent": "customchat/1.0", %s}
+    for attempt in range(3):
+        try:
+            request = urllib.request.Request(%r, json.dumps(payload).encode(), headers, method="POST")
+            with urllib.request.urlopen(request, timeout=15) as response:
+                data = json.loads(response.read(1500000).decode("utf-8", "replace"))
+            rows = %s
+            out = []
+            for item in rows if isinstance(rows, list) else []:
+                if not isinstance(item, dict):
+                    continue
+                text = %s
+                if isinstance(text, list):
+                    text = " ".join(x for x in text if isinstance(x, str))
+                title = item.get("title")
+                title = title if isinstance(title, str) else ""
+                text = text if isinstance(text, str) else title
+                url = item.get("url")
+                if text:
+                    out.append({"title": title, "text": text[:1500], "url": url if isinstance(url, str) else "", "year": None})
+                if len(out) >= limit:
+                    break
+            return out
+        except urllib.error.HTTPError as error:
+            if error.code not in (429, 500, 502, 503, 504):
+                return []
+        except Exception:
+            pass
+        if attempt < 2:
+            time.sleep(attempt + 1)
+    return []
+''' % (provider['env'], bodies[pid], auth, provider['url'], rows, fields[pid])

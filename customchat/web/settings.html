@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Configuration</title>
 <link rel="stylesheet" href="/settings.css"><link rel="stylesheet" href="/motion.css"><script src="/motion.js" defer></script><link rel="stylesheet" href="/customselect.css"><script src="/customselect.js" defer></script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&display=swap"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap"><link rel="stylesheet" href="/customselect.css"><script src="/customselect.js" defer></script><script src="/emoji.js"></script><link rel="stylesheet" href="/tour.css"><script src="/tour.js"></script><link rel="stylesheet" href="/navigation.css"></head>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&display=swap"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap"><link rel="stylesheet" href="/customselect.css"><script src="/customselect.js" defer></script><script src="/emoji.js"></script><link rel="stylesheet" href="/tour.css"><script src="/tour.js"></script><link rel="stylesheet" href="/navigation.css"><link rel="icon" type="image/svg+xml" href="/icons/customchat.svg"></head>
 <body>
-<div class="toolbar"><nav class="common-nav" aria-label="Main navigation"><a href="/">Chat</a><a href="/about.html">About</a><a href="/settings.html" class="active" aria-current="page">Configuration</a><button type="button" class="cc-guide-replay" id="configGuide" aria-label="Replay guide">Guide</button></nav></div>
+<header class="toolbar"><a class="nav-brand" href="/"><img src="/icons/customchat.svg" alt="">CustomChat</a><nav class="common-nav" aria-label="Main navigation"><a href="/">Chat</a><a href="/about.html">About</a><a href="/settings.html" class="active" aria-current="page">Configuration</a><button type="button" class="cc-guide-replay" id="configGuide" aria-label="Replay guide">Guide</button></nav><div class="nav-status"></div></header>
 <main class="card">
   <h1 id="h">Configuration</h1>
   <p class="lead" id="lead">Set up your model, sources and appearance. Keys stay on this computer.</p>
@@ -81,7 +81,7 @@
   </div>
   <div class="savebar clean" id="savebar"><span id="dirty">No unsaved changes</span><button class="go ghost" id="resetAll">Reset look to default</button><button class="go blue" id="saveLook">Save look</button></div>
 </main>
-<script src="/brand.js"></script><script src="/settings.js"></script><script src="/panels.js" defer></script>
+<script src="/brand.js"></script><script src="/settings.js"></script><script src="/pipeline.js" defer></script><script src="/panels.js" defer></script>
 <button type="button" id="pvfab" aria-label="Show live preview" hidden>Preview</button>
 <script>(function(){var b=document.getElementById("pvfab");if(!b)return;b.hidden=false;b.addEventListener("click",function(){var o=document.body.classList.toggle("pvopen");b.textContent=o?"Close preview":"Preview";b.setAttribute("aria-label",o?"Close live preview":"Show live preview")})})()</script>
 <script>(function(){var K="cc_cfg_mode",bar=document.getElementById("cfgmode"),help=document.getElementById("modehelp");if(!bar)return;

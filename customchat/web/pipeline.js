@@ -32,7 +32,7 @@ function stageCard(s) {
   if (sw) { $("input", sw).checked = !!s.on; $("input", sw).addEventListener("change", async (e) => { try { await api("/api/prompts/save", { key: s.key, on: e.target.checked }); s.on = e.target.checked; const sm = $("summary small", $("#st-" + s.key)); if (sm) sm.textContent = s.on ? "On" : "Off"; redrawDiagram(); st.textContent = e.target.checked ? "On." : "Off."; } catch (x) { st.textContent = x.message; e.target.checked = !e.target.checked; } }); }
   const save = el("button", { type: "button", class: "go blue", text: "Save", onclick: async () => { try { const txt = area.value.trim() === s.default.trim() ? "" : area.value; const r = await api("/api/prompts/save", { key: s.key, text: txt }); s.text = txt; st.textContent = "Saved. New questions use it."; } catch (x) { st.textContent = x.message; } } });
   const reset = el("button", { type: "button", class: "go ghost", text: "Use default", onclick: async () => { try { await api("/api/prompts/reset", { key: s.key }); s.text = ""; area.value = s.default; st.textContent = "Back to the default."; } catch (x) { st.textContent = x.message; } } });
-  const gen = el("button", { type: "button", class: "go ghost", text: "Write it with AI", onclick: async () => { gen.disabled = true; st.textContent = "Writing..."; try { const r = await api("/api/prompts/generate", { key: s.key, brief: brief.value, current: area.value }); area.value = r.prompt; st.textContent = r.model_used ? "Written. Review, then save." : "Demo template. Review, then save.";st.className="testres"+(r.model_used?"":" bad");why.className="why"+(r.model_used?"":" demo-notice");if (r.rationale && r.rationale.length) why.textContent = r.rationale.join(" "); } catch (x) { st.textContent = x.message; } gen.disabled = false; } });
+  const gen = el("button", { type: "button", class: "go ghost", text: "Write it with AI", onclick: async () => { gen.disabled = true; st.textContent = "Writing..."; try { const r = await api("/api/prompts/generate", { key: s.key, brief: brief.value, current: area.value }); area.value = r.prompt; st.textContent = r.model_used ? "Written. Review, then save." : "Demo template. Review, then save.";st.className="testres"+(r.model_used?"":" bad");why.className="why"+(r.model_used?"":" demo-notice");if (r.rationale && r.rationale.length) why.textContent = r.rationale.join(" "); } catch (x) { st.textContent = x.message; } finally {gen.disabled = false} } });
   const why = el("p", { class: "h" });
   return el("details", { class: "stage", id: "st-" + s.key }, el("summary", {}, el("b", { text: s.label }), el("small", { text: s.optional ? (s.on ? "On" : "Off") : "Always on" })), el("div", { class: "sbody" }, el("p", { class: "h", text: s.help }), sw, area, el("div", { class: "keyrow" }, brief, gen), why, el("div", { class: "keyrow" }, save, reset, st)));
 }
@@ -41,6 +41,12 @@ function redrawDiagram() { if (dg) { const n = diagram(); dg.replaceWith(n); dg 
 
 function codeCard(kind, title, help, ph) {
   const brief = el("textarea", { rows: "3", "aria-label": title + " description", placeholder: ph });
+  let recognized = "";
+  const apiKey=el("input",{type:"password",autocomplete:"off",spellcheck:"false","aria-label":"Optional connector API key",placeholder:"Optional API key (never put it in the description)"});
+  const detected=el("p",{class:"h",role:"status"});
+  const infer=async(saveKey=false)=>{const r=await api("/api/codegen/infer",{brief:brief.value,key:apiKey.value,save_key:saveKey});recognized=r.recognized?r.id:"";detected.textContent=r.recognized?"Detected: "+r.name+". Requests go to "+r.endpoint+". Review before testing.":r.message;if(r.recognized&&saveKey){apiKey.value="";detected.textContent+=" Key saved privately."}return r};
+  const saveConnectorKey=el("button",{type:"button",class:"go ghost",text:"Save key privately",onclick:async()=>{try{await infer(true)}catch(e){detected.textContent=e.message}}});
+  const detect=el("button",{type:"button",class:"go ghost",text:"Detect API",onclick:async()=>{try{await infer(false)}catch(e){detected.textContent=e.message}}});
   const host = el("div", { class: "cmhost" });
   const ed = window.CCEditor ? window.CCEditor.create(host, { doc: "" }) : null;
   const fallback = ed ? null : el("textarea", { rows: "12", class: "code", spellcheck: "false", "aria-label": title + " code" });
@@ -48,17 +54,25 @@ function codeCard(kind, title, help, ph) {
   if (ed) { let free = false; host.addEventListener("keydown", (e) => { if (e.key === "Escape") { free = true; return; } if (e.key === "Tab" && free) { e.stopImmediatePropagation(); free = false; return; } free = false; }, true); }
   if (ed) { host.dataset.ph = "The code appears here after you press Write the code."; const sync = () => host.classList.toggle("filled", !!ed.get()); new MutationObserver(sync).observe(host, { childList: true, subtree: true, characterData: true }); sync(); }
   const out = el("div", { class: "review", role: "status", "aria-live": "polite" });
-  async function review() { try { const r = await api("/api/codegen/review", { kind, code: code.value }); out.className = "review " + (r.ok ? "ok" : "bad"); if (ed) { host._marks = r.marks || []; ed.mark(host._marks); } out.replaceChildren(el("b", { text: r.ok ? "Safety check passed" : "Needs changes" }), ...(r.problems || []).map((p) => el("div", { text: p }))); } catch (x) { out.textContent = x.message; } }
-  const gen = el("button", { type: "button", class: "go blue", text: "Write the code", onclick: async () => { if (!brief.value.trim()) { out.className = "review bad"; out.textContent = "Describe what it should do first."; return; } gen.disabled = true; out.className = "review"; out.textContent = "Writing..."; try { const r = await api("/api/codegen", { kind, brief: brief.value, sample }); sample = ""; code.value = r.code || ""; await review(); if (!r.model_used) out.append(el("div", { class: "h", text: "No model is connected, so this is a starting template to edit." })); } catch (x) { out.className = "review bad"; out.textContent = x.message; } gen.disabled = false; } });
+  async function review() { try { const r = await api("/api/codegen/review", { kind, code: code.value }); out.className = "review " + (r.ok ? "ok" : "bad"); if (ed) { host._marks = r.marks || []; ed.mark(host._marks); } out.replaceChildren(el("b", { text: r.ok ? "Syntax and safety checks passed" : "Needs changes" }), ...(r.problems || []).map((p) => el("div", { text: p }))); } catch (x) { out.textContent = x.message; } }
+  const gen = el("button", { type: "button", class: "go blue", text: "Write the code", onclick: async () => { if (!brief.value.trim() && !apiKey.value.trim() && !recognized) { out.className = "review bad"; out.textContent = "Describe what it should do first."; return; } gen.disabled = true; out.className = "review"; out.textContent = "Writing..."; try { if(kind==="search"&&!recognized)await infer(false); if(kind==="search"&&!recognized&&!brief.value.trim()){out.textContent="Name the API or paste its docs URL first.";return} const r = await api("/api/codegen", { kind, brief: brief.value, sample, ...(recognized?{known_provider:recognized}:{}) }); sample = ""; code.value = r.code || ""; await review(); if (!r.model_used && !r.known_provider) out.append(el("div", { class: "h", text: "No model is connected, so this is a starting template to edit." })); } catch (x) { out.className = "review bad"; out.textContent = x.message; } finally {gen.disabled = false} } });
   let sample = "";
+  brief.addEventListener("input",()=>{recognized=""});
   const tq = el("input", { placeholder: "Sample question to try", "aria-label": "Sample question", value: kind === "search" ? "vitamin D and sleep" : "Can you tell me about vitamin D?" });
   const tres = el("div", { class: "review", role: "status", "aria-live": "polite" });
   const tryBtn = el("button", { type: "button", class: "go ghost", text: "Try it", title: "Runs this code once, in a separate limited process, with your sample question", onclick: async () => {
-    tryBtn.disabled = true; out.className = "review"; out.textContent = ""; if (ed) ed.mark([]); tres.className = "review"; tres.textContent = "Running once..."; try { const r = await api("/api/codegen/test", { kind, code: code.value, query: tq.value }); tres.className = "review " + (r.ok ? "ok" : "bad");
+    tryBtn.disabled = true; out.className = "review"; out.textContent = ""; if (ed) ed.mark([]); tres.className = "review"; tres.textContent = "Running once..."; try {
+      const checked=await api("/api/codegen/review",{kind,code:code.value});
+      if(!checked.ok){tres.className="review bad";tres.textContent="Fix compilation/safety errors first: "+checked.problems.join(" ");return}
+      if(kind==="search"&&recognized){
+        if(!confirm("Run one live search using the saved key through the built-in "+recognized+" connector? This can use provider credits. Edited code is not run with your key.")){tres.textContent="Not run.";return}
+        const r=await api("/api/websearch/test",{id:recognized,query:tq.value});tres.textContent=r.ok?"Built-in connector returned "+r.items.length+" results. Edited helper code was not run with your key.":r.error;return;
+      }
+      const r = await api("/api/codegen/test", { kind, code: code.value, query: tq.value }); tres.className = "review " + (r.ok ? "ok" : "bad");
       const rows = [el("b", { text: r.ok ? "Worked" + (kind === "search" ? ": " + r.count + " result" + (r.count === 1 ? "" : "s") + " in " + r.seconds + "s" : ": " + (r.result || "")) : r.error || (r.empty ? "It ran but returned no results. Try another sample question, or show a raw response and rewrite the parsing." : "Needs changes")})];
       (r.problems || []).forEach((x) => rows.push(el("div", { text: x }))); (r.items || []).forEach((it) => rows.push(el("div", { class: "item", text: (it.title || "(no title)") + (it.year ? " (" + it.year + ")" : "") + ": " + (it.text || "").slice(0, 110) })));
       if (r.ok && (r.items || []).length) { const norm = JSON.stringify(r.items, null, 2); const parts = [el("div", { class: "h", text: "Normalized: what the chat receives from your code" }), el("pre", { class: "code", text: norm.slice(0, 4000) })]; if (raw.value.trim()) parts.unshift(el("div", { class: "h", text: "Raw: what the API sent (the box above)" }), el("pre", { class: "code", text: raw.value.slice(0, 1500) })); rows.push(el("details", { class: "stage inner" }, el("summary", {}, el("b", { text: "Compare raw and normalized" })), el("div", { class: "sbody" }, ...parts))); }
-      tres.replaceChildren(...rows); } catch (x) { tres.className = "review bad"; tres.textContent = x.message; } tryBtn.disabled = false; } });
+      tres.replaceChildren(...rows); } catch (x) { tres.className = "review bad"; tres.textContent = x.message; } finally {tryBtn.disabled = false} } });
   const url = el("input", { placeholder: "https://api.example.org/search?q={query}", "aria-label": "API address for a sample response" });
   const raw = el("textarea", { rows: "5", class: "code", "aria-label": "Raw response", placeholder: "A raw response from the API appears here. You can also paste one.", spellcheck: "false" });
   const show = el("button", { type: "button", class: "go ghost", text: "Show raw response", onclick: async () => { try { const r = await api("/api/codegen/sample", { url: url.value, query: tq.value }); raw.value = r.body; tres.className = "review"; tres.textContent = "Got HTTP " + r.status + " (" + (r.type || "unknown type") + "). Now press Rewrite parsing."; } catch (x) { tres.className = "review bad"; tres.textContent = x.message; } } });
@@ -66,7 +80,7 @@ function codeCard(kind, title, help, ph) {
   const live = kind === "search" ? el("details", { class: "stage inner" }, el("summary", {}, el("b", { text: "Match a real response" }), el("small", { text: "Optional" })), el("div", { class: "sbody" }, el("p", { class: "h", text: "Fetch one real response so the parsing fits it." }), el("div", { class: "keyrow" }, url, show), raw, rewrite)) : null;
   const copy = el("button", { type: "button", class: "go ghost", text: "Copy", onclick: () => { navigator.clipboard && navigator.clipboard.writeText(code.value); out.textContent = "Copied."; } });
   const chk = el("button", { type: "button", class: "go ghost", text: "Check again", onclick: review });
-  return el("details", { class: "sub helper" }, el("summary", {}, el("b", { text: title }), el("small", { text: help })), brief, live, el("div", { class: "keyrow tight" }, gen, chk, copy), ed ? host : fallback, ed ? el("small", { class: "h", text: "Press Esc, then Tab, to move past the editor." }) : null, out, el("div", { class: "keyrow" }, tq, tryBtn), tres);
+  return el("details", { class: "sub helper" }, el("summary", {}, el("b", { text: title }), el("small", { text: help })), brief, kind==="search"?el("div",{class:"keyrow"},apiKey,saveConnectorKey,detect):null, kind==="search"?el("p",{class:"h",text:"Key stays private, never in generated code or sent to the writing model. Unknown service? Add its name or docs URL."}):null, kind==="search"?detected:null, live, el("div", { class: "keyrow tight" }, gen, chk, copy), ed ? host : fallback, ed ? el("small", { class: "h", text: "Press Esc, then Tab, to move past the editor." }) : null, out, el("div", { class: "keyrow" }, tq, tryBtn), tres);
 }
 
 function build(col) {
@@ -78,12 +92,12 @@ function build(col) {
   stages.filter((s) => !used.has(s.key)).forEach((s) => prompts.append(stageCard(s)));
   if (!real) prompts.append(el("p", { class: "h", text: "Optional steps need a real model." }));
   const code = el("section", { class: "tile", id: "sec-code" }, el("div", { class: "head" }, el("span", { class: "ic green", text: "</>" }), el("div", {}, el("b", { text: "Code helpers" }), el("small", { text: "Describe it, read the code, then use it yourself" }))),
-    el("div", { class: "help", text: "These write small Python helpers. Code is checked, then shown. It runs only when you press Try it." }),
+    el("div", { class: "help", text: "These write small Python helpers. Python compilation and safety checks run before it is shown. It runs only when you press Try it." }),
     codeCard("search", "Search connector", "Pulls passages from your own API or website.", "Example: search my clinic's JSON API at https://example.org/api, using the q parameter, and return title, text and link."),
     codeCard("clean_query", "Query cleaning", "Tidies a question before it is searched.", "Example: remove filler words, keep drug names and numbers, and lowercase everything."));
   const m = $("#sec-model"); const anchor = $("#look");
   col.insertBefore(prompts, anchor); col.insertBefore(code, anchor);
-  const menu = $("#menu"); const go = () => { if (!menu.children.length) return setTimeout(go, 150); for (const [id, t] of [["prompts", "Prompts"], ["code", "Code helpers"]]) menu.append(el("a", { href: "#sec-" + id, text: t })); }; go();
+
 }
 async function init() {
   try { const d = await api("/api/prompts"); stages = d.stages; real = d.real_model; } catch (e) { return; }

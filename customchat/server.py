@@ -267,7 +267,7 @@ def make_handler(cfg, engine):
                 if not can_edit(self):
                     return self._send(403, {"error": "Only the admin can see this computer's details"})
                 return self._send(200, hardware.report(str(qs.get("base_url") or "http://localhost:11434")))
-            if path.startswith("/api/prompts") or path.startswith("/api/codegen") or path.startswith("/api/websearch") or path == "/api/catalog":
+            if path.startswith("/api/prompts") or path.startswith("/api/codegen") or path.startswith("/api/websearch") or path.startswith("/api/catalog"):
                 if not can_edit(self):
                     return self._send(403, {"error": "Only the admin can change prompts or generate code"})
                 try:
@@ -299,9 +299,7 @@ def make_handler(cfg, engine):
                             pids = [x for x in dict.fromkeys(pids) if x in websearch.PROVIDERS]
                             if not pids:
                                 return self._send(400, {"error": "Save a key for a provider below first, then tick it"})
-                            missing = [websearch.PROVIDERS[x]["label"] for x in pids if not websearch.has_key(x)]
-                            if missing:
-                                return self._send(400, {"error": "Save a key first for " + ", ".join(missing)})
+                            # Selected services without keys are paused by the connector.
                         engine.set_web(on, pids)
                         try:
                             wf = os.path.join(os.path.dirname(os.path.abspath(store.path)), "websource.json")
@@ -319,7 +317,16 @@ def make_handler(cfg, engine):
                             pass
                         return self._send(200, {"types": types})
                     if path == "/api/websearch/status":
-                        return self._send(200, {"catalog": engine.catalog_state(), "source": engine.web_state(), "providers": [{"id": k, "label": v["label"], "has_key": websearch.has_key(k)} for k, v in websearch.PROVIDERS.items()]})
+                        return self._send(200, {"catalog": engine.catalog_state(), "catalog_keys": {"openalex": bool(secrets.saved("catalog:openalex") or os.environ.get("OPENALEX_API_KEY"))}, "source": engine.web_state(), "providers": [{"id": k, "label": v["label"], "has_key": websearch.has_key(k)} for k, v in websearch.PROVIDERS.items()]})
+                    if path == "/api/catalog/key" and method == "POST":
+                        if b.get("id") != "openalex":
+                            return self._send(400, {"error": "Unknown library"})
+                        if b.get("clear"):
+                            secrets.STORE.delete("catalog:openalex")
+                        else:
+                            secrets.STORE.set("catalog:openalex", b.get("key"))
+                        engine._cache.clear()
+                        return self._send(200, {"has_key": bool(secrets.saved("catalog:openalex") or os.environ.get("OPENALEX_API_KEY"))})
                     if path == "/api/websearch/key" and method == "POST":
                         pid = str(b.get("id") or "")
                         if pid not in websearch.PROVIDERS:
@@ -336,7 +343,20 @@ def make_handler(cfg, engine):
                             return self._send(200, {"ok": True, "items": [{"title": i["title"], "text": i["text"][:200], "url": i["url"]} for i in items], "raw": raw})
                         except websearch.SearchError as e:
                             return self._send(200, {"ok": False, "error": str(e), "items": []})
+                    if path == "/api/codegen/infer" and method == "POST":
+                        pid = generators.infer_search(b.get("brief"), b.get("key"))
+                        if not pid:
+                            return self._send(200, {"recognized": False, "message": "Name the API or paste its docs URL. A key alone does not identify an unknown service safely."})
+                        provider = websearch.PROVIDERS[pid]
+                        if b.get("save_key") and b.get("key"):
+                            secrets.STORE.set("search:" + pid, b.get("key"))
+                        return self._send(200, {"recognized": True, "id": pid, "name": provider["label"], "endpoint": provider["url"], "has_key": websearch.has_key(pid)})
                     if path == "/api/codegen" and method == "POST":
+                        if b.get("known_provider"):
+                            pid = str(b["known_provider"])
+                            code = generators.known_search_template(pid)
+                            ok, problems = generators.review_code("search", code)
+                            return self._send(200, {"code": code, "ok": ok, "problems": problems, "model_used": False, "known_provider": pid, "filename": "user_search.py"})
                         research = ""
                         if b.get("research") and engine.provider is not None:
                             pid = str(b.get("research_with") or "")

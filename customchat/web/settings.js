@@ -62,9 +62,11 @@ function mark(p) { if (LOGOS.includes(p)) { const img=el("img", { class: "plogo"
 function buildChips(list) {
   if (list) chipList = list; const seg = $("#seg"); seg.replaceChildren();
   const top = TOP.filter((p) => chipList.includes(p)), rest = chipList.filter((p) => !top.includes(p));
-  if (rest.includes(cur.provider)) chipsMore = true;
-  for (const p of top.concat(chipsMore ? rest : [])) { const b = el("button", { type: "button", "data-p": p, role: "radio", "aria-checked": String(p === cur.provider) }, mark(p), NAMES[p] || p); b.addEventListener("click", () => { if (canEdit) { cur = { ...read(), provider: p, model: "" };$("#testres").textContent="";$("#testres").className="testres"; draw(); pvFollow(); } }); seg.append(b); }
-  if (rest.length) { const m = el("button", { type: "button", class: "chipmore" }, chipsMore ? "Show fewer" : "Load more"); m.addEventListener("click", () => { chipsMore = !chipsMore; buildChips(); }); seg.append(m); }
+  // Keep the active provider visible without reopening a collapsed list.
+  if (!top.includes(cur.provider) && chipList.includes(cur.provider)) top.push(cur.provider);
+  const extra = rest.filter(p => !top.includes(p));
+  for (const p of top.concat(chipsMore ? extra : [])) { const b = el("button", { type: "button", "data-p": p, role: "radio", "aria-checked": String(p === cur.provider) }, mark(p), NAMES[p] || p); b.addEventListener("click", () => { if (canEdit) { cur = { ...read(), provider: p, model: "" };$("#testres").textContent="";$("#testres").className="testres"; draw(); pvFollow(); } }); seg.append(b); }
+  if (extra.length) { const m = el("button", { type: "button", class: "chipmore", "aria-expanded": String(chipsMore) }, chipsMore ? "Show fewer" : "Load more"); m.addEventListener("click", () => { chipsMore = !chipsMore; buildChips(); }); seg.append(m); }
 }
 /* ---------- local model suggestions (Ollama) ---------- */
 let hwView = "simple";
@@ -483,12 +485,12 @@ function resetGroup(s) { const d = meta.default; for (const f of s.fields) { if 
 function setPvMode(m) { document.querySelectorAll("#pvmode button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.m === m))); }
 function buildMenu() {
   const m = $("#menu"); m.replaceChildren();
-  const groups=[["config","Configuration",[["model","Model and key"],["search","Sources and APIs"]]],["frontend","Frontend",[["presets","Presets and states"],...SECTIONS.map(s=>[s.id,s.title])]], ["manage","App management",[["freshness","Document freshness"],["budget","Budget"],["portable","Portable app"],["finish","All set"]]]];
+  const groups=[["config","Configuration",[["model","Model and key"],["search","Sources and APIs"],["prompts","Prompts"],["code","Code helpers"]]],["frontend","Frontend",[["presets","Presets and states"],...SECTIONS.map(s=>[s.id,s.title])]], ["manage","App management",[["freshness","Document freshness"],["budget","Budget"],["portable","Portable app"],["finish","All set"]]]];
   groups.forEach(([id,title,items])=>{const group=el("div",{class:"nav-group","data-group":id});group.append(el("b",{class:"nav-label",text:title}));items.forEach(([id,t])=>group.append(el("a",{href:"#sec-"+id,text:t})));m.append(group);});
   m.querySelector("a").classList.add("on");
   let navHoldUntil=0;
   m.addEventListener("click",e=>{const a=e.target.closest("a");if(!a)return;activeSec=a.hash.replace("#sec-","");navHoldUntil=Date.now()+1200;pvFollow();m.querySelectorAll("a").forEach(x=>x.classList.toggle("on",x===a))});
-  const col=$("#col");const order=["model","search","presets","look","freshness","budget","portable","finish"];
+  const col=$("#col");const order=["model","search","prompts","code","presets","look","freshness","budget","portable","finish"];
   order.forEach(id=>{const sec=id==="look"?$("#look"):$("#sec-"+id);if(sec)col.insertBefore(sec,$("#msg"));});
   const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting && Date.now()>navHoldUntil) { activeSec = e.target.id.replace("sec-", ""); pvFollow(); document.querySelectorAll("#menu a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id)); } }, { rootMargin: "-20% 0px -70% 0px" });
   const watch = () => document.querySelectorAll("section.tile[id^=sec-]").forEach((n) => io.observe(n)); watch(); setTimeout(watch, 800); setTimeout(watch, 2500);

@@ -97,7 +97,7 @@ function apply(t, root = document.documentElement) {
   const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.content = c.brand;
   let icon = document.querySelector('link[data-cc-icon]');
   if (!icon) { icon = document.createElement("link"); icon.rel = "icon"; icon.type = "image/png"; icon.dataset.ccIcon = "1"; document.head.append(icon); }
-  icon.href = t.logo || "/favicon.ico";
+  icon.href = t.logo || "/icons/customchat.svg"; icon.type=t.logo?"image/png":"image/svg+xml";
   const paintWatermark = () => {
     let watermark = document.getElementById("cc-watermark");
     const host = document.querySelector(".main") || document.body; if (!host) return;
