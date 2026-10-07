@@ -482,6 +482,6 @@ init().then(() => { updateVis(); setTimeout(updateVis, 500); }).catch((e) => say
 
 document.addEventListener("click", (e) => { if (e.target && e.target.id === "resetLink") { const r = document.getElementById("resetAll"); if (r) r.click(); } });
 
-;(function(){var t,pv=function(){return document.querySelector('.preview')};document.addEventListener('input',fire,true);document.addEventListener('change',fire,true);document.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('.preset,.seg button,.tile[data-p]'))fire()},true);
-function fire(){clearTimeout(t);t=setTimeout(function(){var p=pv();if(!p)return;p.classList.remove('pulse');void p.offsetWidth;p.classList.add('pulse')},60)}
-var m=document.querySelector('.menu');if(m){var on=function(){m.classList.toggle('end',m.scrollLeft+m.clientWidth>=m.scrollWidth-4)};m.addEventListener('scroll',on,{passive:true});on()}})();
+
+// Keep the settings preview in place while properties update.
+(function(){var m=document.querySelector('.menu');if(m){var on=function(){m.classList.toggle('end',m.scrollLeft+m.clientWidth>=m.scrollWidth-4)};m.addEventListener('scroll',on,{passive:true});on()}})();
