@@ -1,0 +1,51 @@
+{
+  "choice": "uvx source install; uv tool persistent option",
+  "registry_published": false,
+  "linux_only": true,
+  "ui_verified": false,
+  "source_commit": "eecc832bf57821692d1cceddf04f995624090d77",
+  "source_run": {
+    "health": {
+      "ok": true
+    },
+    "provider": {
+      "type": "mock",
+      "model": ""
+    },
+    "lock": {
+      "/settings.html": 404,
+      "/api/settings": 404
+    },
+    "evidence_count": 2,
+    "answer": "CustomChat turns one YAML file into a chat application. [1] Every question is rewritten into a standalone question using the earlier turns of the same conversation, so a follow-up such as \"what about its cost?\" still retrieves the right evidence. [2]",
+    "ui_verified": false
+  },
+  "wheel_run": {
+    "health": {
+      "ok": true
+    },
+    "provider": {
+      "type": "mock",
+      "model": ""
+    },
+    "answer": "CustomChat turns one YAML file into a chat application. [1] Every question is rewritten into a standalone question using the earlier turns of the same conversation, so a follow-up such as \"what about its cost?\" still retrieves the right evidence. [2]",
+    "evidence_count": 2,
+    "lock": {
+      "/settings.html": 404,
+      "/api/settings": 404
+    },
+    "ui_verified": false
+  },
+  "source_tests": 129,
+  "artifact_sha256": {
+    "customchat-0.1.0-py3-none-any.whl": "1d4f988d9d52cedb84c86a8d47d0f84def66ed8ad1434334d9f8867baed292b6",
+    "customchat-0.1.0.tar.gz": "aa011d5e08b9ff9eba502606a04996ac2ef9e102173a27b3faec8cb96067bbb7"
+  },
+  "limits": [
+    "uv already installed; clean home/cache/workspace is not a bare machine",
+    "No automatic Python download test",
+    "pipx/npx/Docker not run",
+    "Windows/macOS/WSL not tested",
+    "Registry package ownership unverified; no short unqualified uvx command promised"
+  ]
+}
