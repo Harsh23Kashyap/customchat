@@ -24,5 +24,14 @@
     const backs=[bg,surface,sidebar,bot,you];
     return {bg,surface,sidebar,bot,you,brand:safe(color,backs),accent:safe(color,backs),ink:safe(dark?'#f8f8f8':'#17231f',backs),muted:safe(dark?'#a9b7b0':'#63736c',backs),line:mix(color,dark?'#000000':'#ffffff',dark?.65:.78),danger:safe('#b23a3a',backs)};
   }
-  const api={seed,palette,contrast,safe};root.CCBrand=api;if(typeof module!=='undefined')module.exports=api;
+  function shade(color, background, target=4.5){
+    if(contrast(color,background)>=target)return color;
+    const values=rgb(color).map(v=>v/255),max=Math.max(...values),min=Math.min(...values),delta=max-min;
+    const light=(max+min)/2,sat=delta===0?0:delta/(1-Math.abs(2*light-1));
+    let hue=0;if(delta){hue=max===values[0]?((values[1]-values[2])/delta)%6:max===values[1]?(values[2]-values[0])/delta+2:(values[0]-values[1])/delta+4;hue=(hue*60+360)%360;}
+    const make=l=>{const c=(1-Math.abs(2*l-1))*sat,x=c*(1-Math.abs((hue/60)%2-1)),m=l-c/2;const v=hue<60?[c,x,0]:hue<120?[x,c,0]:hue<180?[0,c,x]:hue<240?[0,x,c]:hue<300?[x,0,c]:[c,0,x];return hex(v.map(n=>(n+m)*255));};
+    let best=null,dist=2;for(let i=0;i<=1000;i++){const l=i/1000,c=make(l);if(contrast(c,background)>=target&&Math.abs(l-light)<dist){best=c;dist=Math.abs(l-light);}}
+    return best||safe(color,[background],target);
+  }
+  const api={seed,palette,contrast,safe,shade};root.CCBrand=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
