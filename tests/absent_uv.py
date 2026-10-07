@@ -10,6 +10,8 @@ def main():
         env.update(HOME=str(home),USERPROFILE=str(home),UV_CACHE_DIR=str(home/'cache'))
         for key in ('UV_INSTALL_DIR','UV_UNMANAGED_INSTALL','XDG_BIN_HOME','XDG_DATA_HOME','UV_OFFLINE','PYTHONPATH','PSModulePath'):
             env.pop(key,None)
+        # Windows environment keys are case-insensitive; runner stores PSMODULEPATH uppercase.
+        env={k:v for k,v in env.items() if k.upper()!='PSMODULEPATH'}
         # Remove any PATH directory exposing uv, not the Python/shell/runtime tools.
         paths=[p for p in env['PATH'].split(os.pathsep) if p and os.access(p,os.X_OK) and not shutil.which('uv',path=p)]
         env['PATH']=os.pathsep.join(paths)
@@ -18,11 +20,6 @@ def main():
         opts=['--source',str(wheel),'--state',str(home/'private state'),'--directory',str(home/'my workspace'),'--no-browser','--lock-config','--verify-and-stop']
         if os.name=='nt':
             shell=shutil.which('powershell',path=env['PATH']);assert shell
-            # Surface Windows engine/module diagnostics before official bootstrap.
-            probe=subprocess.run([shell,'-NoProfile','-ExecutionPolicy','Bypass','-Command',
-                '$PSVersionTable; $PSHOME; $env:PSModulePath; Import-Module Microsoft.PowerShell.Security -Verbose -ErrorAction Stop; Get-ExecutionPolicy'],
-                env=env,text=True,capture_output=True)
-            print(probe.stdout,flush=True);print(probe.stderr,flush=True)
             cmd=[shell,'-NoProfile','-ExecutionPolicy','Bypass','-File',str(ROOT/'install.ps1'),*opts]
         else:cmd=['sh',str(ROOT/'install.sh'),*opts]
         result=subprocess.run(cmd,cwd=home,env=env,text=True,capture_output=True,timeout=300)
