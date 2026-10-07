@@ -7,3 +7,5 @@ Local document filtering happens before top-k selection, semantic fusion and rer
 An explicit collection selection excludes automatic personal-upload retrieval. An empty explicit source list means no sources, rather than silently searching all. Scope labels are not access-control rules. Configured sources and their local document filenames remain visible to every authenticated app visitor. Permission-aware documents are a separate pending feature; do not host private team sources on a shared app until that is configured and verified.
 
 This slice locks collection or local document, not a historical version hash. The latest indexed version is used. Current UI scope remains for subsequent questions until cleared and is not restored as a global preference after reload. Optional semantic paths apply the same document filter but real model quality is not benchmarked. No remote document browsing/scope is implemented.
+
+Update: permission-aware source rules are now available in PERMISSIONS.md. The scope picker filters choices through them. Sources without rules remain shared by default; a scope selection itself never grants access.
