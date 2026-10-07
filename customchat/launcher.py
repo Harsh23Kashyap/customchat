@@ -30,14 +30,17 @@ def start(directory,port=8080,no_browser=False,lock_config=False):
     start_banner(str(app.parent),url)
     print('Workspace: '+str(app.parent),flush=True)
     print('Starting CustomChat at '+url+' (Ctrl+C to stop)',flush=True)
-    if not no_browser:
-        def ready():
-            end=time.monotonic()+30
-            while time.monotonic()<end:
-                try:
-                    with urllib.request.urlopen(url+'/api/health',timeout=1) as r:
-                        if r.status==200:webbrowser.open(url);return
-                except Exception:pass
-                time.sleep(.4)
-        threading.Thread(target=ready,daemon=True).start()
+    if not no_browser: open_when_ready(url)
     serve(str(app),'127.0.0.1',chosen)
+
+
+def open_when_ready(url):
+    def ready():
+        end=time.monotonic()+30
+        while time.monotonic()<end:
+            try:
+                with urllib.request.urlopen(url+'/api/health',timeout=1) as r:
+                    if r.status==200:webbrowser.open(url);return
+            except Exception:pass
+            time.sleep(.4)
+    threading.Thread(target=ready,daemon=True).start()

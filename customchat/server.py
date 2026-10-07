@@ -19,6 +19,11 @@ def make_handler(cfg, engine):
     store = engine.store
     from .actions import Actions
     actions=Actions(cfg,store)
+    from .nerdload import NerdLoader
+    loader = NerdLoader(cfg.get("_dir", os.getcwd()))
+    engine.nerd_loader = loader
+    from .ollama_setup import OllamaSetup
+    ollama_setup = OllamaSetup()
     token_env = cfg["auth"]["token_env"]
     hits = collections.defaultdict(list)
     from .budget import Budget, BudgetError
@@ -226,12 +231,28 @@ def make_handler(cfg, engine):
                             engine._cache.clear()
                         rows.append(conn.status())
                 return self._send(200, {"sources": rows, "mode": "Checks on questions and owner refresh; no background polling"})
+            if path == "/api/app-export-check" and method == "GET":
+                if not can_edit(self): raise PermissionError("Only the app owner can export configuration")
+                from .portable import bundle
+                from .readiness import check
+                import io, zipfile
+                data, manifest = bundle(cfg, themestore.value, engine.prompts._load())
+                with zipfile.ZipFile(io.BytesIO(data)) as archive:
+                    files = {n:archive.read(n) for n in archive.namelist() if not n.endswith("/")}
+                readiness=check(cfg,files)
+                return self._send(200, {"readiness":readiness,"warnings":manifest["warnings"],"excluded":["API keys and credentials","Accounts and chat history","Personal uploads","Installed local models"],"files":list(manifest["files"])})
             if path == "/api/app-export" and method == "GET":
                 if not can_edit(self):
                     raise PermissionError("Only the app owner can export configuration.")
                 from .portable import bundle
                 data, _ = bundle(cfg, themestore.value, engine.prompts._load())
                 return self._send(200, data, "application/zip", {"Content-Disposition": 'attachment; filename="customchat-app.zip"'})
+            if path in ("/api/nerds/review", "/api/nerds/load") and method == "POST":
+                self._owner()
+                if not can_edit(self) or self.client_address[0] not in ("127.0.0.1", "::1"): raise PermissionError("Only the local app owner on this computer can load Nerds")
+                if path.endswith("review"):
+                    return self._send(200, loader.review(str(b.get("name", "")), str(b.get("data", ""))))
+                return self._send(200, loader.load(str(b.get("token", "")), b.get("allow_code") is True))
             if path == "/api/settings" and method == "GET":
                 return self._send(200, {"settings": settings_view(), "can_edit": can_edit(self), "providers": sorted(schema.PROVIDERS)})
             if path == "/api/settings" and method == "POST":
@@ -379,6 +400,24 @@ def make_handler(cfg, engine):
                         return self._send(200, {"ok": not marks, "problems": sorted({m for _, m in marks}), "marks": [{"line": l, "message": m} for l, m in marks]})
                 except ValueError as e:
                     return self._send(400, {"error": str(e)})
+            if path.startswith("/api/ollama/setup"):
+                if not can_edit(self) or self.client_address[0] not in ("127.0.0.1", "::1"):
+                    raise PermissionError("Only the local app owner can set up Ollama")
+                # A hostile web page must not cause local software installation.
+                origin = self.headers.get("Origin")
+                host = self.headers.get("Host", "")
+                parsed = urlparse("http://" + host)
+                if parsed.hostname not in ("localhost", "127.0.0.1", "::1"):
+                    raise PermissionError("Open CustomChat through its local address for setup")
+                if origin and urlparse(origin).netloc != host:
+                    raise PermissionError("Local setup requires the same origin")
+                if method == "POST" and "application/json" not in self.headers.get("Content-Type", ""):
+                    raise PermissionError("Local setup requires a JSON request")
+                if path == "/api/ollama/setup" and method == "GET": return self._send(200, ollama_setup.status())
+                if path == "/api/ollama/setup/prepare" and method == "POST": return self._send(200, ollama_setup.prepare(b.get("action")))
+                if path == "/api/ollama/setup/execute" and method == "POST": return self._send(200, ollama_setup.execute(str(b.get("ticket") or ""), b.get("confirmed")))
+                if path == "/api/ollama/setup/status" and method == "GET": return self._send(200, ollama_setup.job(qs.get("id", "")))
+                return self._send(404, {"error": "Not found"})
             if path == "/api/ollama/pull/cancel" and method == "POST":
                 if not can_edit(self):
                     return self._send(403, {"error": "Only the admin can cancel downloads"})
@@ -592,7 +631,7 @@ ERR_PAGES = {
 # Config lock: CUSTOMCHAT_CONFIG=off serves the chat only. No settings page, no config or key endpoints.
 LOCKED = os.environ.get("CUSTOMCHAT_CONFIG", "").strip().lower() in ("off", "0", "false", "locked", "disabled")
 LOCKED_PAGES = {"/settings.html", "/settings.js", "/settings.css", "/panels.js", "/pipeline.js", "/codeeditor.js", "/codeeditor.LICENSE.txt"}
-LOCKED_API = ("/api/budget", "/api/docs-freshness", "/api/app-export", "/api/settings", "/api/provider", "/api/hardware", "/api/prompts", "/api/codegen", "/api/websearch", "/api/catalog", "/api/ollama", "/api/states")
+LOCKED_API = ("/api/budget", "/api/docs-freshness", "/api/app-export", "/api/app-export-check", "/api/settings", "/api/provider", "/api/hardware", "/api/prompts", "/api/codegen", "/api/websearch", "/api/catalog", "/api/ollama", "/api/states", "/api/nerds")
 
 
 def _esc(s):
@@ -630,7 +669,13 @@ def serve(path, host=None, port=None):
     host, port = host or cfg["server"]["host"], port or cfg["server"]["port"]
     srv = LocalHTTPServer((host, port), make_handler(cfg, engine))
     print("%s running at http://%s:%d  (provider: %s)" % (cfg["app"]["title"], host, port, cfg["provider"]["type"]))
+    import signal, threading
+    if threading.current_thread() is threading.main_thread():
+        signal.signal(signal.SIGTERM, lambda *_: (_ for _ in ()).throw(KeyboardInterrupt()))
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
         pass
+    finally:
+        engine.nerd_loader.close()
+        srv.server_close()

@@ -422,6 +422,17 @@ async function regen(turn, style) {
 }
 const autosize = () => { const q = $("#q"); q.style.height = "auto"; q.style.height = Math.min(q.scrollHeight, 160) + "px"; };
 
+function updateModelBadge() {
+  const providerNames = {mock:"Demo",openai:"OpenAI",claude:"Claude",gemini:"Gemini",ollama:"Ollama",openai_compatible:"Custom provider",openrouter:"OpenRouter",deepseek:"DeepSeek",groq:"Groq",mistral:"Mistral",minimax:"MiniMax",mimo:"Xiaomi MiMo"};
+  const badge=$("#modelBadge"), demo=S.cfg.provider.type === "mock";
+  badge.textContent = demo ? "Demo · offline" : (providerNames[S.cfg.provider.type] || S.cfg.provider.type) + (S.cfg.provider.model ? " · " + S.cfg.provider.model : "");
+  badge.title = demo ? "Offline Demo: built-in answers from your documents. No AI model or paid calls. Choose a provider in Configuration to use AI." : "Configured AI provider and model";
+}
+async function refreshModelBadge() { try { const cfg = await api("/api/config"); S.cfg.provider = cfg.provider; updateModelBadge(); } catch (_) {} }
+window.addEventListener("focus", refreshModelBadge);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshModelBadge(); });
+window.addEventListener("storage", (e) => { if (e.key === "cc_config_changed") refreshModelBadge(); });
+
 async function init() {
   S.cfg = await api("/api/config");
   if (S.cfg.auth === "accounts" && !PREVIEW) await accountGate();
@@ -429,10 +440,7 @@ async function init() {
     const L = 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; document.documentElement.style.setProperty("--on-accent", L > 0.5 ? "#000" : "#fff"); }
   const a = S.cfg.app; document.title = a.title;
   $("#brand").textContent = a.title; $("#sideTitle").textContent = "Conversations"; $("#noteName").textContent = a.title; $("#noteText").textContent = a.footer; $("#tempPill").addEventListener("click", toggleTemp); $("#themeBtn").addEventListener("click", () => { const dark = document.documentElement.dataset.theme === "dark"; localStorage.setItem("cc_mode", dark ? "light" : "dark"); CCTheme.apply(CCTheme.value); });
-  const providerNames = {mock:"Demo",openai:"OpenAI",claude:"Claude",gemini:"Gemini",ollama:"Ollama",openai_compatible:"Custom provider",openrouter:"OpenRouter",deepseek:"DeepSeek",groq:"Groq",mistral:"Mistral",minimax:"MiniMax",mimo:"Xiaomi MiMo"};
-  const badge=$("#modelBadge"), demo=S.cfg.provider.type === "mock";
-  badge.textContent = demo ? "Demo · offline" : (providerNames[S.cfg.provider.type] || S.cfg.provider.type) + (S.cfg.provider.model ? " · " + S.cfg.provider.model : "");
-  badge.title = demo ? "Offline Demo: built-in answers from your documents. No AI model or paid calls. Choose a provider in Configuration to use AI." : "Configured AI provider and model";
+  updateModelBadge();
   $("#themeBtn").title = "Switch between light and dark theme";
   const modeHelp={quick:"Short answer: 2 to 4 sentences.",standard:"Balanced answer in short paragraphs.",deep:"Longer answer with sections, caveats and open questions. This changes answer detail, not the model or source quality."};
   S.cfg.styles.forEach((s) => $("#style").append(el("option", {title:modeHelp[s] || "Answer style: "+s, "data-description":modeHelp[s] || "", value: s === "standard" ? s : s, ...(s === "standard" ? { selected: "" } : {}) }, s[0].toUpperCase() + s.slice(1))));

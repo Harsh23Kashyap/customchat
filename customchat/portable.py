@@ -67,7 +67,15 @@ def bundle(cfg, theme_value=None, prompt_value=None):
     used = 0
     for i, source in enumerate(clean['sources']):
         if source['type'] != 'local_files':
-            if source['type'] == 'python': warnings.append('Python source %s needs its module installed separately.' % source['id'])
+            if source['type'] == 'python':
+                mod=source['entry'].partition(':')[0]
+                path=base / (mod.replace('.','/')+'.py')
+                if not re.fullmatch(r'[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*',mod) or not path.is_file() or path.is_symlink():
+                    raise ExportError('Python connector %s must be a local module file to share.' % source['id'])
+                data=path.read_bytes()
+                if len(data)>200000:raise ExportError('Python connector is too large to review')
+                files[mod.replace('.','/')+'.py']=data
+                warnings.append('Python connector code is included. Review it before running; install its dependencies separately.')
             continue
         root = Path(source.get('path', 'docs'))
         root = root if root.is_absolute() else base / root

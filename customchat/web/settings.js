@@ -94,11 +94,17 @@ async function ollamaPanel() {
     cards.append(c);
   });
   box.replaceChildren(head, cards);
+  if (canEdit) { $("#sec-model .ollama-setup")?.remove();const setup=el("section",{class:"ollama-setup"});$("#sec-model").prepend(setup);drawOllamaSetup(setup); }
   if (r.others && r.others.length) {
     const d = el("details", { class: "grp" }, el("summary", { text: "See other models" }), el("div", { class: "oother" }, r.others.map((o) => el("div", { class: "orow" }, el("span", { class: "fitdot " + o.fit }), el("span", { class: "oname", text: o.name }), el("span", { class: "h", text: o.why })))));
     box.append(d);
   }
-  if (det) box.append(el("pre", { class: "otechbox", text: ["Computer: " + hw.os + " " + hw.arch + ", " + hw.cores + " CPU cores, " + hw.ram_gb + " GB RAM", "GPU: " + (hw.gpu ? hw.gpu + " (" + hw.vram_gb + " GB video memory)" : (hw.apple_silicon ? "Apple Silicon (shared memory)" : "none found")), "Ollama: " + (r.ollama_running ? "running, " + (r.installed || []).length + " models installed" : "not reachable at the Base URL"), "", "Memory budget: " + rec.budget_gb + " GB. " + rec.budget_why, "A model must fit in 85% of that (" + rec.limit_gb + " GB), counting its file size plus about 1.5 GB for the conversation.", "Green = uses at most 60% of the budget. Blue = fits in 85%. Red = does not fit."].join("\n") }));
+  if (det) {
+    const total=hw.gpu && hw.vram_gb ? hw.vram_gb : hw.ram_gb, pct=Math.max(0,Math.min(100,rec.budget_gb/Math.max(.1,total)*100));
+    const graph=el("section",{class:"memory-graph","aria-label":"Model memory budget"},el("h3",{text:"Model memory budget"}),el("div",{class:"memory-label"},el("b",{text:total+" GB "+(hw.apple_silicon?"shared memory":hw.gpu?"GPU memory":"RAM")}),el("span",{text:hw.os+" · "+hw.cores+" CPU cores"})),el("div",{class:"memory-total",role:"img","aria-label":rec.budget_gb+" GB model budget, "+Math.max(0,total-rec.budget_gb).toFixed(1)+" GB reserve"},el("div",{class:"memory-available",style:"width:"+pct+"%;padding:"+(pct===0?0:4)+"px",text:pct>=20?rec.budget_gb+" GB model budget":""}),el("div",{class:"memory-reserve",style:"width:"+(100-pct)+"%",text:Math.max(0,total-rec.budget_gb).toFixed(1)+" GB reserve"})),el("small",{text:rec.budget_why}),el("h4",{text:"Safe fit inside that budget"}),el("div",{class:"memory-fit",role:"img","aria-label":"85% safe fit ceiling"},el("i",{style:"width:"+(rec.budget_gb>0?85:0)+"%"})),el("div",{class:"memory-label"},el("b",{text:rec.limit_gb+" GB fit ceiling"}),el("span",{text:rec.budget_gb+" GB budget"})),el("div",{class:"memory-thresholds"},el("span",{text:"Comfortable ≤60%"}),el("span",{text:"Fits ≤85%"}),el("span",{text:"Doesn't fit >85%"})),el("small",{text:"Includes about 1.5 GB for conversation overhead. Estimates, not measured free RAM."}),el("p",{text:"Ollama: "+(r.ollama_running?"running · "+(r.installed||[]).length+" models installed":"not reachable")}),el("small",{text:hw.os+" "+hw.arch}));
+    if (rec.budget_gb === 0) graph.prepend(el("p",{text:"No safe model memory budget detected. Use a hosted provider or a larger computer."}));
+    box.append(graph);
+  }
   else box.append(el("div", { class: "h", text: "Rough estimate from " + hw.ram_gb + " GB of memory" + (hw.gpu ? " and your " + hw.gpu : "") + ". Choose Details to see the math." }));
   if (rec.note && rec.picks.length) box.append(el("div", { class: "h", text: rec.note }));
 }
@@ -419,6 +425,13 @@ function pvExtra() {
   }
 }
 function pvFollow() {
+  window.CCPipeline?.show(activeSec);
+  const editing = ["prompts", "code"].includes(activeSec);
+  document.body.classList.toggle("editing-pipeline", editing);
+  document.body.dataset.editorKind = editing ? activeSec : "";
+  const loading = activeSec === "portable";
+  document.body.classList.toggle("loading-nerd", loading);
+  if (editing || loading) return;
   const m = activeSec === "model", card = $("#pvmodel"), fr = $("#pv"), cap = $("#pvcap");
   const names = { presets: "Whole look", wording: "Wording", colors: "Colors", background: "Background", fonts: "Fonts", shape: "Shape and spacing", emoji: "Icons", motion: "Motion", layout: "Layout", model: "Model" };
   if (cap) cap.textContent = "Showing: " + (names[activeSec] || "Chat");
@@ -513,7 +526,11 @@ function buildPresets() {
   draw();
 }
 async function init() {
-  const c = await api("/api/config"); $("#h").textContent = c.app.title + " configuration"; document.title = c.app.title + " configuration";
+  const c = await api("/api/config"); window.CCLoadedApp = c; $("#lead").textContent = "Editing " + c.app.title + ". " + (c.app.tagline || "") + " Keys stay on this computer."; $("#h").textContent = c.app.title + " configuration"; document.title = c.app.title + " configuration";
+  const overview = el("section", {class:"loaded-app",id:"loadedApp"}, el("b", {text:"Loaded Nerd: " + c.app.title}), el("p", {text:c.app.tagline || ""}), el("small", {text:"Sources: " + c.sources.map(x=>x.label || x.id).join(", ")}), el("small", {text:"Answers: " + (c.provider.type === "mock" ? "Offline Demo, not live news" : c.provider.type + " · " + c.provider.model)}));
+  $("#lead").after(overview);
+  const sourceOverview = el("div", {class:"loaded-source-overview"}, el("b", {text:"This Nerd's configured sources"}), ...c.sources.map(x=>el("p", {text:(x.label || x.id) + " · " + (x.type || "") })), el("small", {text:"Sources in the loaded app file are already active. The controls below add optional web searches; they do not replace your Nerd's connector."}));
+  const search = $("#sec-search"); if (search) search.prepend(sourceOverview);
   const d = await api("/api/settings"); cur = d.settings; canEdit = d.can_edit; try { keyInfo = (await api("/api/provider/status")).keys; } catch (e) { keyInfo = {}; }
   const th = await api("/api/theme"); theme = th.theme; meta = th.meta; saved = clone(theme); canEdit = canEdit && th.can_edit !== false;
   const seg = $("#seg");
@@ -540,10 +557,10 @@ async function init() {
       finishList.replaceChildren(...rows);};
     drawFinish();new MutationObserver(()=>drawFinish()).observe($("#seg"),{subtree:true,attributes:true,attributeFilter:["aria-checked"]});
   }
-  $("#apply").addEventListener("click", async () => { try { cur = (await api("/api/settings", { settings: read() })).settings; draw(); say("Applied. New questions use these settings."); } catch (e) { say(e.message, true); } });
+  $("#apply").addEventListener("click", async () => { try { cur = (await api("/api/settings", { settings: read() })).settings; draw(); localStorage.setItem("cc_config_changed", String(Date.now())); say("Applied. New questions use these settings."); } catch (e) { say(e.message, true); } });
   $("#save").addEventListener("click", async () => { try { const n = (await api("/api/states/save", { name: $("#sname").value })).name; await states(); say("Saved as \u201c" + n + "\u201d."); } catch (e) { say(e.message, true); } });
   $("#states").addEventListener("change",syncDeleteLook);
-  $("#load").addEventListener("click", async () => { const n = $("#states").value; if (!n) return say("Choose a saved state first", true); try { cur = (await api("/api/states/load", { name: n })).settings; draw(); say("Loaded \u201c" + n + "\u201d."); } catch (e) { say(e.message, true); } });
+  $("#load").addEventListener("click", async () => { const n = $("#states").value; if (!n) return say("Choose a saved state first", true); try { cur = (await api("/api/states/load", { name: n })).settings; draw(); localStorage.setItem("cc_config_changed", String(Date.now())); say("Loaded \u201c" + n + "\u201d."); } catch (e) { say(e.message, true); } });
   $("#del").addEventListener("click", async () => { const n = $("#states").value; if (!n) return say("Choose a saved look first", true); if (!confirm("Delete the saved look \"" + n + "\"?")) return; await api("/api/states/delete", { name: n }); await states(); say("Deleted."); });
   $("#saveLook").addEventListener("click", async () => { try { theme = (await api("/api/theme", { theme })).theme; saved = clone(theme); drawLook(); changed(); say("Look saved. The chat now uses it for everyone."); } catch (e) { say(e.message, true); } });
   $("#resetAll").addEventListener("click", () => { if (!confirm("Put every look setting back to the default? (Press Save look afterwards to keep it.)")) return; theme = clone(meta.default); drawLook(); changed(); });
@@ -554,7 +571,11 @@ async function init() {
 document.getElementById("exportApp").addEventListener("click", async function () {
   if (!canEdit) return;
   const status = document.getElementById("exportStatus");
-  if (!confirm("Include configured local documents in this app export? Review the ZIP before sharing. Keys and private session state are excluded.")) return;
+  try {
+    const checks=await api("/api/app-export-check");
+    const text="Export readiness (offline checks only):\n\n"+checks.readiness.rows.filter(r=>["setup","warning","blocked"].includes(r.kind)).map(r=>r.item+": "+r.message).join("\n")+"\n\nNot included: "+checks.excluded.join(", ")+".\n\nIncluded documents need your review before sharing. Download bundle?";
+    if (!confirm(text)) return;
+  } catch(e) { status.textContent=e.message;return; }
   this.disabled = true; status.textContent = "Preparing app export...";
   try {
     // Flush the current look so the ZIP matches the configuration on screen.
@@ -628,6 +649,46 @@ $("#saveBudget").addEventListener("click", async function () {
 
 let helpQueued=false;new MutationObserver(()=>{if(helpQueued)return;helpQueued=true;queueMicrotask(()=>{helpQueued=false;compactHelp()})}).observe(document.getElementById("look"),{childList:true,subtree:true});
 $("#configGuide").addEventListener("click", () => CCTour.config(true));
+
+async function drawOllamaSetup(host) {
+  host.dataset.poll='';
+  host.replaceChildren(el('div',{class:'h',text:'Checking local Ollama...'}));
+  try {
+    const st=await api('/api/ollama/setup');
+    const titles={running:'Ollama is running',stopped:'Ollama is installed but stopped',not_detected:'Ollama not detected'};
+    host.replaceChildren(el('h3',{text:'Set up Ollama'}),el('div',{class:'setup-status'},el('b',{text:titles[st.state]}),el('p',{class:'h',text:'On the computer running CustomChat, not this phone.'})));
+    const recheck=el('button',{type:'button',class:'mini',text:'Recheck',onclick:()=>drawOllamaSetup(host)});
+    host.append(el('div',{class:'setup-row'},el('span',{text:'Computer'}),el('b',{text:st.system+' · '+st.arch})),el('div',{class:'setup-row'},el('span',{text:'Installer'}),el('b',{text:'Official Ollama'})));
+    if(st.state==='running'){host.append(el('p',{text:'Choose a model separately below.'}),recheck);return;}
+    const detail=el('details',{class:'setup-details'},el('summary',{text:'Installation details'}),el('p',{class:'h',text:st.disk_free_gb+' GB free disk. A connection error alone does not mean Ollama is missing. If installed elsewhere, start it and recheck.'}),el('p',{class:'h',text:'Review before installing. OS prompts stay on your computer. Models download separately.'}));
+    if(!st.supported){host.append(el('a',{href:'https://ollama.com',target:'_blank',rel:'noopener',text:'Official Ollama site'}),recheck);return;}
+    const action=st.state==='stopped'?'start':'install';
+    host.append(el('button',{type:'button',class:'mini',text:action==='start'?'Review start':'Review installation',onclick:async()=>{
+      try {
+        const plan=await api('/api/ollama/setup/prepare',{action});
+        host.replaceChildren(el('h3',{text:action==='start'?'Start local Ollama':'Install Ollama?'}),el('p',{class:'h',text:'On this '+plan.system+' computer. '+plan.disk_free_gb+' GB free.'}));const more=el('details',{class:'setup-details'},el('summary',{text:'What changes'}),el('p',{class:'h',text:plan.changes}),el('p',{class:'h',text:plan.instructions}));host.append(more);
+        if(action==='install')host.append(el('a',{href:plan.source,target:'_blank',rel:'noopener',text:'Official installer source'}),el('p',{class:'h',text:'No model download included. Installer size unknown; limit 2 GB.'}));
+        const consent=el('input',{type:'checkbox'}),label=el('label',{class:'setup-consent'},consent,' I approve '+(action==='install'?'installing Ollama':'starting Ollama')+' on this computer.');
+        const go=el('button',{type:'button',class:'mini',text:action==='install'?'Install Ollama':'Start Ollama',disabled:''});consent.onchange=()=>go.disabled=!consent.checked;
+        go.onclick=async()=>{go.disabled=true;try{const {id}=await api('/api/ollama/setup/execute',{ticket:plan.ticket,confirmed:consent.checked});await pollOllamaSetup(host,id);}catch(e){host.append(el('p',{class:'testres bad',text:e.message}));}};
+        host.append(label,go,el('button',{type:'button',class:'mini',text:'Not now',onclick:()=>drawOllamaSetup(host)}));
+      }catch(e){host.append(el('p',{class:'testres bad',text:e.message}));}
+    }}),recheck,detail);
+  }catch(e){host.replaceChildren(el('p',{class:'h',text:e.message}));}
+}
+async function pollOllamaSetup(host,id){
+  host.dataset.poll=id;
+  for(let i=0;i<310 && host.isConnected && host.dataset.poll===id;i++){
+    const st=await api('/api/ollama/setup/status?id='+encodeURIComponent(id));
+    host.replaceChildren(el('h3',{text:st.state==='ready'?'Ollama is ready':'Ollama setup'}),el('p',{text:st.message}));
+    if(st.sha256){const d=el('details',{},el('summary',{text:'Downloaded installer fingerprint'}),el('small',{text:st.sha256}));host.append(d);}
+    if(st.page)host.append(el('a',{href:st.page,target:'_blank',rel:'noopener',text:'Official installation instructions'}));
+    host.append(el('button',{type:'button',class:'mini',text:'Recheck local service',onclick:()=>drawOllamaSetup(host)}));
+    if(['ready','failed','needs_manual'].includes(st.state))return;
+    await new Promise(r=>setTimeout(r,2000));
+  }
+}
+
 init().then(() => { CCTour.config(); if (canEdit) { docsFreshness(false); loadBudget().catch((e) => { $("#budgetStatus").textContent = e.message; }); } updateVis(); setTimeout(updateVis, 500); }).catch((e) => say(e.message, true));
 })();
 
@@ -651,4 +712,5 @@ document.addEventListener("click", (e) => { if (e.target && e.target.id === "res
 
 // Keep the settings preview in place while properties update.
 (function(){var m=document.querySelector('.menu');if(m){var on=function(){m.classList.toggle('end',m.scrollLeft+m.clientWidth>=m.scrollWidth-4)};m.addEventListener('scroll',on,{passive:true});on()}
+
 })();

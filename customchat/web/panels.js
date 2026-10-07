@@ -119,10 +119,12 @@ async function codePanel(host) {
     const endpoint=library?"/api/catalog/key":"/api/websearch/key";
     const save=el("button",{type:"button",class:"go blue",text:"Save key",onclick:async()=>{if(!input.value.trim()){status.textContent="Paste a key first. Existing key kept.";return}try{const r=await api(endpoint,{id,key:input.value});input.value="";has=r.has_key;refresh()}catch(e){status.textContent=e.message}}});
     const remove=el("button",{type:"button",class:"go ghost",text:"Remove key",onclick:async()=>{try{const r=await api(endpoint,{id,clear:true});has=r.has_key;refresh()}catch(e){status.textContent=e.message}}});
-    keyrow.append(input,save,link(url,"Get a key ↗"),remove);
+    keyrow.append(input,save,remove);
     cb.addEventListener("change",()=>{cb.checked?set.add(id):set.delete(id);refresh();library?persistLibraries():persistWeb()});
     card.append(el("div",{class:"source-key-top"},el("label",{class:"check sw"},cb,el("b",{text:name})),badge),status,keyrow,help);refresh();host.append(card);
   }
+  const loaded=window.CCLoadedApp || await api("/api/config");
+  host.prepend(el("div", {class:"loaded-source-overview"}, el("b", {text:"This Nerd's configured sources"}), ...loaded.sources.map(s=>el("p", {text:s.label + " · " + s.type})),el("small", {text:"Already active from the loaded Nerd. The controls below add optional searches."})));
   SEARCH.forEach(p=>service(p.id,p.name,false,false,p.url));
   host.append(el("h3",{text:"Reference libraries"}));
   [["pubmed","PubMed"],["arxiv","arXiv"],["wikipedia","Wikipedia"],["crossref","Crossref"],["openalex","OpenAlex"]].forEach(([id,name])=>service(id,name,true,id!=="openalex","https://openalex.org/settings/api"));

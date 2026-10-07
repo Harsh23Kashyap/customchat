@@ -75,3 +75,9 @@ Open Configuration, then **Prompts** or **Code helpers** in the sidebar. Both ar
 [Install options](docs/INSTALL.md) · [Hosting](docs/DEPLOY_OPTIONS.md) · [Architecture](docs/DESIGN.md) · Tests: `python -m unittest discover -s tests`
 
 Counterpart of [Custom-Nerd](https://github.com/Harsh23Kashyap/Custom-Nerd). Harsh Kashyap, Shela Wu. Advisor: Dennis Shasha. MIT license.
+
+### Load a shared Nerd
+
+Open Configuration → Load and share Nerds. Drop a ZIP or app.yaml, read the readiness check, review any Python connector, then Load and run. A separate workspace opens; the current app stays intact. Keys, accounts and chat history never come with the bundle. Python runs with your local user permissions after your review. Import checks are offline, not a model/network test.
+
+`customchat-app run app.yaml` opens the browser after the server is ready. Use `--no-browser` for servers or terminals without a desktop.

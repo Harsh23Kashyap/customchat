@@ -25,7 +25,7 @@ def _main(argv=None):
     st.add_argument("--no-browser", action="store_true")
     st.add_argument("--lock-config", action="store_true")
     v = sub.add_parser("validate", help="check an app file"); v.add_argument("app")
-    r = sub.add_parser("run", help="serve an app"); r.add_argument("app"); r.add_argument("--host"); r.add_argument("--port", type=int)
+    r = sub.add_parser("run", help="serve an app"); r.add_argument("app"); r.add_argument("--host"); r.add_argument("--port", type=int); r.add_argument("--no-browser", action="store_true", help="serve without opening a browser")
     df = sub.add_parser("config-diff", help="preview changed keys and effects without values"); df.add_argument("app"); df.add_argument("candidate")
     ca = sub.add_parser("config-apply", help="apply exact previewed config with private rollback backup")
     ca.add_argument("app"); ca.add_argument("candidate"); ca.add_argument("--current-sha", required=True); ca.add_argument("--candidate-sha", required=True)
@@ -78,6 +78,16 @@ def _main(argv=None):
         print("OK: %s, %d source(s), provider %s" % (c["app"]["title"], len(c["sources"]), c["provider"]["type"]))
     elif args.cmd == "run":
         from .server import serve
+        c = schema.load(args.app)
+        host = args.host or c["server"]["host"]
+        port = args.port or c["server"]["port"]
+        browser_host = "127.0.0.1" if host in ("0.0.0.0", "::") else host
+        if ":" in browser_host: browser_host = "[" + browser_host + "]"
+        url = "http://%s:%s" % (browser_host, port)
+        print("Open %s in your browser. Ctrl+C stops the app." % url, flush=True)
+        if not args.no_browser:
+            from .launcher import open_when_ready
+            open_when_ready(url)
         serve(args.app, args.host, args.port)
     elif args.cmd == "doctor":
         doctor(args.app)

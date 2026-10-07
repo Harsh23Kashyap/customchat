@@ -1,0 +1,6 @@
+.env
+.newsnerd-venv/
+data/
+__pycache__/
+*.pyc
+nerds/
