@@ -5,6 +5,10 @@ from pathlib import Path
 RELEASE='08ab51591a43edf382080add86e8eacbaff0e9cf'
 SOURCE='https://github.com/Harsh23Kashyap/customchat/archive/'+RELEASE+'.zip'
 
+def stage(text):
+    enabled=sys.stdout.isatty() and 'NO_COLOR' not in os.environ and os.environ.get('TERM')!='dumb'
+    print(('\033[36m' + text + '\033[0m') if enabled else text,flush=True)
+
 def healthy(url):
     try:
         with urllib.request.urlopen(url+'/api/health',timeout=1) as r:return r.status==200
@@ -51,14 +55,14 @@ def run(args):
         same=False
         try:same=json.loads(receipt.read_text()).get('source')==source
         except (OSError,ValueError):pass
-        if valid and same:print('Environment and dependencies already ready; skipped.',flush=True)
+        if valid and same:stage('1 / 3  Environment and dependencies already ready; skipped.')
         else:
             if not valid:
-                print('Creating or repairing private environment.',flush=True)
+                stage('1 / 3  Creating or repairing private environment.')
                 # Only this installer-owned venv is removed. User workspace is separate.
                 shutil.rmtree(root/'venv',ignore_errors=True)
                 command('venv','--python',sys.executable,root/'venv')
-            print('Installing app and dependencies.',flush=True)
+            stage('2 / 3  Installing app and dependencies.')
             command('pip','install','--python',py,source)
             subprocess.run([str(py),'-c','import customchat.launcher,yaml'],check=True)
             temp=receipt.with_suffix('.tmp');temp.write_text(json.dumps(dict(source=source)));temp.replace(receipt)
@@ -80,7 +84,7 @@ def run(args):
                 time.sleep(.2)
             else:raise RuntimeError('App did not report ready; inspect '+str(log))
             active.write_text(json.dumps(dict(pid=child.pid,url=url)))
-            print('Starting CustomChat at '+url+' (Ctrl+C to stop)',flush=True)
+            stage('3 / 3  Starting CustomChat at '+url+' (Ctrl+C to stop)')
             print('Workspace: '+str(Path(args.directory).expanduser().resolve()),flush=True)
             if args.verify_and_stop:
                 with urllib.request.urlopen(url+'/api/config',timeout=3) as response:
