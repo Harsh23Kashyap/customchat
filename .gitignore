@@ -6,3 +6,10 @@ data/
 .venv/
 node_modules/
 deploy/publish.env
+
+# Python packaging outputs
+build/
+dist/
+*.egg-info/
+# Default local quickstart workspace
+customchat-app/
