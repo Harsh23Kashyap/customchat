@@ -14,4 +14,4 @@ Checks happen when questions arrive, at most once per interval (seconds, 0-86400
 
 A missing/unreadable folder or symlink stops use of that source. Old passages are not used for a new answer after a failed check. Other available sources can still answer. A later question or owner check retries, and recovery swaps in a complete index. Existing saved answers remain historical snapshots; they are not silently rewritten.
 
-The first scope is .md/.txt/.json/.csv local folders. Remote docs, PDF/OCR, notifications while idle and scheduled sync are not included. Keep private account files and personal uploads out of configured source folders. Owner/admin authorization and configuration locking apply to the freshness status endpoint.
+Supported local files are .md/.txt/.json/.csv and PDF with the optional document dependencies described in RETRIEVAL.md. Remote docs, notifications while idle and scheduled sync are not included. Keep private account files and personal uploads out of configured source folders. Owner/admin authorization and configuration locking apply to the freshness status endpoint.
