@@ -1,5 +1,5 @@
 """Run the README bootstrap with no uv, Python, Git or host package access."""
-import json, os, shutil, subprocess, tempfile, time, urllib.request
+import json, os, signal, shutil, subprocess, tempfile, time, urllib.request
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -24,7 +24,7 @@ def main():
             env['CUSTOMCHAT_INSTALL_SOURCE']=str(next((ROOT/'dist').glob('*.whl')).resolve())
         work=base/'my workspace';work.mkdir()
         with open(base/'run.log','w+') as log:
-            proc=subprocess.Popen(cmd+['--no-browser','--lock-config','--port','18750'],cwd=work,env=env,stdout=log,stderr=subprocess.STDOUT)
+            proc=subprocess.Popen(cmd+['--no-browser','--lock-config','--port','18750'],cwd=work,env=env,stdout=log,stderr=subprocess.STDOUT,start_new_session=os.name!='nt')
             try:
                 url=None
                 for _ in range(900):
@@ -41,7 +41,9 @@ def main():
                 assert (home/'.local/bin'/('uv.exe' if os.name=='nt' else 'uv')).exists()
                 print((base/'run.log').read_text());print('Fresh laptop bootstrap passed: no uv/Python/Git, empty cache, health 200, cited Demo.')
             finally:
-                proc.terminate()
+                if os.name=='nt':
+                    subprocess.run(['taskkill','/F','/T','/PID',str(proc.pid)],capture_output=True)
+                else:os.killpg(proc.pid,signal.SIGTERM)
                 try:proc.wait(timeout=10)
                 except subprocess.TimeoutExpired:proc.kill();proc.wait()
 if __name__=='__main__':main()
