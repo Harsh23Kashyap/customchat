@@ -1,6 +1,6 @@
 """App starters generated once per prompt/config version; never use private chat context."""
 import hashlib,json,re,threading
-from . import providers
+from . import providers, permissions
 _lock=threading.Lock()
 
 def clean(rows,limit=4):
@@ -14,11 +14,11 @@ def clean(rows,limit=4):
         if len(out)>=limit:break
     return out
 
-def starters(engine):
+def starters(engine, owner=None):
     cfg=engine.cfg
     context={'app':{k:cfg['app'].get(k) for k in ('title','tagline','examples')},
              'instruction':engine.prompts.text('answer') or cfg['prompt']['system'],
-             'sources':[s.get('label','') for s in cfg['sources']],
+             'sources':[s.get('label','') for s in cfg['sources'] if permissions.allowed(cfg,owner,s['id'])],
              'provider':{k:cfg['provider'].get(k) for k in ('type','model','base_url')}}
     key='starters-'+hashlib.sha256(json.dumps(context,sort_keys=True).encode()).hexdigest()[:24]
     with _lock:
