@@ -272,6 +272,26 @@
       "type": "integer",
       "const": 1,
       "description": "Version 1; omitted in legacy files."
+    },
+    "actions": {
+      "type": "object",
+      "properties": {
+        "allow": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "enum": [
+              "list_notes",
+              "save_note"
+            ]
+          }
+        },
+        "writes": {
+          "type": "boolean"
+        }
+      }
     }
   }
         }
