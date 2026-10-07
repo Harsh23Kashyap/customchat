@@ -25,6 +25,12 @@ def make_handler(cfg, engine):
     themestore = themes.ThemeStore(os.path.dirname(os.path.abspath(store.path)) if store.path != ":memory:" else "/tmp")
     acc = Accounts(store, bool(cfg["auth"].get("signup", True))) if cfg["auth"]["mode"] == "accounts" else None
 
+    def turn_scopes(owner, rows):
+        for row in rows:
+            try: row["scope"] = store.get_state(owner, "scope-" + row["id"])
+            except ValueError: pass
+        return rows
+
     def settings_view():
         p, r = cfg["provider"], cfg["retrieval"]
         return {"provider": p["type"], "model": p["model"], "base_url": p["base_url"], "temperature": p["temperature"],
@@ -164,6 +170,16 @@ def make_handler(cfg, engine):
                 return self._send(404, {"error": "Not found"})
             o = self._owner()
             b = self._body() if method == "POST" else {}
+            if path == "/api/scopes" and method == "GET":
+                rows = []
+                for sid, conn in engine.connectors.items():
+                    docs = []
+                    if hasattr(conn, "docs"):
+                        try: conn.refresh()
+                        except OSError: pass
+                        docs = sorted({d.get("document") for d in conn.docs if d.get("document")}) if not getattr(conn, "last_error", "") else []
+                    rows.append({"source": sid, "label": conn.label, "documents": docs})
+                return self._send(200, rows)
             if path == "/api/suggestions" and method == "POST":
                 from .suggestions import starters, recent
                 result = starters(engine)
@@ -350,7 +366,7 @@ def make_handler(cfg, engine):
             if path == "/api/chats" and method == "POST":
                 return self._send(200, {"id": store.new_chat(o, b.get("title") or "New chat")})
             if path == "/api/turns":
-                return self._send(200, store.turns(o, qs.get("chat", "")))
+                return self._send(200, turn_scopes(o, store.turns(o, qs.get("chat", ""))))
             if path == "/api/export-all":
                 return self._send(200, json.dumps(store.export_all(o), indent=1).encode(), "application/json",
                                   {"Content-Disposition": 'attachment; filename="customchat-export.json"'})
@@ -386,7 +402,7 @@ def make_handler(cfg, engine):
                 chat = None if temp else (b.get("chat") or store.new_chat(o))
                 gen = engine.ask_stream(o, chat, b.get("question"), b.get("sources"), b.get("style", "standard"),
                                         b.get("topic"), bool(b.get("new_topic")), not b.get("fresh"),
-                                        temporary=temp, temp_history=b.get("history"), use_profile=bool(b.get("use_profile")))
+                                        temporary=temp, temp_history=b.get("history"), use_profile=bool(b.get("use_profile")), scope=b.get("scope"))
                 first = next(gen)  # validation errors surface as a normal 400 before streaming starts
                 self.send_response(200)
                 self.send_header("Content-Type", "application/x-ndjson")
@@ -410,7 +426,9 @@ def make_handler(cfg, engine):
                 return self._send(200, r)
             if path == "/api/regenerate":
                 t = store.turn(o, b.get("turn", ""))
-                r = engine.ask(o, t["chat"], t["question"], None, b.get("style", "standard"), t["topic"], False, False)
+                try: saved_scope = store.get_state(o, "scope-" + t["id"])
+                except ValueError: saved_scope = None
+                r = next(data for kind, data in engine.ask_stream(o, t["chat"], t["question"], None, b.get("style", "standard"), t["topic"], False, False, scope=saved_scope) if kind == "done")
                 return self._send(200, r)
             if path == "/api/branch" and method == "POST":
                 return self._send(200, store.branch(o, str(b.get("turn") or ""), b.get("question")))
@@ -445,7 +463,7 @@ def make_handler(cfg, engine):
             if path == "/api/topics":
                 return self._send(200, store.topics(o))
             if path == "/api/topic-turns":
-                return self._send(200, store.topic_turns(o, qs.get("topic", "")))
+                return self._send(200, turn_scopes(o, store.topic_turns(o, qs.get("topic", ""))))
             if path == "/api/rename-topic":
                 store.rename_topic(o, b.get("topic"), b.get("title")); return self._send(200, {"ok": True})
             if path == "/api/bibtex":
