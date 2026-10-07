@@ -107,12 +107,22 @@ class Engine:
 
     def retrieve(self, question, source_ids=None, owner=None):
         ids = [s for s in (source_ids or list(self.connectors)) if s in self.connectors]
+        refresh_errors = {}
+        for sid in list(ids):
+            conn = self.connectors[sid]
+            if hasattr(conn, "refresh"):
+                try:
+                    if conn.refresh(): self._cache.clear()
+                except OSError:
+                    ids.remove(sid); refresh_errors[sid] = "Local folder unavailable"
+                    self._cache.clear()
         extra = self._uploads_evidence(owner, question)
-        key = (question.lower().strip(), tuple(sorted(ids)), owner if extra else None, len(extra))
-        if key in self._cache:
+        key = (question.lower().strip(), tuple(sorted(ids)), owner if extra else None, len(extra),
+               tuple((sid, getattr(self.connectors[sid], "revision", "")) for sid in sorted(ids)))
+        if key in self._cache and not refresh_errors:
             return self._cache[key]
         k = self.cfg["retrieval"]["top_k"]
-        found, errors, seen = list(extra), {}, set()
+        found, errors, seen = list(extra), dict(refresh_errors), set()
         weights = {s["id"]: float(s.get("weight", 1.0)) for s in self.cfg["sources"]}
         qs = self.queries(question)
 
