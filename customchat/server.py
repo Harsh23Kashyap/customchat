@@ -164,6 +164,10 @@ def make_handler(cfg, engine):
                 return self._send(404, {"error": "Not found"})
             o = self._owner()
             b = self._body() if method == "POST" else {}
+            if path == "/api/suggestions" and method == "POST":
+                from .suggestions import starters, recent
+                result = starters(engine)
+                return self._send(200, dict(result, recent=[] if b.get("temporary") else recent(store, o)))
             if LOCKED and path == "/api/theme" and method == "POST":
                 return self._send(404, {"error": "Not found"})
             if path == "/api/theme" and method == "POST":
