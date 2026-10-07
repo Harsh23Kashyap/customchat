@@ -28,7 +28,7 @@ const ICON = {
   close: "M6 6l12 12M18 6L6 18",
 };
 const svg = (n) => { const e = document.createElementNS("http://www.w3.org/2000/svg", "svg"); e.setAttribute("viewBox", "0 0 24 24"); e.setAttribute("width", "18"); e.setAttribute("height", "18"); e.setAttribute("fill", "none"); e.setAttribute("stroke", "currentColor"); e.setAttribute("stroke-width", "2"); e.setAttribute("stroke-linecap", "round"); e.setAttribute("stroke-linejoin", "round"); const p = document.createElementNS("http://www.w3.org/2000/svg", "path"); p.setAttribute("d", ICON[n]); e.append(p); return e; };
-const S = { cfg: null, chat: null, topic: null, newTopic: false, tab: "chats", sources: new Set(), turns: [], ratings: {}, temp: false, useProfile: localStorage.getItem("cc_profile_on") === "1", busy: false, token: localStorage.getItem("cc_token") || "" };
+const S = { suggestions: null, cfg: null, chat: null, topic: null, newTopic: false, tab: "chats", sources: new Set(), turns: [], ratings: {}, temp: false, useProfile: localStorage.getItem("cc_profile_on") === "1", busy: false, token: localStorage.getItem("cc_token") || "" };
 
 const TV = (k) => ((window.CCTheme && window.CCTheme.value) || {})[k] || "";
 const PREVIEW = !!window.__ccPreview;
@@ -173,9 +173,19 @@ async function download(path, name) {
   const a = el("a", { href: URL.createObjectURL(await r.blob()), download: name }); a.click();
 }
 
+async function loadSuggestions() {
+  if (PREVIEW) return;
+  try { S.suggestions = await api("/api/suggestions", {temporary: S.temp}); if (!S.turns.length) drawThread(); }
+  catch (_) { /* Configured examples remain usable if budget/provider is unavailable. */ }
+}
+function recentQuestions() {
+  if (S.temp || !S.suggestions || !S.suggestions.recent.length) return null;
+  return el("div", {class:"recent-questions"}, el("p", {class:"fu-label",text:"Your recent questions"}),
+    el("div",{class:"ex"}, S.suggestions.recent.map(x=>el("button",{onclick:()=>{$("#q").value=x;send();}},x))));
+}
 function heroView() {
   const a = S.cfg.app;
-  const he = TV("emoji_hero") || TV("emoji_bot"), exs = TV("txt_examples") ? TV("txt_examples").split("\n").map((x) => x.trim()).filter(Boolean).slice(0, 8) : a.examples;
+  const he = TV("emoji_hero") || TV("emoji_bot"), exs = TV("txt_examples") ? TV("txt_examples").split("\n").map((x) => x.trim()).filter(Boolean).slice(0, 8) : (S.suggestions ? S.suggestions.questions : a.examples);
   return el("div", { class: "hero" + (PREVIEW ? " mini" : "") }, TV("logo") ? el("img", { class: "hero-logo", src: TV("logo"), alt: "" }) : el("div", { class: "av bot" + (he ? " emo" : ""), text: he || (TV("txt_title") || a.title || "AI").replace(/[^A-Za-z]/g, "").slice(0, 2) }), el("div", {}, el("h1", { text: TV("txt_title") || a.title }), el("p", { text: TV("txt_tagline") || a.tagline }),
     el("div", { class: "ex" }, exs.map((x) => el("button", { onclick: () => { $("#q").value = x; send(); } }, x)))));
 }
@@ -192,8 +202,8 @@ function drawThread() {
   const w = el("div", { class: "wrap" });
   if (!S.turns.length) {
     const a = S.cfg.app;
-    const he = TV("emoji_hero") || TV("emoji_bot"), exs = TV("txt_examples") ? TV("txt_examples").split("\n").map((x) => x.trim()).filter(Boolean).slice(0, 8) : a.examples;
-    w.append(heroView());
+    const he = TV("emoji_hero") || TV("emoji_bot"), exs = TV("txt_examples") ? TV("txt_examples").split("\n").map((x) => x.trim()).filter(Boolean).slice(0, 8) : (S.suggestions ? S.suggestions.questions : a.examples);
+    w.append(heroView()); const recent = recentQuestions(); if (recent) w.append(recent);
   } else { if (PREVIEW) w.append(heroView()); S.turns.forEach((t, i) => w.append(...turnView(t, S.turns[i - 1]))); if (PREVIEW) w.append(chartCard()); }
   { const rows = [...w.querySelectorAll(".row")], same = th.dataset.chat === String(S.chat), prev = same ? +th.dataset.n || 0 : 0; rows.forEach((r, i) => { if (i >= prev) r.classList.add("fresh"); }); th.dataset.chat = String(S.chat); th.dataset.n = rows.length; }
   th.append(w); th.scrollTop = PREVIEW ? 0 : th.scrollHeight;
@@ -244,7 +254,7 @@ async function openTopic(id) {
   S.turns = await api("/api/topic-turns?topic=" + id);
   $("#chatTitle").textContent = "Conversation"; $("#app").classList.remove("menu-open"); drawThread();
 }
-function newChat() { setTemp(false); S.chat = null; S.topic = null; S.newTopic = false; S.turns = []; $("#chatTitle").textContent = "New chat"; $("#app").classList.remove("src", "menu-open"); drawThread(); loadList(); $("#q").focus(); }
+function newChat() { setTemp(false); loadSuggestions(); S.chat = null; S.topic = null; S.newTopic = false; S.turns = []; $("#chatTitle").textContent = "New chat"; $("#app").classList.remove("src", "menu-open"); drawThread(); loadList(); $("#q").focus(); }
 
 let aborter = null;
 async function stream(body, onEvent) {
@@ -375,7 +385,7 @@ async function init() {
   document.addEventListener("keydown", (e) => { const t = e.target.tagName; if (["INPUT", "TEXTAREA", "SELECT"].includes(t) || e.metaKey || e.ctrlKey || e.altKey) return; if (e.key === "j") jumpQ(1); else if (e.key === "k") jumpQ(-1); });
   applyWording(); applyIcons();
   if (PREVIEW) { previewMode(); return; }
-  drawThread(); loadList(); tour();
+  drawThread(); loadList(); loadSuggestions(); tour();
 }
 init().catch((e) => { document.body.textContent = "Could not start: " + e.message; });
 
