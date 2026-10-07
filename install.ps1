@@ -12,7 +12,12 @@ if (-not $uv) {
     Invoke-WebRequest https://astral.sh/uv/install.ps1 -OutFile $script
     # Keep the same engine as this script, rather than crossing pwsh/WindowsPowerShell module paths.
     $engine = Join-Path $PSHOME $(if ($PSVersionTable.PSEdition -eq 'Core') { 'pwsh.exe' } else { 'powershell.exe' })
-    & $engine -NoProfile -ExecutionPolicy Bypass -File $script
+    # Inherited PS7 module paths can shadow WindowsPowerShell's built-in Security module.
+    $savedModulePath = $env:PSModulePath
+    try {
+      $env:PSModulePath = Join-Path $PSHOME 'Modules'
+      & $engine -NoProfile -ExecutionPolicy Bypass -File $script
+    } finally { $env:PSModulePath = $savedModulePath }
     if ($LASTEXITCODE -ne 0) { throw 'uv bootstrap failed' }
   } finally { Remove-Item $script -ErrorAction SilentlyContinue }
   $exe = Join-Path $HOME '.local\bin\uv.exe'
