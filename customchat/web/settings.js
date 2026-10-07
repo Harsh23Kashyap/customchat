@@ -19,7 +19,7 @@ function draw() {
   document.querySelectorAll("#seg button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.p === cur.provider)));
   buildChips();
   provExtras();
-  for (const id of ["model", "apikey", "keysave", "keyclear", "modelPick", "refreshModels", "testconn", "base", "temp", "topk", "rewrite", "apply", "load", "saveLook", "resetAll", "imp", "exportApp", "checkDocs"]) $("#" + id).disabled = !canEdit; $("#testconn").disabled = !canEdit || testBlocked;
+  for (const id of ["model", "apikey", "keysave", "keyclear", "modelPick", "refreshModels", "testconn", "base", "temp", "topk", "rewrite", "apply", "load", "saveLook", "resetAll", "imp", "exportApp", "checkDocs", "saveBudget"]) $("#" + id).disabled = !canEdit; $("#testconn").disabled = !canEdit || testBlocked;
 }
 const read = () => ({ provider: cur.provider, model: chosenModel(), base_url: $("#base").value.trim(), temperature: +$("#temp").value, top_k: +$("#topk").value, query_rewrite: $("#rewrite").checked });
 /* ---------- key, model picker, connection test ---------- */
@@ -428,7 +428,7 @@ function resetGroup(s) { const d = meta.default; for (const f of s.fields) { if 
 function setPvMode(m) { document.querySelectorAll("#pvmode button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.m === m))); }
 function buildMenu() {
   const m = $("#menu"); m.replaceChildren();
-  const items = [["presets", "Presets and states"], ["model", "Model"], ["portable", "Portable app"], ["freshness", "Document freshness"]].concat(SECTIONS.map((s) => [s.id, s.title]));
+  const items = [["presets", "Presets and states"], ["model", "Model"], ["portable", "Portable app"], ["freshness", "Document freshness"], ["budget", "Budget"]].concat(SECTIONS.map((s) => [s.id, s.title]));
   items.forEach(([id, t]) => m.append(el("a", { href: "#sec-" + id, text: t })));
   const links = [...m.children]; links[0].classList.add("on");
   const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) { activeSec = e.target.id.replace("sec-", ""); pvFollow(); document.querySelectorAll("#menu a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id)); } }, { rootMargin: "-20% 0px -70% 0px" });
@@ -519,7 +519,26 @@ $("#checkDocs").addEventListener("click", async function () {
   try { await docsFreshness(true); } finally { this.disabled = !canEdit; }
 });
 
-init().then(() => { if (canEdit) docsFreshness(false); updateVis(); setTimeout(updateVis, 500); }).catch((e) => say(e.message, true));
+async function loadBudget() {
+  const data = await api("/api/budget"), limits = data.limits;
+  $("#budgetQuestions").value = limits.daily_questions;
+  $("#budgetUser").value = limits.user_daily_questions;
+  $("#budgetCalls").value = limits.daily_model_calls;
+  $("#budgetSpend").value = limits.spend_cap_usd === null ? "" : limits.spend_cap_usd;
+  $("#budgetStatus").textContent = data.day + " UTC: " + (data.used.question || 0) + " questions, " + (data.used.model || 0) + " model invocations. " + data.spend_note;
+}
+$("#saveBudget").addEventListener("click", async function () {
+  if (!canEdit) return; this.disabled = true;
+  try {
+    await api("/api/budget", { budget: { daily_questions: Number($("#budgetQuestions").value),
+      user_daily_questions: Number($("#budgetUser").value), daily_model_calls: Number($("#budgetCalls").value),
+      spend_cap_usd: $("#budgetSpend").value === "" ? null : Number($("#budgetSpend").value) } });
+    await loadBudget();
+  } catch (error) { $("#budgetStatus").textContent = error.message; }
+  finally { this.disabled = !canEdit; }
+});
+
+init().then(() => { if (canEdit) { docsFreshness(false); loadBudget().catch((e) => { $("#budgetStatus").textContent = e.message; }); } updateVis(); setTimeout(updateVis, 500); }).catch((e) => say(e.message, true));
 })();
 
 
