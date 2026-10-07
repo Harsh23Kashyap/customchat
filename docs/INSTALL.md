@@ -78,3 +78,9 @@ Packaging is prepared, not published. Before a short PyPI command: verify packag
 - Docker Windows prerequisites: https://docs.docker.com/desktop/setup/install/windows-install/
 - packaged runtime data: https://setuptools.pypa.io/en/latest/userguide/datafiles.html
 - build backend/metadata: https://packaging.python.org/en/latest/tutorials/packaging-projects/?highlight=distributing
+
+## Fresh-computer bootstrap (October 7 update)
+
+The README now uses `start.sh` / `start.ps1`: they detect or install uv, obtain managed Python 3.12, and invoke `uv tool run` (uvx) in an isolated tool environment. The archive source does not require Git. This differs from the older `install.sh` route above, which uses an installer-owned venv. Both keep user workspaces outside the software environment.
+
+`tests/start_bootstrap.py` runs the new bootstrap in a disposable home and empty cache, with uv, uvx, Python and Git absent from PATH, then checks health 200 and a Demo answer with citations. Linux passed with both the wheel and the real remote archive. macOS/Windows are checked by the release workflow; do not treat Linux alone as proof for those OSes. The pip venv artifact test also passed dependency checks, offline Demo and isolation from a deliberately broken host yaml package.
