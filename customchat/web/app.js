@@ -216,8 +216,12 @@ async function loadSuggestions() {
 }
 function recentQuestions() {
   if (S.temp || !S.suggestions || !S.suggestions.recent.length) return null;
+  const starters=TV("txt_examples")?TV("txt_examples").split("\n"):S.suggestions.questions;
+  const shown=new Set(starters.map(x=>x.trim().toLocaleLowerCase()));
+  const recent=S.suggestions.recent.filter(x=>!shown.has(x.trim().toLocaleLowerCase()));
+  if(!recent.length)return null;
   return el("div", {class:"recent-questions"}, el("p", {class:"fu-label",text:"Your recent questions"}),
-    el("div",{class:"ex"}, S.suggestions.recent.map(x=>el("button",{onclick:()=>{$("#q").value=x;send();}},x))));
+    el("div",{class:"ex"}, recent.map(x=>el("button",{onclick:()=>{$("#q").value=x;send();}},x))));
 }
 function heroView() {
   const a = S.cfg.app;
