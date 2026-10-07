@@ -92,7 +92,7 @@ function apply(t, root = document.documentElement) {
   set("--pat-pos", t.pattern === "plus" ? "center" : "0 0");
   if (t.pattern === "plus") { set("--pat-img", `linear-gradient(${rgba(pc, t.pattern_opacity / 100)},${rgba(pc, t.pattern_opacity / 100)}),linear-gradient(${rgba(pc, t.pattern_opacity / 100)},${rgba(pc, t.pattern_opacity / 100)})`); set("--pat-size", `${ps}px 1px, 1px ${ps}px`); }
   const d = root.dataset;
-  d.pattern = t.pattern; d.motion = t.motion; d.entrance = t.entrance; d.bubble = t.bubble; d.sidebar = t.sidebar; d.chatw = t.chat_width;
+  d.pattern = t.pattern; d.motion = t.motion === "calm" ? "none" : t.motion; d.motionProfile = t.motion; d.entrance = t.entrance; d.bubble = t.bubble; d.sidebar = t.sidebar; d.chatw = t.chat_width;
   d.avatars = t.avatars; d.align = t.you_align; d.composer = t.composer; d.toolbar = t.toolbar; d.lift = t.hover_lift ? "on" : "off"; d.sources = t.sources_panel ? "on" : "off";
   const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.content = c.brand;
   let icon = document.querySelector('link[data-cc-icon]');
