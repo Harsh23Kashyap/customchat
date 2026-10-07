@@ -225,3 +225,16 @@ html[data-sidebar=hidden] .side{transition:transform .28s var(--ease)}
 @media(prefers-reduced-motion:no-preference){#dirty:not(.dirty)::before{animation:m-tick .26s var(--ease)}}
 .keystate.ok::before{content:"\2713";display:inline-block;margin-right:5px;font-weight:700}
 @media(prefers-reduced-motion:no-preference){.keystate.ok::before{animation:m-tick .26s var(--ease)}}
+
+/* Review: meaningful state transitions, without moving the whole shell. */
+.src{transition:background-color 180ms ease-out,border-color 180ms ease-out,box-shadow 180ms ease-out}
+.cite:focus-visible{outline:2px solid var(--brand);outline-offset:2px;background:var(--bot)}
+.ex button:hover,.ex button:focus-visible{transform:none}
+.ex button::after{transition:transform 140ms ease-out}
+.ex button:hover::after,.ex button:focus-visible::after{transform:translateX(3px)}
+.answer-arrive{animation:answer-arrive 200ms ease-out both}
+@keyframes answer-arrive{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+/* The preview is an iframe: interpolate inside it, not on the outer frame. */
+html.preview body,html.preview .app,html.preview .main,html.preview .bar,html.preview .side,html.preview .box,html.preview .q,html.preview .srcs button.s{transition:background-color 220ms ease-out,color 220ms ease-out,border-color 220ms ease-out,border-radius 240ms ease-out,padding 280ms ease-out,gap 280ms ease-out}
+html[data-motion=none] *,html[data-motion=none] *::before{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+@media(prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
