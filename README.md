@@ -27,10 +27,10 @@ The app opens in your browser. If that does not happen, open the printed localho
 ### Already have uv?
 
 ```sh
-uvx --python 3.12 --from https://github.com/Harsh23Kashyap/customchat/archive/refs/heads/main.zip customchat start
+uvx customchat-app start
 ```
 
-This archive route needs no Git. It installs from current `main`, which can change. PyPI publication of `customchat-app` is pending; do not use `uvx customchat` or `pip install customchat`, which target another project.
+[customchat-app 0.1.0 is on PyPI](https://pypi.org/project/customchat-app/). The distribution and executable alias are `customchat-app`; `customchat` is also available inside its environment. Do not use `uvx customchat` or `pip install customchat`, which target another project. The fresh-computer scripts pin 0.1.0; to pin uvx too, use `uvx customchat-app@0.1.0 start`.
 
 ### Will it conflict with my other Python packages?
 
@@ -45,14 +45,14 @@ With **Python 3.10+** already installed, open a new empty folder and run:
 ```sh
 # macOS / Linux
 python3 -m venv .venv
-.venv/bin/python -m pip install https://github.com/Harsh23Kashyap/customchat/archive/refs/heads/main.zip
+.venv/bin/python -m pip install customchat-app==0.1.0
 .venv/bin/python -m customchat start
 ```
 
 ```powershell
 # Windows
 py -3 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install https://github.com/Harsh23Kashyap/customchat/archive/refs/heads/main.zip
+.\.venv\Scripts\python.exe -m pip install customchat-app==0.1.0
 .\.venv\Scripts\python.exe -m customchat start
 ```
 
@@ -63,7 +63,7 @@ These commands use the venv directly; no activation or PowerShell activation-pol
 Choose an AI provider in Configuration or your app YAML. Keep keys in environment variables/private local storage, never YAML or Git.
 
 ```sh
-uvx --python 3.12 --from https://github.com/Harsh23Kashyap/customchat/archive/refs/heads/main.zip customchat start --directory my-chat
+uvx customchat-app start --directory my-chat
 ```
 
 Edit `my-chat/app.yaml` and add documents in the app folder. [Configuration reference](docs/DESIGN.md).
