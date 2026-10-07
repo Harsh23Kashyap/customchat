@@ -159,6 +159,7 @@ function turnView(t, prev) {
     t.followups.forEach((x) => f.append(el("button", { class: "chip", onclick: () => { $("#q").value = x; send(); } }, x)));
     nodes.push(el("div", { class: "fu-label", text: "Related" }), f);
   }
+  meta.append(el("button", { "data-more": "1", class: "chip", onclick: () => branchQuestion(t) }, "Edit + branch"));
   meta.append(el("button", { "data-more": "1", class: "chip del", title: "Delete this answer", onclick: async () => {
     await api("/api/delete-turn", { turn: t.id }); S.turns = S.turns.filter((x) => x.id !== t.id); drawThread();
     const u = el("div", { class: "toast", onclick: async () => { await api("/api/restore-turn", { turn: t.id }); S.turns = await api("/api/turns?chat=" + S.chat); drawThread(); u.remove(); } }, "Answer deleted. Click to undo"); centerToast(u);
@@ -166,6 +167,20 @@ function turnView(t, prev) {
   const more = [...meta.querySelectorAll("[data-more]")];
   if (more.length) { const d = el("details", { class: "more" }, el("summary", { class: "chip", title: "More actions" }, t.evidence.length ? "More" : "Details")); const box = el("div", { class: "more-box" }); more.forEach((b) => box.append(b)); d.append(box); meta.append(d); }
   return nodes;
+}
+async function branchQuestion(t) {
+  if (S.busy) return toast("Wait for the current answer or stop it first");
+  const question = prompt("Edit this question. A new branch keeps earlier context and leaves the original unchanged.", t.question);
+  if (question == null || !question.trim()) return;
+  if (S.temp) return toast("Edit + branch needs a saved chat. Temporary chats stay unsaved.");
+  try {
+    const result = await api("/api/branch", {turn:t.id, question});
+    await openChat(result.chat);
+    $("#q").value = result.question; autosize(); rdy(); $("#q").focus();
+    const notice = el("div", {class:"branch-notice"}, "New branch. Original unchanged. ", el("button", {class:"chip", onclick:()=>{$("#q").value="";autosize();rdy();openChat(result.original_chat)}}, "Open original"));
+    $("#thread .wrap").prepend(notice);
+    toast("Branch ready. Review and send your edited question.");
+  } catch(e) { toast(e.message); }
 }
 async function download(path, name) {
   const h = S.token ? { Authorization: "Bearer " + S.token } : {};
