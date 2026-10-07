@@ -118,6 +118,15 @@
             "type": "number",
             "minimum": 0,
             "maximum": 86400
+          },
+          "ocr": {
+            "type": "boolean"
+          },
+          "semantic_model": {
+            "type": "string"
+          },
+          "rerank_model": {
+            "type": "string"
           }
         }
       }
