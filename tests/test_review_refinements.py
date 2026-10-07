@@ -6,6 +6,7 @@ class ReviewRefinements(unittest.TestCase):
   web=Path(__file__).resolve().parents[1]/'customchat/web'
   css=(web/'style.css').read_text(); app=(web/'app.js').read_text(); settings=(web/'settings.js').read_text()
   self.assertIn('prefers-reduced-motion:no-preference',css)
+  self.assertIn('html[data-motion] *::after{transition:none!important;transition-duration:0s!important',css)
   self.assertIn('html.preview:not([data-motion=none])',css)
   self.assertIn('["calm","none"].includes(t.motion)',settings)
   self.assertIn('["calm","none"].includes(theme.motion)',settings)
