@@ -39,6 +39,29 @@ function loadFonts(t) {
 }
 const stack = (k, custom, fallback) => (k === "custom" && custom ? `"${custom}",${fallback}` : (FONT_STACKS[k] || FONT_STACKS["dm-sans"])[0]);
 
+
+const autoColors = new Map();
+let contrastFrame = 0, contrastSettle = 0;
+function readableFonts(){
+  if (!window.CCBrand || !document.body) return;
+  autoColors.forEach((value,node)=>{if(node.isConnected){node.style.removeProperty("color");if(value)node.style.color=value;}});autoColors.clear();
+  const shadeCache=new Map();
+  const parse=value=>{const m=value.match(/^rgba?\(([^)]+)\)/);if(!m)return null;const v=m[1].split(/[, ]+/).map(Number);if(v.length>3&&v[3]===0)return null;return "#"+v.slice(0,3).map(x=>Math.round(x).toString(16).padStart(2,"0")).join("");};
+  document.querySelectorAll("body *").forEach(node=>{
+    if (!(node instanceof HTMLElement) || node.closest("#cc-watermark") || ![...node.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())) return;
+    const color=parse(getComputedStyle(node).color);if(!color)return;
+    let back=null,host=node;while(host&&!back){const value=getComputedStyle(host).backgroundColor;const m=value.match(/^rgba?\(([^)]+)\)/);const vals=m?m[1].split(/[, ]+/).map(Number):[];if(vals.length===3||vals[3]===1)back=parse(value);host=host.parentElement;}
+    back=back||getComputedStyle(document.documentElement).getPropertyValue("--cream").trim();
+    if(!/^#[0-9a-f]{6}$/i.test(back))return;
+    const key=color+back;const changed=shadeCache.get(key)||CCBrand.shade(color,back);shadeCache.set(key,changed);if(changed!==color){autoColors.set(node,node.style.color);node.style.setProperty("color",changed,"important");}
+  });
+}
+function queueContrast(){cancelAnimationFrame(contrastFrame);contrastFrame=requestAnimationFrame(readableFonts);clearTimeout(contrastSettle);contrastSettle=setTimeout(readableFonts,400);}
+window.CCReadableFonts=queueContrast;
+document.addEventListener("DOMContentLoaded",()=>{
+  queueContrast();new MutationObserver(queueContrast).observe(document.body,{childList:true,subtree:true});
+});
+
 function apply(t, root = document.documentElement) {
   if (!t || !t.light) return;
   const local = !window.__ccPreview && localStorage.getItem("cc_mode");
@@ -83,7 +106,7 @@ function apply(t, root = document.documentElement) {
     watermark.hidden = !(t.logo && t.logo_watermark);
   };
   if (document.body) paintWatermark(); else document.addEventListener("DOMContentLoaded",paintWatermark,{once:true});
-  window.CCTheme.value = t;
+  window.CCTheme.value = t; queueContrast();
 }
 window.__ccPreview = /[?&]preview=1/.test(location.search);
 window.CCTheme = { apply, value: null, fonts: FONT_STACKS };
