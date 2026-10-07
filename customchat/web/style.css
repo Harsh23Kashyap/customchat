@@ -580,3 +580,11 @@ html.preview .bar .title{font-size:13px!important}
 @media (max-width:700px){.meta{gap:10px 14px}.meta .chip{min-height:36px;padding-inline:12px}}
 @media (prefers-reduced-motion:reduce){.srcs button.s .go,.nf-tips .go{transition:none}}
 .nf-tips{padding-left:0 !important;margin:8px 0 0;list-style:none}.bubble.none .nf-tips .tip{text-align:left}
+
+/* Branding stays behind the reading surfaces and never intercepts controls. */
+#cc-watermark{position:absolute;right:20px;bottom:90px;width:240px;height:240px;background:center/contain no-repeat;opacity:.04;pointer-events:none;z-index:0}
+.main{position:relative}.main>.bar,.main>.thread,.main>.composer{position:relative;z-index:1}
+
+html[data-branded=on][data-theme=dark] .box{background:var(--bot);border-color:var(--line)}
+html[data-branded=on][data-theme=dark] .cmeta,html[data-branded=on][data-theme=dark] .cmeta *,html[data-branded=on][data-theme=dark] .hero p,html[data-branded=on][data-theme=dark] .box textarea::placeholder{color:var(--mut)}
+html[data-branded=on] .new{color:var(--on-brand)}
