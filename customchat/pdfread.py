@@ -56,3 +56,42 @@ def extract(data):
     if len(text) < 20:
         raise ValueError("No readable text in this PDF (it may be a scan)")
     return text[:150_000]
+
+
+def pages(data, ocr=False, max_pages=100):
+    """Page-preserving extraction; OCR is explicit and local, never a web upload."""
+    if not data.startswith(b"%PDF") or len(data) > MAX_BYTES:
+        raise ValueError("PDF must be valid and at most 8 MB")
+    try:
+        import io
+        from pypdf import PdfReader
+    except ImportError:
+        raise ValueError("Page anchors need pypdf. Install customchat[documents].") from None
+    reader = PdfReader(io.BytesIO(data))
+    if len(reader.pages) > max_pages:
+        raise ValueError("PDF exceeds the 100-page local extraction limit")
+    out = []
+    for number, page in enumerate(reader.pages, 1):
+        text = (page.extract_text() or "").strip()
+        if len(text) < 20 and ocr:
+            text = _ocr_page(data, number)
+        if text: out.append({"page": number, "text": text[:150000], "ocr": len((page.extract_text() or "").strip()) < 20 and ocr})
+    if not out: raise ValueError("No readable text. Set ocr: true and install local OCR tools for scans.")
+    return out
+
+
+def _ocr_page(data, number):
+    import shutil, subprocess, tempfile
+    from pathlib import Path
+    if not shutil.which("pdftoppm") or not shutil.which("tesseract"):
+        raise ValueError("OCR needs pdftoppm (Poppler) and Tesseract installed on this computer")
+    with tempfile.TemporaryDirectory(prefix="customchat-ocr-") as folder:
+        root = Path(folder); source = root / "document.pdf"; source.write_bytes(data)
+        try:
+            subprocess.run(["pdftoppm", "-f", str(number), "-l", str(number), "-scale-to", "2000", "-singlefile", "-png", str(source), str(root / "page")],
+                           check=True, timeout=30, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            result = subprocess.run(["tesseract", str(root / "page.png"), "stdout"], check=True, timeout=30,
+                                    stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        except (subprocess.SubprocessError, OSError):
+            raise ValueError("Local OCR failed or timed out; no text from that page was indexed") from None
+        return result.stdout.decode("utf-8", errors="replace").strip()
