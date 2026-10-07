@@ -58,7 +58,7 @@
   </div>
   <div class="savebar clean" id="savebar"><span id="dirty">No unsaved changes</span><button class="go ghost" id="resetAll">Reset look to default</button><button class="go blue" id="saveLook">Save look</button></div>
 </main>
-<script src="/settings.js"></script><script src="/codeeditor.js" defer></script><script src="/pipeline.js" defer></script><script src="/panels.js" defer></script>
+<script src="/brand.js"></script><script src="/settings.js"></script><script src="/codeeditor.js" defer></script><script src="/pipeline.js" defer></script><script src="/panels.js" defer></script>
 <button type="button" id="pvfab" aria-label="Show live preview" hidden>Preview</button>
 <script>(function(){var b=document.getElementById("pvfab");if(!b)return;b.hidden=false;b.addEventListener("click",function(){var o=document.body.classList.toggle("pvopen");b.textContent=o?"Close preview":"Preview";b.setAttribute("aria-label",o?"Close live preview":"Show live preview")})})()</script>
 <script>(function(){var K="cc_cfg_mode",bar=document.getElementById("cfgmode"),help=document.getElementById("modehelp");if(!bar)return;
@@ -67,4 +67,4 @@ help.textContent=m==="simple"?"The everyday settings, in plain words.":"Adds pro
 var m="simple";try{m=localStorage.getItem(K)||"simple"}catch(e){}set(m);
 bar.addEventListener("click",function(e){var b=e.target.closest("button");if(b)set(b.dataset.m)})})()</script>
 </body>
-</html>
+  </html>
