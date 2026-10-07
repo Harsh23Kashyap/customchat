@@ -18,6 +18,10 @@ def make_handler(cfg, engine):
     store = engine.store
     token_env = cfg["auth"]["token_env"]
     hits = collections.defaultdict(list)
+    from .budget import Budget, BudgetError
+    budget = Budget(cfg, os.path.dirname(os.path.abspath(store.path)) if store.path != ":memory:" else None)
+    cfg["budget"] = dict(budget.value)
+    engine.provider = budget.wrap(engine.provider)
     themestore = themes.ThemeStore(os.path.dirname(os.path.abspath(store.path)) if store.path != ":memory:" else "/tmp")
     acc = Accounts(store, bool(cfg["auth"].get("signup", True))) if cfg["auth"]["mode"] == "accounts" else None
 
@@ -49,7 +53,7 @@ def make_handler(cfg, engine):
         except schema.ConfigError as e:
             raise ValueError(str(e)) from None
         cfg["provider"], cfg["retrieval"] = new["provider"], new["retrieval"]
-        engine.provider = providers.make(cfg)
+        engine.provider = budget.wrap(providers.make(cfg))
         engine._cache.clear()
 
     class H(BaseHTTPRequestHandler):
@@ -166,6 +170,11 @@ def make_handler(cfg, engine):
                 if not can_edit(self):
                     return self._send(403, {"error": "The look can only be changed from this computer or by the admin"})
                 return self._send(200, {"theme": themestore.reset() if b.get("reset") else themestore.save(b.get("theme"))})
+            if path == "/api/budget" and method in ("GET", "POST"):
+                if not can_edit(self): raise PermissionError("Only the app owner can change the budget.")
+                if method == "POST":
+                    budget.save(b.get("budget", {})); cfg["budget"] = dict(budget.value)
+                return self._send(200, budget.view())
             if path == "/api/docs-freshness" and method in ("GET", "POST"):
                 if not can_edit(self):
                     raise PermissionError("Only the app owner can check document freshness.")
@@ -205,7 +214,7 @@ def make_handler(cfg, engine):
                         secrets.STORE.delete(kind)
                     else:
                         secrets.STORE.set(kind, b.get("key"))
-                    engine.provider = providers.make(cfg); engine._cache.clear()
+                    engine.provider = budget.wrap(providers.make(cfg)); engine._cache.clear()
                     return self._send(200, {"key": providers.has_key(kind)})
                 if path == "/api/provider/models" and method == "POST":
                     try:
@@ -361,6 +370,7 @@ def make_handler(cfg, engine):
                 return self._send(200, chat_markdown(ch["title"], store.turns(o, ch["id"])).encode(), "text/markdown; charset=utf-8",
                                   {"Content-Disposition": 'attachment; filename="chat.md"'})
             if path in ("/api/ask", "/api/ask-stream", "/api/regenerate"):
+                budget.take("question", o)
                 now = time.time(); hits[o] = [t for t in hits[o] if now - t < 60]
                 if len(hits[o]) >= 30:
                     return self._send(429, {"error": "Too many questions, wait a moment"})
@@ -477,6 +487,8 @@ def make_handler(cfg, engine):
                 self._send(400, {"error": str(e) or "Bad request"})
             except (TypeError, AttributeError):
                 self._send(400, {"error": "That request had the wrong shape. Check the values and try again."})
+            except BudgetError as e:
+                self._send(429, {"error": str(e)})
             except providers.ProviderError as e:
                 self._send(502, {"error": str(e)})
             except Exception:
@@ -498,7 +510,7 @@ ERR_PAGES = {
 # Config lock: CUSTOMCHAT_CONFIG=off serves the chat only. No settings page, no config or key endpoints.
 LOCKED = os.environ.get("CUSTOMCHAT_CONFIG", "").strip().lower() in ("off", "0", "false", "locked", "disabled")
 LOCKED_PAGES = {"/settings.html", "/settings.js", "/settings.css", "/panels.js", "/pipeline.js", "/codeeditor.js", "/codeeditor.LICENSE.txt"}
-LOCKED_API = ("/api/docs-freshness", "/api/app-export", "/api/settings", "/api/provider", "/api/hardware", "/api/prompts", "/api/codegen", "/api/websearch", "/api/catalog", "/api/ollama", "/api/states")
+LOCKED_API = ("/api/budget", "/api/docs-freshness", "/api/app-export", "/api/settings", "/api/provider", "/api/hardware", "/api/prompts", "/api/codegen", "/api/websearch", "/api/catalog", "/api/ollama", "/api/states")
 
 
 def _esc(s):
