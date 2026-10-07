@@ -1,5 +1,7 @@
 # Ways to run or host CustomChat: pick one
 
+New non-Docker path: [one-host preparation](../deploy/host/README.md) generates a systemd/Caddy plan and provides private SQLite backup, loopback health and code-release rollback helpers. Local helpers are tested. Public host, TLS and production restore remain unverified.
+
 New local install choice: [uvx source install](INSTALL.md), `uvx --from git+https://github.com/Harsh23Kashyap/customchat.git@main customchat start`. Local package installation is tested; no registry publication or public deployment.
 
 Written hosting comparison only. Nothing here was deployed. Prices and free tiers change, so check each provider's pricing page before choosing.
