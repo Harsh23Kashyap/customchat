@@ -36,7 +36,10 @@ function stageCard(s) {
   const why = el("p", { class: "h" });
   return el("details", { class: "stage", id: "st-" + s.key }, el("summary", {}, el("b", { text: s.label }), el("small", { text: s.optional ? (s.on ? "On" : "Off") : "Always on" })), el("div", { class: "sbody" }, el("p", { class: "h", text: s.help }), sw, area, el("div", { class: "keyrow" }, brief, gen), why, el("div", { class: "keyrow" }, save, reset, st)));
 }
-let selected = {};
+let selected = {},focusSection="";
+function placePrompt(){const pane=$("#promptsEditor"),section=$("#sec-prompts"),layout=$(".layout"),preview=$("#pvbox");if(!pane||!section||!layout)return;const active=focusSection==="prompts",desktop=matchMedia("(min-width:1181px)").matches;document.body.classList.toggle("prompt-pane-active",active&&desktop);if(active&&desktop){pane.classList.add("prompt-side-editor");layout.insertBefore(pane,preview)}else{pane.classList.remove("prompt-side-editor");const list=$(".editor-list",section);section.insertBefore(pane,active&&!desktop?list:null)}if(preview)preview.hidden=active&&desktop;}
+window.CCPipelineFocus=section=>{focusSection=section;placePrompt()};window.addEventListener("resize",placePrompt);
+
 function editorList(section, cards, kind) {
   const pane = el("div", {class:"pipeline-editor-pane inline-editor",id:kind+"Editor", "aria-label":kind === "prompts" ? "Selected prompt editor" : "Selected code editor"});
   const list = el("div", {class:"editor-list", role:"list", "aria-label":kind === "prompts" ? "Prompt stages" : "Code helpers"});
@@ -47,6 +50,7 @@ function editorList(section, cards, kind) {
     card.hidden = false; card.open = true; card.classList.add("selected-editor");
     selected[kind] = {card,button};
     pane.replaceChildren(card);
+    if(kind==="prompts"){const area=$("textarea",card);if(area){area.scrollTop=0;area.setSelectionRange(0,0)}placePrompt();requestAnimationFrame(()=>{if(area)area.scrollTop=0})}
   };
   cards.forEach(card => {
     const title = $("summary b", card)?.textContent || "Editor";
@@ -56,7 +60,7 @@ function editorList(section, cards, kind) {
   section.append(list, pane);
   section._editorCards=cards;
   if (cards[0]) choose(cards[0],list.querySelector("button"));
-  section._choose=choose;
+  section._choose=choose;placePrompt();
 }
 let dg;
 function redrawDiagram() { if (dg) { const n = diagram(); dg.replaceWith(n); dg = n; } }
