@@ -36,7 +36,7 @@ class ConfigAlignment(unittest.TestCase):
 
  def test_bundle_review_has_one_preview_and_full_content_width(self):
   css=(Path(__file__).parents[1]/'customchat/web/settings.css').read_text()
-  self.assertIn('body.reviewing-nerd #pvbox,body.reviewing-nerd #pvfab{display:none!important}',css)
-  self.assertIn('body.reviewing-nerd #col{min-width:0;width:100%;max-width:none}',css)
+  self.assertIn('body:has(#nerdReview .import-grid) #pvbox,body:has(#nerdReview .import-grid) #pvfab{display:none!important}',css)
+  self.assertIn('body:has(#nerdReview .import-grid) #col{min-width:0;width:100%;max-width:none}',css)
   self.assertIn('.import-preview{position:static;max-height:none;overflow:visible}',css)
   self.assertIn('#nerdReview{scroll-margin-top:24px}',css)
