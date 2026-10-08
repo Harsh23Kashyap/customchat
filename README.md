@@ -1,5 +1,7 @@
 # CustomChat
 
+0.1.14: Selecting Prompts replaces the desktop chat preview with the full current stage editor. Prompt selection starts at the beginning of its complete text; mobile shows the editor above the stage list. Saved revise toggles match app defaults and explicit overrides. No prompt wording changed.
+
 0.1.13: Configuration hydrates its normal controls, not a raw app-field dump. Active sources are detected by type rather than special IDs, matching presets are selected and custom looks are labeled accurately. App-file branding seeds unsaved theme values. Existing helper drafts and private key presence show in their controls; empty optional fields explicitly say not filled. Saved-state selection reflects the current model settings. No unused source is enabled automatically.
 
 0.1.12: Nerd bundle review uses the full content width and its own static bundle preview, without an unrelated live chat preview. Review cards no longer pin and clip against the viewport top; desktop navigation has a safe inset. All settings remain in the continuous document. Imported Nerds have an explicit Edit configuration link. Configuration includes every app-file field with current values, effective branding text and saved inert code drafts or the active connector source. App-file edits are revision-checked and require restart; helper drafts never activate or run code. Model/retrieval Apply is saved to the app file for reopening. Keys remain private with saved-presence indicators.
@@ -122,3 +124,5 @@ Residual risks: models can still follow poisoned content or launder false claims
 ### Configuration layout fixes (0.1.10)
 
 Setup uses short, stacked status lines, with full check details behind an expandable section. Workspace tabs wrap in a consistent grid. Action links, including Open your chat, center their labels without underlines or clipped text and grow when text wraps. No provider, prompt or data behavior changes.
+
+0.1.14: full selected prompt in the desktop preview pane; prompt switches use workspace defaults; preset navigation keeps scroll; guides remember their first display across ports; floating Save and red Reset menu; header and welcome illustration follow the palette.
