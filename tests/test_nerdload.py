@@ -65,4 +65,4 @@ class NerdLoadTests(unittest.TestCase):
    self.loader.review('d.zip',self.encoded({'app.yaml':'{}','.private':'x'}))
  def test_source_archive_explained(self):
   with self.assertRaisesRegex(ValueError,'CustomChat source ZIP, not a Nerd bundle'):
-   self.loader.review('source.zip',self.encoded({'customchat/.gitignore':'x','customchat/pyproject.toml':'x','customchat/customchat/__init__.py':'x'}))
+   self.loader.review('source.zip',self.encoded({'customchat/.gitignore':'x','customchat/pyproject.toml':'x','customchat/customchat/__init__.py':'x','customchat/customchat/accounts.py':'x'}))
