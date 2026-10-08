@@ -100,7 +100,7 @@ def bundle(cfg, theme_value=None, prompt_value=None):
         if not any(k.startswith(target + '/') for k in files):
             files[target + '/'] = b''
     if theme_value is None:
-        theme_value = theme.ThemeStore(str(state)).value if state else {}
+        theme_value = theme.ThemeStore(str(state),cfg["app"]).value if state else {}
     files['data/theme.json'] = json.dumps(theme.clean(theme_value), indent=2).encode()
     if prompt_value is None:
         prompt_value = prompts.PromptStore(str(state) if state else '')._load()
