@@ -27,13 +27,26 @@ class NerdLoader:
    try:
     with zipfile.ZipFile(io.BytesIO(data)) as z:
      if len(z.infolist())>500:raise ValueError('Too many files')
+     # Validate paths and private names before ignoring benign metadata.
+     for info in z.infolist():
+      path=PurePosixPath(info.filename)
+      if path.is_absolute() or '..' in path.parts or '\\' in info.filename or re.match(r'^[A-Za-z]:',info.filename):raise ValueError('Unsafe path in bundle: '+info.filename)
+      if (info.external_attr>>16)&0o170000==0o120000:raise ValueError('Symlinks are not allowed: '+info.filename)
+      if any(re.match(r'^\.env(?:$|[._-])',part,re.I) or part.lower() in ('.ssh','.aws','.azure','.gnupg','.npmrc','.pypirc','.netrc') for part in path.parts):raise ValueError('Private file is not allowed: '+info.filename)
+      if re.search(r'(secret|credential|password|token|customchat\.db|accounts|sessions)',info.filename,re.I):raise ValueError('Private file is not allowed: '+info.filename)
+     names={str(PurePosixPath(i.filename).name) for i in z.infolist() if not i.is_dir()}
+     if 'pyproject.toml' in names and any('/customchat/__init__.py' in '/'+i.filename for i in z.infolist()):raise ValueError('This is the CustomChat source ZIP, not a Nerd bundle. Install it to run CustomChat. To share a Nerd, use Download app ZIP in Configuration.')
      total=0
      for info in z.infolist():
       path=PurePosixPath(info.filename)
       if path.is_absolute() or '..' in path.parts or '\\' in info.filename or re.match(r'^[A-Za-z]:',info.filename):raise ValueError('Unsafe path in bundle')
       if (info.external_attr>>16)&0o170000==0o120000:raise ValueError('Symlinks are not allowed')
       if info.is_dir():continue
-      if any(x.startswith('.') for x in path.parts):raise ValueError('Hidden files are not allowed; never import .env')
+      benign={'.gitignore','.gitattributes','.editorconfig','.DS_Store','.github','.git','__MACOSX'}
+      hidden=[x for x in path.parts if x.startswith('.') or x=='__MACOSX']
+      if hidden:
+       if all(x in benign or x.startswith('._') for x in hidden):continue
+       raise ValueError('Unsupported hidden file: '+info.filename)
       if re.search(r'(secret|credential|password|token|customchat\.db|accounts|sessions)',info.filename,re.I):raise ValueError('Private files are not allowed')
       if len(info.filename)>240:raise ValueError('Path too long')
       if path.suffix.lower() not in _ALLOWED:raise ValueError('Unsupported file: '+info.filename)
@@ -66,6 +79,7 @@ class NerdLoader:
     d=json.loads(files[name])
     if name.endswith('theme.json'):files[name]=json.dumps(theme.clean(d)).encode()
     elif not isinstance(d,dict) or set(d)-{'text','on'}:raise ValueError('Invalid prompt settings')
+  empty_sources=[]
   for src in cfg['sources']:
    for field in ('path','module'):
     v=src.get(field)
@@ -74,7 +88,7 @@ class NerdLoader:
     if p.is_absolute() or '..' in p.parts or '\\' in v:raise ValueError('Sources must stay inside the bundle')
    if src['type']=='local_files':
     path=src.get('path','docs').rstrip('/')
-    if not any(n.startswith(path+'/') for n in files):raise ValueError('Missing local source folder '+path+'. Load a ZIP with its documents.')
+    if not any(n.startswith(path+'/') for n in files):empty_sources.append((src['label'],path))
    if src['type']=='python':
     mod=src.get('entry','').partition(':')[0]
     if not re.fullmatch(r'[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*',mod):raise ValueError('Invalid Python module entry')
@@ -88,6 +102,7 @@ class NerdLoader:
   envs=sorted({src.get('api_key_env') for src in cfg['sources'] if src.get('api_key_env')}|({cfg['provider']['api_key_env']} if cfg['provider'].get('api_key_env') else set()))
   from .readiness import check
   readiness=check(cfg,files,raw)
+  for label,path in empty_sources:readiness['rows'].append({'kind':'setup','item':label,'message':'No documents included for '+path+'. An empty source folder will be created. Add documents in the new workspace before asking source-backed questions.'})
   if not readiness['can_load']:raise ValueError('Python connector does not compile. Fix it before loading.')
   envs=readiness['required_env']
   token=hashlib.sha256(data).hexdigest()
@@ -111,6 +126,8 @@ class NerdLoader:
   folder=Path(tempfile.mkdtemp(prefix='nerd-',dir=str(self.root)))
   for name,data in files.items():
    p=folder/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(data)
+  for src in cfg['sources']:
+   if src['type']=='local_files':(folder/src.get('path','docs')).mkdir(parents=True,exist_ok=True)
   port=pick_port(8090)
   cfg['server']['port']=port;(folder/'app.yaml').write_text(yaml.safe_dump(cfg,sort_keys=False))
   log=open(folder/'run.log','wb')
