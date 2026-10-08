@@ -23,7 +23,7 @@ class ConfigAlignment(unittest.TestCase):
   follow=js.split('function pvFollow() {',1)[1].split('const m = activeSec',1)[0]
   self.assertNotIn('editing-pipeline',follow)
   self.assertNotIn('loading-nerd',follow)
-  self.assertNotIn('CCPipeline',follow)
+  self.assertNotIn('section.hidden',follow) # editor placement may change, sections stay continuous
  def test_editors_live_in_their_sections(self):
   js=(Path(__file__).parents[1]/'customchat/web/pipeline.js').read_text()
   self.assertIn('section.append(list, pane)',js)
