@@ -440,7 +440,7 @@ class Engine:
         return kept or evidence
 
     def revise(self, answer, evidence):
-        if not evidence or not answer or not (self._llm_on("revise") or (self.cfg["prompt"].get("revise") and self.cfg["provider"]["type"] != "mock")):
+        if not evidence or not answer or not (self._llm_on("revise") or (self.cfg["prompt"].get("revise") and self.prompts._load()["on"].get("revise",True) and self.cfg["provider"]["type"] != "mock")):
             return answer
         ev = "\n".join("[%d] %s. %s" % (e["n"], e["title"], e["text"][:3000]) for e in evidence)
         try:
