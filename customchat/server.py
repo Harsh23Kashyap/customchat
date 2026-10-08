@@ -171,6 +171,7 @@ def make_handler(cfg, engine):
             if path == "/api/theme" and method == "GET":
                 return self._send(200, {"theme": themestore.value, "meta": themes.meta(), "can_edit": can_edit(self)})
             if path == "/api/configuration-state":
+                self._owner()
                 if not can_edit(self):raise PermissionError('Only the app owner can view or edit configuration')
                 if method == "POST":
                     b=self._body()
@@ -178,6 +179,7 @@ def make_handler(cfg, engine):
                     return self._send(200,{'revision':rev,'restart_required':True,'message':'App file saved. Restart this workspace to apply all fields. No new code or network calls ran.'})
                 return self._send(200,{'config':editstate.view(cfg),'revision':editstate.revision(cfg),'helpers':editstate.helper_state(cfg,state_folder)})
             if path == "/api/codegen/draft" and method == "POST":
+                self._owner()
                 if not can_edit(self):raise PermissionError('Only the app owner can save helper drafts')
                 b=self._body()
                 return self._send(200,editstate.save_draft(state_folder,str(b.get('kind','')),b.get('brief'),b.get('code')))
