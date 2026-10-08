@@ -4,8 +4,10 @@
   const node=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text)n.textContent=text;return n;};
   const stored=k=>{try{return localStorage.getItem(k)}catch{return null}};
   const mark=k=>{try{localStorage.setItem(k,'1')}catch{}};
-  function show({key,title,steps,replay=false,onClose}) {
+  async function show({key,title,steps,replay=false,onClose}) {
+    if(!replay){try{const r=await fetch("/api/guide-seen"),d=await r.json();if(d[key])return}catch{}}
     if(document.querySelector('.cc-tour')||(!replay&&stored(key)))return;
+    mark(key);fetch('/api/guide-seen',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key})}).catch(()=>{});
     const before=document.activeElement,scroll=window.scrollY;
     const dialog=node('dialog','cc-tour');dialog.setAttribute('aria-label',title);
     const glow=node('div','cc-tour-focus');glow.setAttribute('aria-hidden','true');document.body.append(glow);
