@@ -467,7 +467,7 @@ function syncColorEditor(sec) {
   }
 }
 function drawLook() {
-  const root = $("#look"); root.replaceChildren();
+  const root = $("#look"),extra=new Map([...root.querySelectorAll("section.tile")].map(sec=>[sec.id,[...sec.querySelectorAll(":scope > .workspace-fields")]])); root.replaceChildren();
   for (const s of SECTIONS) {
     const sec = el("section", { class: "tile", id: "sec-" + s.id });
     const head = el("div", { class: "head" }, el("span", { class: "ic " + s.tone, text: s.icon }), el("div", {}, el("b", { text: s.title }), el("small", { text: s.sub })), el("button", { type: "button", class: "mini reset", title: "Put this group back to the defaults", disabled: canEdit ? undefined : "", onclick: () => resetGroup(s) }, "Reset group"));
@@ -490,6 +490,7 @@ function drawLook() {
       const rest = s.fields.filter((f) => !used.has(f.key)); if (rest.length) { const g = el("div", { class: "fields" }); rest.forEach((f) => g.append(control(f))); sec.append(el("details", { class: "grp" }, el("summary", { text: "More options" }), g)); }
     }
     sec.append(el("div", { class: "secfoot" }, el("button", { type: "button", class: "go blue", disabled: canEdit ? undefined : "", onclick: () => saveSection(s) }, "Save " + s.title.toLowerCase()), el("button", { type: "button", class: "go ghost", disabled: canEdit ? undefined : "", onclick: () => resetGroup(s) }, "Reset to default")));
+    for(const panel of extra.get(sec.id)||[])sec.append(panel);
     root.append(sec);
   }
   buildMenu();
