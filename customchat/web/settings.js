@@ -31,7 +31,7 @@ async function provExtras() {
   $("#keyh").textContent = p === "openai_compatible" ? "Only if your server asks for one. Stored on this computer only, never shown again." : "Stored on this computer only, never shown again.";
   $("#apikey").placeholder = k.has ? "Saved key available. Enter only to replace it." : "Paste a key to save privately";
   const ks = $("#keystate"); ks.className = "keystate" + (k.has ? " ok" : "");
-  ks.textContent = k.has ? (k.source === "env" ? "Key found in an environment variable." : "A key is saved.") : (k.needed ? "No key yet." : "");
+  ks.textContent = k.has ? (k.source === "env" ? "Key found in an environment variable." : "A key is saved.") : (k.needed ? "Not filled (no API key saved)." : "No key needed.");
   { const tc = $("#testconn"), blocked = !!(k.needed && !k.has); testBlocked = blocked; tc.disabled = blocked || !canEdit; tc.title = blocked ? "Save a key first, then test it" : ""; if (blocked) $("#testres").textContent = "Save a key first, then test."; else if ($("#testres").textContent === "Save a key first, then test.") $("#testres").textContent = ""; }
   $("#keyclear").hidden = k.source !== "saved"; $("#apikey").value = "";
   ollamaPanel();
@@ -138,8 +138,8 @@ function modelAction(tag, installed) {
 }
 function syncDeleteLook(){const name=$("#states").value,btn=$("#del");btn.disabled=!name||!canEdit;btn.textContent=name?'Delete "'+name+'"':'Choose a saved look to delete';}
 async function states() {
-  const s = (await api("/api/states")).states; const sel = $("#states"); sel.replaceChildren();
-  sel.append(el("option", { value: "", text: "Select a state..." })); s.forEach((n) => sel.append(el("option", { value: n, text: n })));syncDeleteLook();
+  const data = await api("/api/states"), s=data.states; const sel = $("#states"); sel.replaceChildren();
+  sel.append(el("option", { value: "", text: "Current settings (not a saved state)" })); s.forEach((n) => sel.append(el("option", { value: n, text: n })));sel.value=data.current||"";syncDeleteLook();
 }
 
 /* ---------- look: every setting, with a plain explanation ---------- */
@@ -248,9 +248,9 @@ const GROUPS = {
   layout: [["Layout", ["sidebar", "chat_width"]], ["More layout options", ["sidebar_width", "avatars", "you_align", "composer", "toolbar", "sources_panel"], true]]
 };
 const clone = (o) => JSON.parse(JSON.stringify(o));
-const effectiveWording = () => {const a=window.CCLoadedApp?.app||{};return {txt_title:a.title,txt_tagline:a.tagline,txt_examples:(a.examples||[]).join("\n"),txt_footer:a.footer};};
+const effectiveWording = () => {const a=window.CCLoadedApp?.app||{};return {txt_title:a.title,txt_tagline:a.tagline,txt_examples:(a.examples||[]).join("\n"),txt_footer:a.footer,txt_placeholder:"Ask a question",txt_hint:"Answers cite their sources. Check important facts.",txt_disclaimer:"Not a substitute for professional advice.",txt_sidebar:"Conversations"};};
 const get = (f) => (f.colors ? theme[editMode][f.key] : theme[f.key] || effectiveWording()[f.key] || theme[f.key]);
-const setv = (f, v) => { if (f.colors) theme[editMode][f.key] = v; else theme[f.key] = v; changed(); };
+const setv = (f, v) => { const empty=document.getElementById("f-"+f.key)?.closest(".field")?.querySelector(".empty-field");if(empty)empty.hidden=!!v; if (f.colors) theme[editMode][f.key] = v; else theme[f.key] = v; changed(); };
 let sendTimer = 0;
 function pushPreview() {
   const t = clone(theme); const m = $("#pvmode .seg button[aria-checked=true], #pvmode button[aria-checked=true]"); t.mode = m ? m.dataset.m : t.mode;
@@ -265,7 +265,7 @@ function updateVis() {
   document.querySelectorAll("[data-k]").forEach((e) => { if (e.dataset.k in show) e.hidden = !show[e.dataset.k]; });
 }
 function changed() {
-  updateVis();
+  updateVis();syncPreset();
   clearTimeout(sendTimer); sendTimer = setTimeout(pushPreview, 40); pvExtra(); setTimeout(pvExtra, 350);
   const dirty = JSON.stringify(theme) !== JSON.stringify(saved);
   $("#dirty").textContent = dirty ? "Saving..." : "All changes saved"; $("#dirty").className = dirty ? "dirty" : ""; $("#savebar").classList.toggle("clean", !dirty);
@@ -366,7 +366,7 @@ function compactHelp(){
 }
 
 function control(f) {
-  const id = "f-" + f.key; let input;
+  const id = "f-" + (f.colors && f.key==="sidebar" ? "color-sidebar" : f.key); let input;
   if(f.key === "bg_image"){
     const link=el("input",{id,type:"text",value:get(f)||"",placeholder:"https://… or choose a picture","aria-label":f.label}),file=el("input",{type:"file",accept:"image/png,image/jpeg,image/webp","aria-label":"Background picture",disabled:canEdit?undefined:""});link.addEventListener("input",()=>setv(f,link.value));file.addEventListener("change",()=>{const chosen=file.files[0];if(!chosen)return;if(chosen.size>4000000){say("Choose a background picture under 4 MB.",true);return}const im=new Image(),url=URL.createObjectURL(chosen);im.onload=()=>{const c=document.createElement("canvas"),scale=Math.min(1,1000/im.width,1000/im.height);c.width=Math.round(im.width*scale);c.height=Math.round(im.height*scale);c.getContext("2d").drawImage(im,0,0,c.width,c.height);const data=c.toDataURL("image/jpeg",.75);if(data.length>600000){say("Picture is too detailed. Choose a smaller one.",true)}else{link.value=data;theme.bg_style="image";setv(f,data);say("Background picture added.")}URL.revokeObjectURL(url)};im.onerror=()=>{say("That picture could not be read.",true);URL.revokeObjectURL(url)};im.src=url});return el("div",{class:"field"},el("div",{class:"flabel",text:"Background picture"}),el("div",{class:"h",text:"Choose a local picture or paste an HTTPS image link."}),link,file);
   }
@@ -391,13 +391,14 @@ function control(f) {
   } else if (f.type === "toggle") {
     input = el("label", { class: "check" }, el("input", { type: "checkbox", id }), "On"); input.firstChild.checked = !!v; input.firstChild.addEventListener("change", (e) => setv(f, e.target.checked));
   } else if (f.type === "area") {
-    input = el("textarea", { id, rows: "4", placeholder: f.ph || "" }); input.value = v || ""; input.addEventListener("input", () => setv(f, input.value));
+    input = el("textarea", { id, rows: "4", placeholder: f.ph || "(not filled)" }); input.value = v || ""; input.addEventListener("input", () => setv(f, input.value));
   } else {
-    input = el("input", { type: "text", id, placeholder: f.ph || "", maxlength: f.type === "emoji" ? "8" : "300", class: f.type === "emoji" ? "emoji" : "" }); input.value = v || ""; input.addEventListener("input", () => setv(f, input.value)); input.addEventListener("blur", () => { const t = input.value.trim(); if (t !== input.value) { input.value = t; setv(f, t); } });
+    input = el("input", { type: "text", id, placeholder: f.ph || "(not filled)", maxlength: f.type === "emoji" ? "8" : "300", class: f.type === "emoji" ? "emoji" : "" }); input.value = v || ""; input.addEventListener("input", () => setv(f, input.value)); input.addEventListener("blur", () => { const t = input.value.trim(); if (t !== input.value) { input.value = t; setv(f, t); } });
   }
   if (!canEdit) { if (input.matches("input,select,textarea,button")) input.disabled=true; input.querySelectorAll("input,select,textarea,button").forEach((x)=>x.disabled=true); }
   if (!canEdit && input.tagName === "SELECT") input.disabled = true;
   const field=el("div", { class: "field" }, el("label", { for: id, class: "flabel" }, f.label), el("span", { class: "h", text: f.help }), input);
+  if (["text","area","emoji","logo"].includes(f.type) && !v) field.append(el("small",{class:"h empty-field",text:"(not filled)"}));
   if(["motion","entrance","speed","hover_lift"].includes(f.key)){
     const play=()=>{pushPreview();setTimeout(()=>{const w=$("#pv").contentWindow;if(w?.ccPreviewMotion)w.ccPreviewMotion(theme)},60)};input.addEventListener("change",play);input.addEventListener("input",play);
   }
@@ -461,7 +462,7 @@ function syncColorEditor(sec) {
   sec.querySelectorAll('[data-m]').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.m===editMode)));
   const spec=SECTIONS.find(s=>s.id==='colors');
   for(const f of spec.fields.filter(f=>f.colors)){
-    const swatch=sec.querySelector('#f-'+f.key);if(!swatch)continue;
+    const swatch=sec.querySelector('#f-'+(f.colors&&f.key==='sidebar'?'color-sidebar':f.key));if(!swatch)continue;
     const value=get(f)||'';swatch.value=value||'#888888';const hex=swatch.closest('.colorrow')?.querySelector('.hex');if(hex)hex.value=value;
   }
 }
@@ -507,22 +508,25 @@ function buildMenu() {
   const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting && Date.now()>navHoldUntil) { activeSec = e.target.id.replace("sec-", ""); pvFollow(); document.querySelectorAll("#menu a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id)); } }, { rootMargin: "-20% 0px -70% 0px" });
   const watch = () => document.querySelectorAll("section.tile[id^=sec-]").forEach((n) => io.observe(n)); watch(); setTimeout(watch, 800); setTimeout(watch, 2500);
 }
+function presetTheme(p){const t=Object.assign(clone(meta.default),clone(p));t.light=Object.assign(clone(meta.default.light),p.light||{});t.dark=Object.assign(clone(meta.default.dark),p.dark||{});return t;}
+function lookSignature(t){const n=clone(t);for(const k of Object.keys(n))if(k.startsWith("txt_")||k.startsWith("logo"))delete n[k];return JSON.stringify(Object.fromEntries(Object.entries(n).sort()));}
+function syncPreset(){if(!theme||!meta)return;const name=Object.entries({...PRESETS,...MORE_PRESETS}).find(([n,p])=>lookSignature(presetTheme(p))===lookSignature(theme))?.[0];document.querySelectorAll("#presets [data-preset]").forEach(b=>{const on=b.dataset.preset===name;b.setAttribute("aria-pressed",String(on));b.classList.toggle("selected",on)});let note=$("#presetCurrent");if(!note){note=el("p",{id:"presetCurrent",class:"h",role:"status"});$("#presets").before(note)}note.textContent=name?"Current preset: "+name:"Current look: Custom (your saved settings)";}
 function buildPresets() {
   const box = $("#presets"); box.replaceChildren();
-  let showMore = false;
+  let showMore = Object.entries({...PRESETS,...MORE_PRESETS}).slice(4).some(([n,p])=>lookSignature(presetTheme(p))===lookSignature(theme));
   const draw = () => { box.replaceChildren();
   const all = showMore ? Object.assign({}, PRESETS, MORE_PRESETS) : Object.fromEntries(Object.entries(PRESETS).slice(0, 4));
   for (const [name, p] of Object.entries(all)) {
-    const t = Object.assign(clone(meta.default), clone(p)); t.light = Object.assign(clone(meta.default.light), p.light || {}); t.dark = Object.assign(clone(meta.default.dark), p.dark || {});
+    const t = presetTheme(p);
     const c = t.mode === "dark" ? t.dark : t.light;
-    const b = el("button", { type: "button", class: "preset", title: "Apply the " + name + " look", disabled: canEdit ? undefined : "" }, el("span", { class: "sw", style: `background:linear-gradient(135deg,${c.bg} 0 50%,${c.brand} 50% 75%,${c.accent} 75%)` }), el("span", { class: "pn" }, el("span", { text: name }), el("small", { text: (FONTNAMES[t.font] || t.font) + (t.heading_font && t.heading_font !== t.font ? " + " + (FONTNAMES[t.heading_font] || t.heading_font) : "") })));
+    const b = el("button", { type: "button", class: "preset", "data-preset":name,"aria-pressed":"false", title: "Apply the " + name + " look", disabled: canEdit ? undefined : "" }, el("span", { class: "sw", style: `background:linear-gradient(135deg,${c.bg} 0 50%,${c.brand} 50% 75%,${c.accent} 75%)` }), el("span", { class: "pn" }, el("span", { text: name }), el("small", { text: (FONTNAMES[t.font] || t.font) + (t.heading_font && t.heading_font !== t.font ? " + " + (FONTNAMES[t.heading_font] || t.heading_font) : "") })));
     b.addEventListener("click", () => { const keep = ["txt_title", "txt_tagline", "txt_examples", "txt_placeholder", "txt_hint", "txt_disclaimer", "txt_sidebar", "txt_footer"]; for (const k of keep) t[k] = theme[k]; theme = t; editMode = theme.mode === "dark" ? "dark" : "light"; setPvMode(editMode); drawLook(); pvPop(); changed(); say("Preset \u201c" + name + "\u201d applied to the preview. Press Save look to keep it."); });
     box.append(b);
   }
   const more = el("button", { type: "button", class: "preset more", "aria-expanded": showMore ? "true" : "false" }, showMore ? "Show fewer" : "Load more");
-  more.addEventListener("click", () => { showMore = !showMore; draw(); });
+  more.addEventListener("click", () => { showMore = !showMore; draw();syncPreset(); });
   box.append(more); };
-  draw();
+  draw();syncPreset();
 }
 async function init() {
   const c = await api("/api/config"); window.CCLoadedApp = c; $("#lead").textContent = "Editing " + c.app.title + ". " + (c.app.tagline || "") + " Keys stay on this computer."; $("#h").textContent = c.app.title + " configuration"; document.title = c.app.title + " configuration";
