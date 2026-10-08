@@ -9,7 +9,7 @@ question -> (1) resolve follow-up into a standalone question using memory
 """
 import collections, math, re, time, json, hashlib
 from concurrent.futures import ThreadPoolExecutor
-from . import permissions
+from . import permissions, stage_contracts
 from . import providers, prompts as promptmod
 from .connectors import make_connector
 
@@ -272,6 +272,8 @@ class Engine:
                                           {"role": "user", "content": "These sentences are too vague: %s\nSay exactly what the passage measured (for example fat mass regain, and which group had more). If a sentence rests on an animal study, say plainly that it was in rats or mice. Every sentence that states a finding needs its own [n] after it. If the opening says Yes or Probably and the effect came with weight loss, open with Possibly or say the effect may partly come from the weight loss.\n\nAnswer:\n%s\n\nEvidence:\n%s" % (" | ".join(flagged)[:800], answer, ev)}]).strip()
         except providers.ProviderError:
             return answer
+        if stage_contracts.errors("revise", out, [e["n"] for e in evidence]):
+            return answer
         if len(out) < 0.4 * len(answer) or not re.search(r"\[\d+\]", out):
             return answer
         new, ev2 = self.tidy(out, evidence)
@@ -406,7 +408,9 @@ class Engine:
             out = self.provider.complete([{"role": "system", "content": self.prompts.text("question_check")}, {"role": "user", "content": question}]).strip()
         except providers.ProviderError:
             return ""
-        if out.upper().startswith("INVALID"):
+        if stage_contracts.errors("question_check", out):
+            return "The question check returned an invalid result. Please try again."
+        if out.startswith("INVALID:"):
             why = out.split(":", 1)[1].strip() if ":" in out else ""
             return why[:300] or "That question is outside what this assistant can answer."
         return ""
@@ -419,7 +423,9 @@ class Engine:
             out = self.provider.complete([{"role": "system", "content": self.prompts.text("relevance")}, {"role": "user", "content": "Question: %s\n\nPassages:\n%s" % (question, listing)}]).strip()
         except providers.ProviderError:
             return evidence
-        if out.upper().startswith("NONE"):
+        if stage_contracts.errors("relevance", out, [e["n"] for e in evidence]):
+            return evidence
+        if out == "NONE":
             return []
         keep = {int(x) for x in re.findall(r"\d+", out)}
         kept = [e for e in evidence if e["n"] in keep]
@@ -433,6 +439,8 @@ class Engine:
             out = self.provider.complete([{"role": "system", "content": self.prompts.text("revise")}, {"role": "user", "content": "Answer:\n%s\n\nEvidence:\n%s" % (answer, ev)}]).strip()
         except providers.ProviderError:
             return answer
+        if stage_contracts.errors("revise", out, [e["n"] for e in evidence]):
+            return answer
         if len(out) < 0.4 * len(answer) or (re.search(r"\[\d+\]", answer) and not re.search(r"\[\d+\]", out)):
             return answer
         return out
@@ -445,7 +453,9 @@ class Engine:
             out = self.provider.complete([{"role": "system", "content": self.prompts.text("faithfulness")}, {"role": "user", "content": "Answer:\n%s\n\nEvidence:\n%s" % (answer, ev)}]).strip()
         except providers.ProviderError:
             return ""
-        if out.upper().startswith("UNSUPPORTED"):
+        if stage_contracts.errors("faithfulness", out):
+            return "Note: the support check returned an invalid result; support was not verified."
+        if out.startswith("UNSUPPORTED:"):
             what = out.split(":", 1)[1].strip() if ":" in out else ""
             return "Note: the sources may not fully support this: %s" % what[:300] if what else "Note: some statements here may not be fully supported by the sources."
         return ""

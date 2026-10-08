@@ -9,11 +9,18 @@ MAX_EXPANDED=32*1024*1024
 _ALLOWED={'.yaml','.yml','.json','.md','.txt','.csv','.pdf','.py'}
 class NerdLoader:
  def __init__(self,folder):
-  self.root=Path(folder)/'nerds';self.pending={};self.children=[];self.lock=threading.Lock()
+  self.root=Path(folder)/'nerds';self.pending={};self.children=[];self.workspaces={};self.lock=threading.Lock()
+  if self.root.is_dir():
+   for folder in self.root.glob('nerd-*'):
+    if folder.is_symlink() or not folder.is_dir():continue
+    try:
+     config=yaml.safe_load((folder/'app.yaml').read_text());title=str(config['app']['title'])[:120]
+     self.workspaces[folder.name]={'folder':folder,'process':None,'title':title,'url':''}
+    except (OSError,ValueError,TypeError,KeyError):pass
  def review(self,name,encoded):
   try:data=base64.b64decode(encoded,validate=True)
   except Exception:raise ValueError('Invalid upload') from None
-  if len(self.children)>=4:raise ValueError('Up to four Nerds can run here. Restart CustomChat to close them before loading more.')
+  if sum(p.poll() is None for p in self.children)>=4:raise ValueError('Up to four Nerds can run here. Stop a running workspace before loading more.')
   if len(data)>MAX_UPLOAD:raise ValueError('Bundle limit is 8 MB')
   files={}
   if name.lower().endswith('.zip'):
@@ -72,6 +79,8 @@ class NerdLoader:
     mod=src.get('entry','').partition(':')[0]
     if not re.fullmatch(r'[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*',mod):raise ValueError('Invalid Python module entry')
     if mod.replace('.','/')+'.py' not in files:raise ValueError('Python connector module is missing from bundle')
+  for src in cfg['sources']:
+   if src['type']=='python':src['execution']='bounded'
   cfg['storage']={'path':'data/customchat.db'};cfg['server']['host']='127.0.0.1';cfg['actions']={'allow':[],'writes':False}
   files.pop(appname);files['app.yaml']=yaml.safe_dump(cfg,sort_keys=False).encode()
   code=[n for n in files if n.endswith('.py')]
@@ -85,12 +94,15 @@ class NerdLoader:
   with self.lock:
    if len(self.pending)>=4:self.pending.pop(next(iter(self.pending)))
    self.pending[token]=(files,cfg,code)
-  return {'readiness':readiness,'token':token,'title':cfg['app']['title'],'tagline':cfg['app']['tagline'],'provider':cfg['provider']['type'],'model':cfg['provider']['model'],'sources':[{'id':s['id'],'label':s.get('label',s['id']),'type':s['type']} for s in cfg['sources']],'required_env':envs,'code':[{'path':n,'text':files[n].decode('utf-8')} for n in code],'warnings':['Separate local workspace. Current app is not overwritten.','Keys, accounts and chat history are not imported.','Imported local apps disable write actions. Review remote sources before asking a question.']}
+  from . import theme
+  look=theme.clean(json.loads(files['data/theme.json'])) if 'data/theme.json' in files else theme.clean({})
+  preview={'title':look.get('txt_title') or cfg['app']['title'],'tagline':look.get('txt_tagline') or cfg['app']['tagline'],'mode':look.get('mode','light'),'colors':look.get('dark' if look.get('mode')=='dark' else 'light',{}),'examples':cfg['app'].get('examples',[])[:3],'files':sorted(files),'static':True}
+  return {'preview':preview,'readiness':readiness,'token':token,'title':cfg['app']['title'],'tagline':cfg['app']['tagline'],'provider':cfg['provider']['type'],'model':cfg['provider']['model'],'sources':[{'id':s['id'],'label':s.get('label',s['id']),'type':s['type']} for s in cfg['sources']],'required_env':envs,'code':[{'path':n,'text':files[n].decode('utf-8')} for n in code],'warnings':['Python uses a bounded process, NOT a sandbox. Host files/network remain accessible; code review required.','Separate local workspace. Current app is not overwritten.','Keys, accounts and chat history are not imported.','Imported local apps disable write actions. Review remote sources before asking a question.']}
  def load(self,token,allow_code=False):
   with self.lock:item=self.pending.get(token)
   if not item:raise ValueError('Review the bundle first')
   files,cfg,code=item
-  if len(self.children)>=4:raise ValueError('Maximum four running Nerds. Restart CustomChat before loading more.')
+  if sum(p.poll() is None for p in self.children)>=4:raise ValueError('Maximum four running Nerds. Stop a running workspace before loading more.')
   if code and not allow_code:raise ValueError('Review Python code and explicitly allow it before loading')
   from .launcher import pick_port
   import tempfile
@@ -102,7 +114,7 @@ class NerdLoader:
   cfg['server']['port']=port;(folder/'app.yaml').write_text(yaml.safe_dump(cfg,sort_keys=False))
   log=open(folder/'run.log','wb')
   child=subprocess.Popen([sys.executable,'-m','customchat','run',str(folder/'app.yaml'),'--no-browser'],stdout=log,stderr=subprocess.STDOUT,cwd=str(Path(__file__).resolve().parents[1]),env={k:v for k,v in os.environ.items() if not re.search(r'(KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)',k,re.I)})
-  log.close();self.children.append(child)
+  log.close();self.children.append(child);self.workspaces[folder.name]={'folder':folder,'process':child,'title':cfg['app']['title'],'url':'http://127.0.0.1:'+str(port)}
   import time,urllib.request
   url='http://127.0.0.1:'+str(port)
   for _ in range(40):
@@ -111,6 +123,27 @@ class NerdLoader:
     with urllib.request.urlopen(url+'/api/health',timeout=.5):return {'url':url,'title':cfg['app']['title'],'workspace':str(folder)}
    except OSError:time.sleep(.1)
   child.terminate();raise ValueError('Nerd did not become ready; current app is unchanged')
+ def list(self):
+  with self.lock:
+   return [{'id':key,'title':v['title'],'url':v['url'],'running':v['process'] is not None and v['process'].poll() is None} for key,v in self.workspaces.items()]
+ def stop(self,key):
+  with self.lock:item=self.workspaces.get(key)
+  if not item:raise ValueError('Unknown imported workspace')
+  proc=item['process']
+  if proc and proc.poll() is None:
+   proc.terminate()
+   try:proc.wait(timeout=3)
+   except subprocess.TimeoutExpired:proc.kill();proc.wait()
+  return {'stopped':True}
+ def remove(self,key,confirmed):
+  if confirmed is not True:raise ValueError('Confirm removal of this imported workspace')
+  with self.lock:item=self.workspaces.get(key)
+  if not item:raise ValueError('Unknown imported workspace')
+  self.stop(key);folder=item['folder']
+  if folder.is_symlink() or folder.parent.resolve()!=self.root.resolve():raise ValueError('Workspace path changed; removal stopped')
+  shutil.rmtree(folder)
+  with self.lock:self.workspaces.pop(key,None)
+  return {'removed':True}
  def close(self):
   for child in self.children:
    if child.poll() is None:

@@ -31,3 +31,18 @@ class NerdLoadTests(unittest.TestCase):
   with self.assertRaisesRegex(ValueError,'missing'):self.loader.review('app.yaml',base64.b64encode(b'sources: [{id: x, type: python, entry: absent:search}]').decode())
  def test_auth_not_silently_replaced(self):
   with self.assertRaisesRegex(ValueError,'auth.mode'):self.loader.review('app.yaml',base64.b64encode(b'auth: {mode: accounts}').decode())
+ def test_stop_list_remove(self):
+  (self.root/'docs').mkdir();(self.root/'docs/guide.md').write_text('Local evidence');cfg=schema.validate({'sources':[{'id':'guide','type':'local_files','path':'docs'}]});cfg['_dir']=str(self.root)
+  data,_=bundle(cfg);d=self.loader.review('nerd.zip',base64.b64encode(data).decode());self.loader.load(d['token']);row=self.loader.list()[0];self.assertTrue(row['running']);self.loader.stop(row['id']);self.assertFalse(self.loader.list()[0]['running'])
+  with self.assertRaises(ValueError):self.loader.remove(row['id'],False)
+  folder=self.loader.workspaces[row['id']]['folder'];self.loader.remove(row['id'],True);self.assertFalse(folder.exists());self.assertEqual(self.loader.list(),[]);self.assertTrue((self.root/'docs/guide.md').exists())
+ def test_discover_stopped(self):
+  f=self.root/'nerds'/'nerd-saved';f.mkdir(parents=True);(f/'app.yaml').write_text('app: {title: Saved}')
+  l=NerdLoader(self.root);self.assertEqual(l.list()[0]['title'],'Saved');self.assertFalse(l.list()[0]['running']);l.remove('nerd-saved',True)
+ def test_bounded_import_default(self):
+  d=self.loader.review('demo.zip',self.encoded({'app.yaml':'sources: [{id: p, type: python, entry: plugin:search}]','plugin.py':'def search(q,k):return []'}));cfg=self.loader.pending[d['token']][1];self.assertEqual(cfg['sources'][0]['execution'],'bounded');self.assertFalse(cfg['actions']['writes'])
+
+ def test_static_preview_no_execution(self):
+  import yaml
+  raw=yaml.safe_dump({'app':{'title':'<img src=x onerror=alert(1)>','tagline':'Bundle tagline','examples':['Example question?']},'provider':{'type':'mock'},'sources':[]})
+  d=self.loader.review('demo.zip',self.encoded({'app.yaml':raw}));self.assertTrue(d['preview']['static']);self.assertEqual(d['preview']['title'],'<img src=x onerror=alert(1)>');self.assertEqual(d['preview']['examples'],['Example question?']);self.assertEqual(self.loader.list(),[])

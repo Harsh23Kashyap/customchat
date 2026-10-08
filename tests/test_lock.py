@@ -16,7 +16,7 @@ class T(unittest.TestCase):
                 if code(port, "/api/health") == 200: break
                 time.sleep(0.3)
             self.assertEqual(code(port, "/"), 200); self.assertEqual(code(port, "/api/health"), 200)
-            for path in ("/settings.html", "/settings.js", "/api/settings", "/api/provider/status", "/api/prompts"):
+            for path in ("/settings.html", "/settings.js", "/api/settings", "/api/provider/status", "/api/prompts", "/api/workspace/status", "/workspace.js"):
                 self.assertEqual(code(port, path), 404, path)
             self.assertNotIn(b"Configuration", urllib.request.urlopen("http://127.0.0.1:%d/" % port).read())
         finally: p.terminate()

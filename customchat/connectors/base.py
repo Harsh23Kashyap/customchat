@@ -27,6 +27,9 @@ def make_connector(block, base_dir="."):
         from .web_search import WebSearch
         return WebSearch(block)
     if t == "python":
+        if block.get('execution') == 'bounded':
+            from .bounded import BoundedPlugin
+            return BoundedPlugin(block, base_dir)
         # plugin: module:function, function(query, k) -> list of Evidence dicts
         mod, _, fn = block["entry"].partition(":")
         if base_dir not in sys.path:

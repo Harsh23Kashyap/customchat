@@ -155,6 +155,8 @@ def validate(raw):
     for i, s in enumerate(cfg["sources"]):
         if not isinstance(s, dict) or s.get("type") not in CONNECTORS:
             raise ConfigError("sources[%d].type must be one of %s" % (i, ", ".join(sorted(CONNECTORS))))
+        if s['type']=='python' and s.get('execution','inprocess') not in ('inprocess','bounded'):
+            raise ConfigError('Python execution must be inprocess or bounded')
         if s["type"] == "local_files":
             for key in ("semantic_model", "rerank_model"):
                 value = s.get(key, "")

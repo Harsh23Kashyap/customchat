@@ -692,11 +692,11 @@ def test_prompts_and_generators():
     except ValueError: pass
     good = g.code_template("search", "x")
     assert g.review_code("search", good)[0]
-    for bad in ["import os\nos.system('x')\ndef search(q): pass", "import subprocess\ndef search(q): pass", "def search(q):\n    return eval(q)", "def search(q):\n    open('f','w')", "def other(): pass", "def search(:", "KEY='sk-abcdefghijklmnop12345'\ndef search(q): pass"]:
+    for bad in ["import os\nos.system('x')\ndef search(q, limit=6): pass", "import subprocess\ndef search(q, limit=6): pass", "def search(q):\n    return eval(q)", "def search(q):\n    open('f','w')", "def other(): pass", "def search(:", "KEY='sk-abcdefghijklmnop12345'\ndef search(q, limit=6): pass"]:
         assert not g.review_code("search", bad)[0], bad
     assert g.review_code("clean_query", "import re\ndef clean_query(q):\n    return q")[0]
     assert not g.review_code("clean_query", "import urllib.request\ndef clean_query(q):\n    return q")[0]
-    f = Fake(["```python\nimport subprocess\ndef search(q): pass\n```", "```python\n" + good + "```"])
+    f = Fake(["```python\nimport subprocess\ndef search(q, limit=6): pass\n```", "```python\n" + good + "```"])
     r = g.generate_code(f, real, "search", "my api"); assert r["ok"] and f.calls == 2
     r = g.generate_code(None, mock_cfg, "search", "my api"); assert r["ok"] and not r["model_used"]
     r = g.generate_code(None, mock_cfg, "clean_query", "strip filler"); assert r["ok"]

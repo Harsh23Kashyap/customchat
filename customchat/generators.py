@@ -10,7 +10,7 @@ never runs generated code by itself.
 """
 import ast, json, re
 
-from . import prompts, providers
+from . import prompts, providers, generator_design
 
 MAX_BRIEF = 2000
 KINDS = {
@@ -61,12 +61,8 @@ def _real(provider, cfg):
 
 
 def prompt_template(stage, brief):
-    """Offline fallback: the built-in default with the reader's domain added."""
-    base = prompts.STAGES[stage]["default"] or "Answer using only the numbered evidence. Cite sources like [1]. Say plainly when the evidence does not cover the question."
-    brief = re.sub(r"\s+", " ", brief).strip()
-    if not brief:
-        return base
-    return "This assistant works in this area: %s\n\n%s" % (brief[:600], base)
+    """Detailed stage-specific offline draft, never automatically saved."""
+    return generator_design.template(stage, brief)
 
 
 def generate_prompt(provider, cfg, stage, brief, current="", fallback_default=""):
@@ -77,17 +73,9 @@ def generate_prompt(provider, cfg, stage, brief, current="", fallback_default=""
         raise ValueError("Describe your area and your readers first, for example: nutrition advice for adults, plain language")
     example = prompts.STAGES[stage]["default"] or fallback_default
     if not _real(provider, cfg):
-        return {"prompt": prompt_template(stage, brief), "rationale": ["Demo template. Connect a model to tailor it."], "model_used": False}
-    system = ("You are an expert prompt engineer for a question answering app that cites its sources.\n"
-              "Write one prompt for the pipeline step \"%s\" (%s).\n"
-              "Keep the structure, tone, output format and strictness of the example prompt, but tailor it to the user's area. "
-              "Do not change what the step must output, because other code reads that output.\n\n"
-              "EXAMPLE PROMPT:\n%s\n\n"
-              "Reply with JSON only, no commentary: {\"rationale\": [up to 3 short bullets], \"prompt\": \"the new prompt text\"}." % (
-                  prompts.STAGES[stage]["label"], prompts.STAGES[stage]["help"], example))
-    user = "Area and readers: %s" % brief
-    if current.strip():
-        user += "\n\nCurrent prompt to improve:\n%s" % current.strip()[:prompts.MAX_LEN]
+        return {"prompt": prompt_template(stage, brief), "rationale": ["Offline stage draft. Audience and personal constraints are unconfirmed; review the scope before saving."], "model_used": False}
+    system = generator_design.system(stage, example)
+    user = json.dumps({"idea": brief, "current_prompt": current.strip()[:prompts.MAX_LEN]}, ensure_ascii=False)
     err = ""
     for attempt in range(2):
         try:
@@ -97,10 +85,10 @@ def generate_prompt(provider, cfg, stage, brief, current="", fallback_default=""
             raise ValueError(str(e))
         d = _extract_json(out)
         p = d.get("prompt") if isinstance(d, dict) else None
-        if isinstance(p, str) and 30 <= len(p.strip()) <= prompts.MAX_LEN:
+        if isinstance(p, str) and not generator_design.validate_draft(stage, d):
             r = d.get("rationale")
             return {"prompt": p.strip(), "rationale": [str(x)[:200] for x in r][:3] if isinstance(r, list) else [], "model_used": True}
-        err = "no usable \"prompt\" text" if isinstance(d, dict) else "not JSON"
+        err = "; ".join(generator_design.validate_draft(stage, d)) if isinstance(d, dict) else "not JSON"
     raise ValueError("The model did not return a usable prompt. Try again, or add more detail about your area.")
 
 
@@ -120,6 +108,9 @@ def review_marks(kind, code):
     for n in ast.walk(tree):
         if isinstance(n, ast.FunctionDef) and n.name == spec["func"]:
             has = True
+            expected = 2 if kind == "search" else 1
+            if len(n.args.args) != expected or n.args.vararg or n.args.kwarg:
+                add(n.lineno, "Keep the exact helper signature: " + spec["sig"])
         elif isinstance(n, ast.Import):
             for a in n.names:
                 if a.name not in spec["allowed"] and a.name.split(".")[0] not in spec["allowed"]:
@@ -134,6 +125,8 @@ def review_marks(kind, code):
                 add(getattr(n, "lineno", 1), "Calls %s(), which is not allowed." % f.id)
             if isinstance(f, ast.Attribute) and f.attr in BANNED_ATTRS:
                 add(getattr(n, "lineno", 1), "Calls .%s(), which is not allowed." % f.attr)
+        elif isinstance(n, ast.Attribute) and n.attr.startswith("__"):
+            add(getattr(n, "lineno", 1), "Dunder attribute access is not allowed in this helper.")
         elif isinstance(n, ast.Constant) and isinstance(n.value, str) and re.search(r"sk-[A-Za-z0-9]{16,}|AIza[0-9A-Za-z_-]{20,}", n.value):
             add(getattr(n, "lineno", 1), "Looks like it contains an API key. Keys must come from environment variables.")
     if not has:
@@ -154,15 +147,14 @@ def review_code(kind, code):
 def code_template(kind, brief):
     brief = re.sub(r"\s+", " ", brief).strip()[:200]
     if kind == "clean_query":
-        return ('import re\n\n\ndef clean_query(query):\n    """Tidy the question into a search string. %s"""\n'
-                '    q = re.sub(r"[^\\w\\s\\-]", " ", query or "")\n    q = re.sub(r"\\s+", " ", q).strip()\n    stop = {"please", "tell", "me", "about", "what", "is", "are", "the", "a", "an", "of", "can", "you"}\n'
-                '    words = [w for w in q.split() if w.lower() not in stop]\n    return " ".join(words) or (query or "").strip()\n') % brief
+        return ('def clean_query(query):\n    """Local whitespace cleanup only; preserves meaning. Review before use."""\n'
+                '    original = query if isinstance(query, str) else ""\n    return " ".join(original.split()) or original\n')
     return TEMPLATE % (brief or "Search connector")
 
 
 TEMPLATE = '''import json, os, time, urllib.error, urllib.parse, urllib.request
 
-API_URL = "https://example.org/search"  # TODO: the API address from your description
+API_URL = ""  # TODO: the API address from your description
 API_KEY = os.environ.get("MY_SEARCH_API_KEY", "")  # optional; set it in your environment, never in this file
 
 
@@ -190,6 +182,11 @@ def _text(v):
 def search(query, limit=6):
     """%s"""
     try:
+        if not API_URL:  # Non-operational until the owner supplies and reviews the real endpoint/schema
+            return []
+        limit = max(0, min(int(limit), 50))
+        if not limit:
+            return []
         body = _get(API_URL + "?" + urllib.parse.urlencode({"q": query, "limit": limit}))
         data = json.loads(body) if body else {}
         items = data.get("results") if isinstance(data, dict) else data
@@ -227,8 +224,7 @@ def generate_code(provider, cfg, kind, brief, sample="", research=""):
         code = code_template(kind, brief); ok, probs = review_code(kind, code)
         return {"code": code, "ok": ok, "problems": probs, "filename": spec["filename"], "model_used": False,
                 "note": "No AI model is connected, so this is a starter template. Connect a model on the Model tab to generate code from your description."}
-    system = ("You write small, safe Python functions for a question answering app.\n%s\n"
-              "Reply with one ```python code block and nothing else. Plain code, short comments, no placeholders left for the user to guess except API addresses you were not given." % spec["contract"])
+    system = generator_design.code_system(kind, spec["contract"])
     err = ""
     for attempt in range(3):
         try:
@@ -243,7 +239,7 @@ def generate_code(provider, cfg, kind, brief, sample="", research=""):
             return {"code": code, "ok": True, "problems": [], "filename": spec["filename"], "model_used": True, "note": ""}
         err = "; ".join(probs)
     return {"code": code, "ok": False, "problems": probs, "filename": spec["filename"], "model_used": True,
-            "note": "The model's code did not pass the safety review after 3 tries. Review the notes, edit it, or add detail to your description."}
+            "note": "The model's code did not pass the static review after 3 tries. Review the notes, edit it, or add detail to your description."}
 
 
 RUNNER = r"""

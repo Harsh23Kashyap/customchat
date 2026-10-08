@@ -71,6 +71,9 @@ def make_handler(cfg, engine):
         if "temperature" in v: new["provider"]["temperature"] = max(0.0, min(2.0, float(v["temperature"])))
         if "top_k" in v: new["retrieval"]["top_k"] = max(1, min(20, int(v["top_k"])))
         if "query_rewrite" in v: new["retrieval"]["query_rewrite"] = bool(v["query_rewrite"])
+        from .portable import _check_values,ExportError
+        try:_check_values(new['provider'])
+        except ExportError:raise ValueError('Do not put credentials in the model address. Use a saved private key instead') from None
         try:
             schema.validate({k: v for k, v in new.items() if k != "_dir"})
         except schema.ConfigError as e:
@@ -78,6 +81,9 @@ def make_handler(cfg, engine):
         cfg["provider"], cfg["retrieval"] = new["provider"], new["retrieval"]
         engine.provider = budget.wrap(providers.make(cfg))
         engine._cache.clear()
+
+    from .management import Management, model_review
+    management = Management(cfg,engine,settings_view,apply_settings,safe_export)
 
     class H(BaseHTTPRequestHandler):
         server_version = "CustomChat"
@@ -190,6 +196,15 @@ def make_handler(cfg, engine):
                 return self._send(404, {"error": "Not found"})
             o = self._owner()
             b = self._body() if method == "POST" else {}
+            if path.startswith('/api/workspace/'):
+                if not can_edit(self): raise PermissionError('Only the app owner can manage this workspace')
+                return self._send(200,management.handle(o,path,method,b,qs))
+            if path in ('/api/nerds','/api/nerds/stop','/api/nerds/remove'):
+                if not can_edit(self) or self.client_address[0] not in ('127.0.0.1','::1'): raise PermissionError('Only the local app owner can manage imported Nerds')
+                if path=='/api/nerds' and method=='GET': return self._send(200,{'workspaces':loader.list()})
+                if method=='POST' and path.endswith('/stop'): return self._send(200,loader.stop(str(b.get('id',''))))
+                if method=='POST' and path.endswith('/remove'): return self._send(200,loader.remove(str(b.get('id','')),b.get('confirmed')))
+                raise ValueError('Unknown workspace action')
             if path == "/api/actions" and method == "GET": return self._send(200,actions.catalog())
             if path == "/api/actions/prepare" and method == "POST": return self._send(200,actions.prepare(o,b.get('tool'),b.get('args')))
             if path == "/api/actions/execute" and method == "POST": return self._send(200,actions.execute(o,b.get('ticket')))
@@ -258,7 +273,9 @@ def make_handler(cfg, engine):
             if path == "/api/settings" and method == "POST":
                 if not can_edit(self):
                     return self._send(403, {"error": "Settings can only be changed from this computer or with the access token"})
-                apply_settings(b.get("settings") or {})
+                with management.lock:
+                    if management.active:raise ValueError('Wait for the workspace test to finish before changing settings')
+                    management.history.record(o,settings_view());apply_settings(b.get("settings") or {})
                 return self._send(200, {"settings": settings_view()})
             if path.startswith("/api/provider/"):
                 if not can_edit(self):
@@ -283,7 +300,8 @@ def make_handler(cfg, engine):
                         return self._send(200, {"models": [], "note": str(e)})
                 if path == "/api/provider/test" and method == "POST":
                     ok, msg = providers.test_connection(cfg, kind, str(b.get("model") or "")[:120], base)
-                    return self._send(200, {"ok": ok, "message": msg})
+                    from .management import diagnosis
+                    return self._send(200, {'ok':ok,'message':msg} if ok else {'ok':False,**diagnosis(msg)})
             if path == "/api/hardware":
                 if not can_edit(self):
                     return self._send(403, {"error": "Only the admin can see this computer's details"})
@@ -416,8 +434,19 @@ def make_handler(cfg, engine):
                 if path == "/api/ollama/setup" and method == "GET": return self._send(200, ollama_setup.status())
                 if path == "/api/ollama/setup/prepare" and method == "POST": return self._send(200, ollama_setup.prepare(b.get("action")))
                 if path == "/api/ollama/setup/execute" and method == "POST": return self._send(200, ollama_setup.execute(str(b.get("ticket") or ""), b.get("confirmed")))
+                if path == "/api/ollama/setup/cancel" and method == "POST": return self._send(200, ollama_setup.cancel(str(b.get("id", ""))))
                 if path == "/api/ollama/setup/status" and method == "GET": return self._send(200, ollama_setup.job(qs.get("id", "")))
                 return self._send(404, {"error": "Not found"})
+            if path == '/api/ollama/pull/review' and method == 'POST':
+                if not can_edit(self): raise PermissionError('Only the app owner can download models')
+                plan=model_review(cfg,b)
+                plan['ticket']=management.reviews.put(o,'model',plan)
+                return self._send(200,plan)
+            if path == '/api/ollama/pull/execute' and method == 'POST':
+                if not can_edit(self): raise PermissionError('Only the app owner can download models')
+                plan=management.reviews.take(o,'model',str(b.get('ticket','')),b.get('confirmed'))
+                model_review(cfg,plan)
+                return self._send(200,{'id':hardware.start_pull(plan['base_url'],plan['model'])})
             if path == "/api/ollama/pull/cancel" and method == "POST":
                 if not can_edit(self):
                     return self._send(403, {"error": "Only the admin can cancel downloads"})
@@ -434,13 +463,15 @@ def make_handler(cfg, engine):
                 st = hardware.pull_status(qs.get("id", ""))
                 return self._send(200, st) if st else self._send(404, {"error": "Unknown download"})
             if path == "/api/states" and method == "GET":
-                return self._send(200, {"states": [n for n in store.states(o) if not n.startswith(("scope-","action-","note-"))]})
+                return self._send(200, {"states": [n for n in store.states(o) if not n.startswith(("scope-","action-","note-","history-","workspace-"))]})
             if path == "/api/states/save" and method == "POST":
                 return self._send(200, {"name": store.save_state(o, b.get("name"), settings_view())})
             if path == "/api/states/load" and method == "POST":
                 if not can_edit(self):
                     return self._send(403, {"error": "Settings can only be changed from this computer or with the access token"})
-                apply_settings(store.get_state(o, str(b.get("name", ""))))
+                with management.lock:
+                    if management.active:raise ValueError('Wait for the workspace test to finish before changing settings')
+                    management.history.record(o,settings_view());apply_settings(store.get_state(o, str(b.get("name", ""))))
                 return self._send(200, {"settings": settings_view()})
             if path == "/api/states/delete" and method == "POST":
                 store.delete_state(o, str(b.get("name", ""))); return self._send(200, {"ok": True})
@@ -630,8 +661,8 @@ ERR_PAGES = {
 
 # Config lock: CUSTOMCHAT_CONFIG=off serves the chat only. No settings page, no config or key endpoints.
 LOCKED = os.environ.get("CUSTOMCHAT_CONFIG", "").strip().lower() in ("off", "0", "false", "locked", "disabled")
-LOCKED_PAGES = {"/settings.html", "/settings.js", "/settings.css", "/panels.js", "/pipeline.js", "/codeeditor.js", "/codeeditor.LICENSE.txt"}
-LOCKED_API = ("/api/budget", "/api/docs-freshness", "/api/app-export", "/api/app-export-check", "/api/settings", "/api/provider", "/api/hardware", "/api/prompts", "/api/codegen", "/api/websearch", "/api/catalog", "/api/ollama", "/api/states", "/api/nerds")
+LOCKED_PAGES = {"/settings.html", "/settings.js", "/settings.css", "/panels.js", "/pipeline.js", "/codeeditor.js", "/codeeditor.LICENSE.txt", "/workspace.js"}
+LOCKED_API = ("/api/budget", "/api/docs-freshness", "/api/app-export", "/api/app-export-check", "/api/settings", "/api/provider", "/api/hardware", "/api/prompts", "/api/codegen", "/api/websearch", "/api/catalog", "/api/ollama", "/api/states", "/api/nerds", "/api/workspace")
 
 
 def _esc(s):

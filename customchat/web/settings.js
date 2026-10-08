@@ -118,13 +118,16 @@ function modelAction(tag, installed) {
   btn.addEventListener("click", async () => {
     btn.disabled = true; bar.hidden = false; msg.textContent = "Starting...";
     try {
-      const { id } = await api("/api/ollama/pull", { model: tag, base_url: $("#base").value.trim() });
+      const plan=await api('/api/ollama/pull/review',{model:tag,base_url:$("#base").value.trim()});
+      const reviewText='Download '+plan.model+'?\n\nApproximate download: '+(plan.download_gb_estimate??'unknown')+' GB. Free disk: '+plan.free_disk_gb+' GB. Memory estimate: '+(plan.memory_need_gb_estimate??'unknown')+' GB; fit: '+plan.fit+'.\n'+plan.location_note+'\n'+plan.notice;
+      if(!window.confirm(reviewText)){btn.disabled=false;bar.hidden=true;msg.textContent='Download not started.';return}
+      const { id } = await api('/api/ollama/pull/execute',{ticket:plan.ticket,confirmed:true});
       pullId=id;cancel.hidden=false;cancel.disabled=false;
       for (;;) {
         await new Promise((r) => setTimeout(r, 700));
         const st = await api("/api/ollama/pull?id=" + id);
         bar.firstChild.style.width = st.pct + "%"; msg.textContent = st.error || (st.done ? "Done" : (st.status || "Downloading") + " " + st.pct + "%");
-        if(st.cancelled&&st.done){cancel.hidden=true;bar.hidden=true;btn.disabled=false;btn.textContent="Resume download";msg.textContent="Cancelled. Ollama may keep partial files for resume.";break}
+        if(st.cancelled&&st.done){cancel.hidden=true;bar.hidden=true;btn.disabled=false;btn.textContent="Retry download";msg.textContent="Cancelled. Retry rechecks the model; Ollama decides whether partial files can be reused.";break}
         if (st.error) { cancel.hidden=true; btn.disabled = false; btn.textContent = "Try again"; bar.hidden = true; msg.className = "h bad"; break; }
         if (st.done) { cancel.hidden=true;wrap.replaceChildren(el("span", { class: "okt", text: "Installed" }), el("button", { type: "button", class: "mini", onclick: use }, "Use this model")); use(); break; }
       }
@@ -498,12 +501,12 @@ function resetGroup(s) { const d = meta.default; for (const f of s.fields) { if 
 function setPvMode(m) { document.querySelectorAll("#pvmode button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.m === m))); }
 function buildMenu() {
   const m = $("#menu"); m.replaceChildren();
-  const groups=[["config","Configuration",[["model","Model and key"],["search","Sources and APIs"],["prompts","Prompts"],["code","Code helpers"]]],["frontend","Frontend",[["presets","Presets and states"],...SECTIONS.map(s=>[s.id,s.title])]], ["manage","App management",[["freshness","Document freshness"],["budget","Budget"],["portable","Portable app"],["finish","All set"]]]];
+  const groups=[["config","Configuration",[["model","Model and key"],["search","Sources and APIs"],["prompts","Prompts"],["code","Code helpers"]]],["frontend","Frontend",[["presets","Presets and states"],...SECTIONS.map(s=>[s.id,s.title])]], ["manage","App management",[["freshness","Document freshness"],["budget","Budget"],["portable","Portable app"],["finish","Setup and workspace"]]]];
   groups.forEach(([id,title,items])=>{const group=el("div",{class:"nav-group","data-group":id});group.append(el("b",{class:"nav-label",text:title}));items.forEach(([id,t])=>group.append(el("a",{href:"#sec-"+id,text:t})));m.append(group);});
   m.querySelector("a").classList.add("on");
   let navHoldUntil=0;
   m.addEventListener("click",e=>{const a=e.target.closest("a");if(!a)return;activeSec=a.hash.replace("#sec-","");navHoldUntil=Date.now()+1200;pvFollow();m.querySelectorAll("a").forEach(x=>x.classList.toggle("on",x===a))});
-  const col=$("#col");const order=["model","search","prompts","code","presets","look","freshness","budget","portable","finish"];
+  const col=$("#col");const order=["finish","model","search","prompts","code","presets","look","freshness","budget","portable"];
   order.forEach(id=>{const sec=id==="look"?$("#look"):$("#sec-"+id);if(sec)col.insertBefore(sec,$("#msg"));});
   const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting && Date.now()>navHoldUntil) { activeSec = e.target.id.replace("sec-", ""); pvFollow(); document.querySelectorAll("#menu a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id)); } }, { rootMargin: "-20% 0px -70% 0px" });
   const watch = () => document.querySelectorAll("section.tile[id^=sec-]").forEach((n) => io.observe(n)); watch(); setTimeout(watch, 800); setTimeout(watch, 2500);
@@ -527,7 +530,7 @@ function buildPresets() {
 }
 async function init() {
   const c = await api("/api/config"); window.CCLoadedApp = c; $("#lead").textContent = "Editing " + c.app.title + ". " + (c.app.tagline || "") + " Keys stay on this computer."; $("#h").textContent = c.app.title + " configuration"; document.title = c.app.title + " configuration";
-  const overview = el("section", {class:"loaded-app",id:"loadedApp"}, el("b", {text:"Loaded Nerd: " + c.app.title}), el("p", {text:c.app.tagline || ""}), el("small", {text:"Sources: " + c.sources.map(x=>x.label || x.id).join(", ")}), el("small", {text:"Answers: " + (c.provider.type === "mock" ? "Offline Demo, not live news" : c.provider.type + " · " + c.provider.model)}));
+  const overview = el("details", {class:"loaded-app",id:"loadedApp"}, el("summary", {text:"Loaded Nerd: " + c.app.title}), el("p", {text:c.app.tagline || ""}), el("small", {text:"Sources: " + c.sources.map(x=>x.label || x.id).join(", ")}));
   $("#lead").after(overview);
   const sourceOverview = el("div", {class:"loaded-source-overview"}, el("b", {text:"This Nerd's configured sources"}), ...c.sources.map(x=>el("p", {text:(x.label || x.id) + " · " + (x.type || "") })), el("small", {text:"Sources in the loaded app file are already active. The controls below add optional web searches; they do not replace your Nerd's connector."}));
   const search = $("#sec-search"); if (search) search.prepend(sourceOverview);
@@ -546,17 +549,6 @@ async function init() {
   $("#keysave").addEventListener("click", async () => { const v = $("#apikey").value.trim(); if (!v) { say("Paste a key first.", true); return; } try { const r = await api("/api/provider/key", { provider: cur.provider, key: v }); keyInfo[cur.provider] = r.key; $("#apikey").value = ""; await provExtras(); say("Key saved on this computer."); } catch (e) { say(e.message, true); } });
   $("#keyclear").addEventListener("click", async () => { try { const r = await api("/api/provider/key", { provider: cur.provider, clear: true }); keyInfo[cur.provider] = r.key; await provExtras(); say("Key removed."); } catch (e) { say(e.message, true); } });
   $("#testconn").addEventListener("click", async () => { const t=$("#testres"),provider=cur.provider,model=chosenModel(),base=$("#base").value.trim();t.className="testres busy";t.textContent="Testing...";let ok=false,message="";try{const r=await api("/api/provider/test",{provider,model,base_url:base});ok=r.ok;message=r.message}catch(e){message=e.message}testLog.unshift({p:NAMES[provider]||provider,ok,detail:message,t:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})});testLog.length=Math.min(testLog.length,5);if(cur.provider===provider){t.className="testres "+(ok?"ok":"bad");t.textContent=(ok?"Passed. ":"Failed. ")+message}pvFollow(); });
-  const finishList=$("#finishList");
-  if(finishList){const row=(ok,t,d)=>el("div",{class:"finrow",role:"listitem"},el("span",{class:"findot "+(ok?"ok":""),"aria-hidden":"true"}),el("div",{},el("b",{text:t}),el("small",{text:d})));
-    const drawFinish=async()=>{const rows=[];
-      const pname=NAMES[cur.provider]||cur.provider||"Demo";
-      const demo=!cur.provider||cur.provider==="mock";
-      rows.push(row(!demo||true,"Answers",demo?"Demo answers, offline, no key needed":pname+(cur.model?" · "+cur.model:"")+(keyInfo[cur.provider]?" · key saved":" · no key yet")));
-      try{const d=await api("/api/websearch/status");const on=d.source&&d.source.on;rows.push(row(!!on,"Live web",on?"On · "+(d.source.providers||[]).join(", "):"Off · answers use your documents"));}catch(e){rows.push(row(false,"Live web","Off · answers use your documents"));}
-      rows.push(row(true,"Look",theme?(LABELS.mode[theme.mode]||"Light")+" mode":"Default look"));
-      finishList.replaceChildren(...rows);};
-    drawFinish();new MutationObserver(()=>drawFinish()).observe($("#seg"),{subtree:true,attributes:true,attributeFilter:["aria-checked"]});
-  }
   $("#apply").addEventListener("click", async () => { try { cur = (await api("/api/settings", { settings: read() })).settings; draw(); localStorage.setItem("cc_config_changed", String(Date.now())); say("Applied. New questions use these settings."); } catch (e) { say(e.message, true); } });
   $("#save").addEventListener("click", async () => { try { const n = (await api("/api/states/save", { name: $("#sname").value })).name; await states(); say("Saved as \u201c" + n + "\u201d."); } catch (e) { say(e.message, true); } });
   $("#states").addEventListener("change",syncDeleteLook);
@@ -681,10 +673,12 @@ async function pollOllamaSetup(host,id){
   for(let i=0;i<310 && host.isConnected && host.dataset.poll===id;i++){
     const st=await api('/api/ollama/setup/status?id='+encodeURIComponent(id));
     host.replaceChildren(el('h3',{text:st.state==='ready'?'Ollama is ready':'Ollama setup'}),el('p',{text:st.message}));
+    if(st.downloaded_bytes)host.append(el('p',{class:'h',text:(st.downloaded_bytes/1048576).toFixed(1)+' MB downloaded'+(st.total_bytes?' of '+(st.total_bytes/1048576).toFixed(1)+' MB':' · total size unknown')}));
     if(st.sha256){const d=el('details',{},el('summary',{text:'Downloaded installer fingerprint'}),el('small',{text:st.sha256}));host.append(d);}
     if(st.page)host.append(el('a',{href:st.page,target:'_blank',rel:'noopener',text:'Official installation instructions'}));
     host.append(el('button',{type:'button',class:'mini',text:'Recheck local service',onclick:()=>drawOllamaSetup(host)}));
-    if(['ready','failed','needs_manual'].includes(st.state))return;
+    if(['ready','failed','needs_manual','cancelled'].includes(st.state)){if(st.state!=='ready')host.append(el('button',{type:'button',class:'mini',text:'Retry after fresh review',onclick:()=>drawOllamaSetup(host)}));return;}
+    host.append(el('button',{type:'button',class:'mini',text:'Cancel setup work',onclick:async()=>{await api('/api/ollama/setup/cancel',{id})}}));
     await new Promise(r=>setTimeout(r,2000));
   }
 }

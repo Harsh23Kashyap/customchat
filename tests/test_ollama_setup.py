@@ -73,3 +73,9 @@ class OllamaSetupHTTPTests(unittest.TestCase):
  def test_json_prepare_no_process(self):
   with patch('customchat.ollama_setup.detect',return_value=OllamaSetupTests().data()),patch('customchat.ollama_setup.subprocess.Popen') as pop:
    status,data=self.call('/api/ollama/setup/prepare',{'Content-Type':'application/json'},{'action':'install'});self.assertEqual(status,200);self.assertIn('ticket',data);pop.assert_not_called()
+ def test_cancel_download(self):
+  import threading
+  s=OllamaSetup();s.jobs['j']={'id':'j','state':'downloading'};s.cancel_events['j']=threading.Event();r=s.cancel('j');self.assertEqual(r['state'],'cancelled');self.assertTrue(s.cancel_events['j'].is_set());s._update('j',state='failed');self.assertEqual(s.job('j')['state'],'cancelled')
+ def test_cancel_does_not_claim_rollback(self):
+  import threading
+  s=OllamaSetup();s.jobs['j']={'id':'j','state':'waiting'};s.cancel_events['j']=threading.Event();self.assertIn('not rolled back',s.cancel('j')['message'])

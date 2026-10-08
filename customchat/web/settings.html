@@ -64,10 +64,8 @@
         <div class="help">Dollar accounting is not available yet. Setting any dollar cap blocks non-Demo answer-pipeline calls rather than guessing a bill. It does not limit owner-run configuration tests, external search fees or embedding costs. Set provider-side billing limits before publishing.</div>
         <button type="button" class="go green" id="saveBudget">Save budget</button><div id="budgetStatus" role="status" aria-live="polite"></div>
       </section>
-      <section class="tile" id="sec-finish"><div class="head"><span class="ic green">&#10003;</span><div><b>All set?</b><small>A quick check before people use it</small></div></div>
-        <div class="help">Everything here saves by itself. This is the current setup at a glance.</div>
-        <div class="finishlist" id="finishList" role="list"></div>
-        <div class="keyrow"><a class="go green big" href="/">Open your chat</a></div>
+      <section class="tile" id="sec-finish"><div class="head"><span class="ic green">✓</span><div><b>Your Nerd, ready to use</b><small>One setup status page. Details stay closed until needed.</small></div></div>
+        <div id="workspacePanel"></div><div class="keyrow"><a class="go green" href="/">Open your chat</a></div>
       </section>
       <div id="look"></div>
       <p class="msg" id="msg" role="status" aria-live="polite"></p>
@@ -90,5 +88,5 @@ function set(m){document.body.classList.toggle("simple",m==="simple");[].forEach
 help.textContent=m==="simple"?"The everyday settings, in plain words.":"Adds design and fine controls.";try{localStorage.setItem(K,m)}catch(e){}}
 var m="simple";try{m=localStorage.getItem(K)||"simple"}catch(e){}set(m);
 bar.addEventListener("click",function(e){var b=e.target.closest("button");if(b)set(b.dataset.m)})})()</script>
-<script src="/nerdload.js"></script></body>
+<script src="/workspace.js"></script><script src="/nerdload.js"></script></body>
 </html>

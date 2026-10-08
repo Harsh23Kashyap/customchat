@@ -81,3 +81,20 @@ Counterpart of [Custom-Nerd](https://github.com/Harsh23Kashyap/Custom-Nerd). Har
 Open Configuration → Load and share Nerds. Drop a ZIP or app.yaml, read the readiness check, review any Python connector, then Load and run. A separate workspace opens; the current app stays intact. Keys, accounts and chat history never come with the bundle. Python runs with your local user permissions after your review. Import checks are offline, not a model/network test.
 
 `customchat-app run app.yaml` opens the browser after the server is ready. Use `--no-browser` for servers or terminals without a desktop.
+
+### Private workspace tools (0.1.7)
+
+Configuration opens with one Setup and workspace page:
+
+- **Setup** shows configuration checks without claiming live availability. Choose model/source checks, review what is sent and possible API budget use, then confirm. Failed checks show categorized, redacted diagnostics.
+- **Workspace** lists imported Nerds. Open, stop or remove one after review. Removal deletes only that imported folder and its local chats. Stopped folders remain discoverable after a restart; reimport the original bundle to start a new reviewed copy.
+- **Changes** keeps the last 30 model/retrieval revisions for the app owner. Compare and restore after review. Concurrent settings changes invalidate the review. Appearance, prompts and credentials are not included in this history.
+- **Backup** downloads a private JSON chat archive for the owner. Restore validates the archive and adds chats instead of overwriting existing chats. It does not back up credentials, profile, uploads, feedback or model files. Chat text and evidence may contain private material: keep this archive private. It is separate from the shareable Nerd ZIP.
+- **Test questions** saves up to 10 questions privately and runs them after service/cost review. Compare current and previous answers and citations. This is not an accuracy score or a correctness claim; test runs do not create chats.
+- **Deploy** prepares an account/audience/cost/rollback plan only. Entered account labels, prices and permissions are not verified. No resource is created and no spending is authorized.
+
+Imported Python connectors default to `execution: bounded`: a separate process with an environment allowlist, 20-second timeout and output limits. App write actions are disabled for imported Nerds. This is **NOT a security sandbox**. Code can still access host files and the network, and can spawn other processes; read and trust the code before allowing it. On Windows, cancellation kills the main connector process, not guaranteed child processes.
+
+Ollama setup can cancel its own work and retry after a fresh review. OS installers or their children may still be open; close them on the host. Installed changes are not rolled back. Installer downloads restart, not resume. Model downloads show a host disk/memory review with approximate catalog sizes. The actual Ollama model location and size may differ. Retrying sends a new pull request; only Ollama decides whether partial files can be reused. No real installer or paid model call is required by the offline test suite.
+
+0.1.7 also improves all nine prompt-generation stages and both code helpers. A short idea becomes a detailed reviewable draft with provisional assumptions, exact runtime fields/output contracts, scope examples and evidence boundaries. Generated drafts are never automatically saved; generated code is never automatically run. Unknown API endpoints remain non-operational TODOs. Static and citation-format checks do not prove truth or code safety, and the bounded process is NOT a security sandbox.

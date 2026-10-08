@@ -29,7 +29,7 @@ class OfficialRedirect(urllib.request.HTTPRedirectHandler):
             raise ValueError('Installer redirected outside the official download hosts')
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
-def download(url, folder):
+def download(url, folder, cancelled=None, progress=None):
     if url not in SOURCES.values(): raise ValueError('Unknown installer source')
     target = Path(folder) / url.rsplit('/', 1)[1]
     opener = urllib.request.build_opener(OfficialRedirect)
@@ -38,17 +38,19 @@ def download(url, folder):
         if total > LIMIT: raise ValueError('Installer exceeds the 2 GB download limit')
         used = 0
         while True:
+            if cancelled and cancelled.is_set(): raise ValueError('Download cancelled')
             chunk = response.read(1024 * 1024)
             if not chunk: break
             used += len(chunk)
             if used > LIMIT: raise ValueError('Installer exceeds the 2 GB download limit')
             out.write(chunk)
+            if progress:progress(used,total)
     if not used: raise ValueError('Empty installer download')
     return target
 
 class OllamaSetup:
     def __init__(self):
-        self.lock = threading.Lock(); self.pending = {}; self.jobs = {}; self.processes = []
+        self.lock = threading.Lock(); self.pending = {}; self.jobs = {}; self.processes = []; self.cancel_events = {}; self.job_processes = {}
     def status(self):
         data = detect(); data.pop('_binary', None)
         return data
@@ -80,6 +82,7 @@ class OllamaSetup:
             if action == 'install' and current['state'] != 'not_detected': raise ValueError('Ollama is now detected; recheck instead of installing again')
             if action == 'start' and current['state'] != 'stopped': raise ValueError('Service state changed; recheck')
             jid = secrets.token_urlsafe(18)
+            self.cancel_events[jid]=threading.Event()
             self.jobs = {jid: {'id': jid, 'state': 'starting' if action == 'start' else 'downloading', 'message': 'Starting Ollama' if action == 'start' else 'Downloading the official installer', 'action': action}}
         threading.Thread(target=self._work, args=(jid, action, system), daemon=True).start()
         return {'id': jid}
@@ -88,7 +91,20 @@ class OllamaSetup:
         if not result: raise ValueError('Unknown setup')
         return result
     def _update(self, jid, **values):
-        with self.lock: self.jobs[jid].update(values)
+        with self.lock:
+            if self.jobs[jid]['state']!='cancelled':self.jobs[jid].update(values)
+    def cancel(self, jid):
+        with self.lock:
+            job=self.jobs.get(jid)
+            if not job:raise ValueError('Unknown setup')
+            if job['state'] in ('ready','failed','needs_manual','cancelled'):return dict(job)
+            self.cancel_events[jid].set()
+            proc=self.job_processes.get(jid)
+            if proc and proc.poll() is None:
+                try:proc.terminate()
+                except OSError:pass
+            job.update(state='cancelled',message='CustomChat stopped its setup work. An OS wizard or child installer may still be open; close it on the host. Installed changes are not rolled back. Retry requires a new review; installer downloads restart, not resume.')
+            return dict(job)
     def _work(self, jid, action, system):
         try:
             if action == 'start':
@@ -98,17 +114,20 @@ class OllamaSetup:
             else:
                 # Keep mounted disk images available until the OS wizard is finished.
                 folder = tempfile.mkdtemp(prefix='customchat-ollama-')
-                target = download(SOURCES[system], folder)
+                target = download(SOURCES[system], folder, self.cancel_events.get(jid), lambda used,total:self._update(jid,downloaded_bytes=used,total_bytes=total,progress_pct=round(100*used/total) if total else None))
                 digestor = hashlib.sha256()
                 with target.open('rb') as downloaded:
                     for chunk in iter(lambda: downloaded.read(1024 * 1024), b''): digestor.update(chunk)
                 digest = digestor.hexdigest()
                 self._update(jid, state='starting', message='Opening the official installer on this computer', sha256=digest)
                 cmd = [str(target)] if system == 'Windows' else ['open', str(target)] if system == 'Darwin' else ['sh', str(target)]
-            proc = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            self.processes.append(proc)
+            with self.lock:
+                if self.cancel_events.get(jid) and self.cancel_events[jid].is_set(): return
+                proc = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                self.processes.append(proc);self.job_processes[jid]=proc
             self._update(jid, state='waiting', message='Complete any OS installer or permission prompt on the host, then recheck. No password is collected here.')
             for _ in range(300):
+                if self.cancel_events.get(jid) and self.cancel_events[jid].is_set():return
                 if hardware.installed(BASE) is not None:
                     self._update(jid, state='ready', message='Local Ollama service verified. Choose a model separately.'); return
                 if system == 'Linux' and proc.poll() not in (None, 0):
