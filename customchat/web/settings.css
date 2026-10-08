@@ -905,3 +905,5 @@ body:has(#nerdReview .import-grid) #col{min-width:0;width:100%;max-width:none}
 @media(min-width:1181px){#menu{top:24px!important;max-height:calc(100dvh - 48px);overscroll-behavior:contain;scroll-padding-block:12px;padding-block:8px;box-sizing:border-box}}
 
 #nerdReview{scroll-margin-top:24px}
+
+.all-config-fields{margin:20px 0;padding:20px;background:#f5f7ef;border:1px solid #d1dec8;border-radius:14px}.all-config-fields>summary{font-weight:600;cursor:pointer}.all-config-fields>p{font-size:13px;line-height:1.6}.all-config-fields label{display:block;margin:16px 0;font-size:12px;font-weight:600}.all-config-fields textarea{display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:12px;font:13px/1.6 monospace;border:1px solid #bacdb2;border-radius:10px;resize:vertical}
