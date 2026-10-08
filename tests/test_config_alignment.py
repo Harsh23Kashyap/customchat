@@ -21,7 +21,8 @@ class ConfigAlignment(unittest.TestCase):
  def test_navigation_does_not_hide_sections(self):
   js=(Path(__file__).parents[1]/'customchat/web/settings.js').read_text()
   follow=js.split('function pvFollow() {',1)[1].split('const m = activeSec',1)[0]
-  self.assertNotIn('classList.toggle',follow)
+  self.assertNotIn('editing-pipeline',follow)
+  self.assertNotIn('loading-nerd',follow)
   self.assertNotIn('CCPipeline',follow)
  def test_editors_live_in_their_sections(self):
   js=(Path(__file__).parents[1]/'customchat/web/pipeline.js').read_text()
@@ -32,3 +33,10 @@ class ConfigAlignment(unittest.TestCase):
   html=(Path(__file__).parents[1]/'customchat/web/settings.html').read_text()
   self.assertIn('class="export-card"',html)
   self.assertIn('Share this Nerd',html)
+
+ def test_bundle_review_has_one_preview_and_full_content_width(self):
+  css=(Path(__file__).parents[1]/'customchat/web/settings.css').read_text()
+  self.assertIn('body.reviewing-nerd #pvbox,body.reviewing-nerd #pvfab{display:none!important}',css)
+  self.assertIn('body.reviewing-nerd #col{min-width:0;width:100%;max-width:none}',css)
+  self.assertIn('.import-preview{position:static;max-height:none;overflow:visible}',css)
+  self.assertIn('#nerdReview{scroll-margin-top:24px}',css)
