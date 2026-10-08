@@ -31,6 +31,8 @@ def make_handler(cfg, engine):
     cfg["budget"] = dict(budget.value)
     engine.provider = budget.wrap(engine.provider)
     themestore = themes.ThemeStore(os.path.dirname(os.path.abspath(store.path)) if store.path != ":memory:" else "/tmp")
+    from . import editstate
+    state_folder = os.path.dirname(os.path.abspath(store.path)) if store.path != ":memory:" else "/tmp"
     acc = Accounts(store, bool(cfg["auth"].get("signup", True))) if cfg["auth"]["mode"] == "accounts" else None
 
     def turn_scopes(owner, rows):
@@ -75,9 +77,13 @@ def make_handler(cfg, engine):
         try:_check_values(new['provider'])
         except ExportError:raise ValueError('Do not put credentials in the model address. Use a saved private key instead') from None
         try:
-            schema.validate({k: v for k, v in new.items() if k != "_dir"})
+            schema.validate({k: v for k, v in new.items() if not k.startswith("_")})
         except schema.ConfigError as e:
             raise ValueError(str(e)) from None
+        if cfg.get("_path"):
+            persisted=schema.load(cfg["_path"])
+            persisted["provider"],persisted["retrieval"]=new["provider"],new["retrieval"]
+            editstate.save_config(cfg,editstate.view(persisted),editstate.revision(cfg))
         cfg["provider"], cfg["retrieval"] = new["provider"], new["retrieval"]
         engine.provider = budget.wrap(providers.make(cfg))
         engine._cache.clear()
@@ -164,6 +170,17 @@ def make_handler(cfg, engine):
                 return self._send(200, {"ok": True, "degraded": store.degraded} if store.degraded else {"ok": True})
             if path == "/api/theme" and method == "GET":
                 return self._send(200, {"theme": themestore.value, "meta": themes.meta(), "can_edit": can_edit(self)})
+            if path == "/api/configuration-state":
+                if not can_edit(self):raise PermissionError('Only the app owner can view or edit configuration')
+                if method == "POST":
+                    b=self._body()
+                    rev=editstate.save_config(cfg,b.get('config'),str(b.get('revision','')))
+                    return self._send(200,{'revision':rev,'restart_required':True,'message':'App file saved. Restart this workspace to apply all fields. No new code or network calls ran.'})
+                return self._send(200,{'config':editstate.view(cfg),'revision':editstate.revision(cfg),'helpers':editstate.helper_state(cfg,state_folder)})
+            if path == "/api/codegen/draft" and method == "POST":
+                if not can_edit(self):raise PermissionError('Only the app owner can save helper drafts')
+                b=self._body()
+                return self._send(200,editstate.save_draft(state_folder,str(b.get('kind','')),b.get('brief'),b.get('code')))
             if path == "/api/config":
                 view=schema.public_view(cfg)
                 principal=acc.user_for(self._cookie()) if acc else None
@@ -678,6 +695,7 @@ class LocalHTTPServer(ThreadingHTTPServer):
 
 def serve(path, host=None, port=None):
     cfg = schema.load(path)
+    cfg["_path"] = os.path.abspath(path)
     store = Store(os.path.join(cfg["_dir"], cfg["storage"]["path"]) if not os.path.isabs(cfg["storage"]["path"]) else cfg["storage"]["path"])
     secrets.STORE = secrets.SecretStore(os.path.dirname(os.path.abspath(store.path)) if store.path != ":memory:" else "/tmp")
     engine = Engine(cfg, store)
