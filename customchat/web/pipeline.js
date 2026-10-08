@@ -36,8 +36,9 @@ function stageCard(s) {
   const why = el("p", { class: "h" });
   return el("details", { class: "stage", id: "st-" + s.key }, el("summary", {}, el("b", { text: s.label }), el("small", { text: s.optional ? (s.on ? "On" : "Off") : "Always on" })), el("div", { class: "sbody" }, el("p", { class: "h", text: s.help }), sw, area, el("div", { class: "keyrow" }, brief, gen), why, el("div", { class: "keyrow" }, save, reset, st)));
 }
-let pane, selected = {};
+let selected = {};
 function editorList(section, cards, kind) {
+  const pane = el("div", {class:"pipeline-editor-pane inline-editor",id:kind+"Editor", "aria-label":kind === "prompts" ? "Selected prompt editor" : "Selected code editor"});
   const list = el("div", {class:"editor-list", role:"list", "aria-label":kind === "prompts" ? "Prompt stages" : "Code helpers"});
   const choose = (card, button) => {
     if (selected[kind]) selected[kind].card.hidden = true;
@@ -52,19 +53,11 @@ function editorList(section, cards, kind) {
     const button = el("button", {type:"button",class:"editor-choice", "aria-pressed":"false",onclick:()=>choose(card,button)}, el("b", {text:title}));
     card.hidden = true; list.append(button);
   });
-  section.append(list);
+  section.append(list, pane);
   section._editorCards=cards;
-  if (cards[0]) { selected[kind]={card:cards[0],button:list.querySelector("button")}; }
+  if (cards[0]) choose(cards[0],list.querySelector("button"));
   section._choose=choose;
 }
-window.CCPipeline = {show(kind) {
-  if (!pane) return;
-  const editing = ["prompts","code"].includes(kind);
-  pane.hidden = !editing;
-  if (!editing) return;
-  const sec = $("#sec-"+kind), entry=selected[kind];
-  if (sec && entry) sec._choose(entry.card,entry.button);
-}};
 let dg;
 function redrawDiagram() { if (dg) { const n = diagram(); dg.replaceWith(n); dg = n; } }
 
@@ -124,14 +117,13 @@ function build(col) {
     el("div", { class: "help", text: "These write small Python helpers. Static checks run before display; they do not prove safety. Try it runs only on your click in a bounded process, NOT a sandbox. Host files and network remain accessible." }),
     codeCard("search", "Search connector", "Pulls passages from your own API or website.", "Example: search my clinic's JSON API at https://example.org/api, using the q parameter, and return title, text and link."),
     codeCard("clean_query", "Query cleaning", "Tidies a question before it is searched.", "Example: remove filler words, keep drug names and numbers, and lowercase everything."));
-  pane = el("section", {class:"pipeline-editor-pane",id:"pipelineEditor", "aria-label":"Selected editor",hidden:""});
-  $(".layout").append(pane);
+
   const promptCards = [...prompts.querySelectorAll(":scope > details.stage")];
   const codeCards = [...code.querySelectorAll(":scope > details.helper")];
   promptCards.forEach(c=>c.remove());codeCards.forEach(c=>c.remove());
   prompts.querySelectorAll(".pgroup").forEach(n=>n.remove());
   editorList(prompts,promptCards,"prompts");editorList(code,codeCards,"code");
-  prompts.querySelector(".help").textContent="Select a stage. Edit its full prompt on the right, or below on a phone.";
+  prompts.querySelector(".help").textContent="Select a stage. Edit its full prompt below.";
   const m = $("#sec-model"); const anchor = $("#look");
   col.insertBefore(prompts, anchor); col.insertBefore(code, anchor);
 
