@@ -432,6 +432,7 @@ function pvExtra() {
 }
 function pvFollow() {
   // Keep all settings in one continuous document. Navigation only updates preview.
+  window.CCPipelineFocus?.(activeSec);
   const m = activeSec === "model", card = $("#pvmodel"), fr = $("#pv"), cap = $("#pvcap");
   const names = { presets: "Whole look", wording: "Wording", colors: "Colors", background: "Background", fonts: "Fonts", shape: "Shape and spacing", emoji: "Icons", motion: "Motion", layout: "Layout", model: "Model" };
   if (cap) cap.textContent = "Showing: " + (names[activeSec] || "Chat");
@@ -503,7 +504,7 @@ function buildMenu() {
   groups.forEach(([id,title,items])=>{const group=el("div",{class:"nav-group","data-group":id});group.append(el("b",{class:"nav-label",text:title}));items.forEach(([id,t])=>group.append(el("a",{href:"#sec-"+id,text:t})));m.append(group);});
   m.querySelector("a").classList.add("on");
   let navHoldUntil=0;
-  m.addEventListener("click",e=>{const a=e.target.closest("a");if(!a)return;activeSec=a.hash.replace("#sec-","");navHoldUntil=Date.now()+1200;pvFollow();m.querySelectorAll("a").forEach(x=>x.classList.toggle("on",x===a))});
+  m.addEventListener("click",e=>{const a=e.target.closest("a");if(!a)return;e.preventDefault();activeSec=a.hash.replace("#sec-","");navHoldUntil=Date.now()+1200;pvFollow();history.replaceState(null,"",a.hash);requestAnimationFrame(()=>document.querySelector(a.hash)?.scrollIntoView({block:"start",behavior:"instant"}));m.querySelectorAll("a").forEach(x=>x.classList.toggle("on",x===a))});
   const col=$("#col");const order=["finish","model","search","prompts","code","presets","look","freshness","budget","portable"];
   order.forEach(id=>{const sec=id==="look"?$("#look"):$("#sec-"+id);if(sec)col.insertBefore(sec,$("#msg"));});
   const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting && Date.now()>navHoldUntil) { activeSec = e.target.id.replace("sec-", ""); pvFollow(); document.querySelectorAll("#menu a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id)); } }, { rootMargin: "-20% 0px -70% 0px" });
@@ -521,7 +522,7 @@ function buildPresets() {
     const t = presetTheme(p);
     const c = t.mode === "dark" ? t.dark : t.light;
     const b = el("button", { type: "button", class: "preset", "data-preset":name,"aria-pressed":"false", title: "Apply the " + name + " look", disabled: canEdit ? undefined : "" }, el("span", { class: "sw", style: `background:linear-gradient(135deg,${c.bg} 0 50%,${c.brand} 50% 75%,${c.accent} 75%)` }), el("span", { class: "pn" }, el("span", { text: name }), el("small", { text: (FONTNAMES[t.font] || t.font) + (t.heading_font && t.heading_font !== t.font ? " + " + (FONTNAMES[t.heading_font] || t.heading_font) : "") })));
-    b.addEventListener("click", () => { const keep = ["txt_title", "txt_tagline", "txt_examples", "txt_placeholder", "txt_hint", "txt_disclaimer", "txt_sidebar", "txt_footer"]; for (const k of keep) t[k] = theme[k]; theme = t; editMode = theme.mode === "dark" ? "dark" : "light"; setPvMode(editMode); drawLook(); pvPop(); changed(); say("Preset \u201c" + name + "\u201d applied to the preview. Press Save look to keep it."); });
+    b.addEventListener("click", () => { const scroll=scrollY; const keep = ["txt_title", "txt_tagline", "txt_examples", "txt_placeholder", "txt_hint", "txt_disclaimer", "txt_sidebar", "txt_footer"]; for (const k of keep) t[k] = theme[k]; theme = t; editMode = theme.mode === "dark" ? "dark" : "light"; setPvMode(editMode); drawLook(); pvPop(); changed();window.scrollTo({top:scroll,behavior:"instant"});requestAnimationFrame(()=>window.scrollTo({top:scroll,behavior:"instant"})); say("Preset \u201c" + name + "\u201d applied to the preview. Press Save look to keep it."); });
     box.append(b);
   }
   const more = el("button", { type: "button", class: "preset more", "aria-expanded": showMore ? "true" : "false" }, showMore ? "Show fewer" : "Load more");
@@ -556,7 +557,7 @@ async function init() {
   $("#load").addEventListener("click", async () => { const n = $("#states").value; if (!n) return say("Choose a saved state first", true); try { cur = (await api("/api/states/load", { name: n })).settings; draw(); localStorage.setItem("cc_config_changed", String(Date.now())); say("Loaded \u201c" + n + "\u201d."); } catch (e) { say(e.message, true); } });
   $("#del").addEventListener("click", async () => { const n = $("#states").value; if (!n) return say("Choose a saved look first", true); if (!confirm("Delete the saved look \"" + n + "\"?")) return; await api("/api/states/delete", { name: n }); await states(); say("Deleted."); });
   $("#saveLook").addEventListener("click", async () => { try { theme = (await api("/api/theme", { theme })).theme; saved = clone(theme); drawLook(); changed(); say("Look saved. The chat now uses it for everyone."); } catch (e) { say(e.message, true); } });
-  $("#resetAll").addEventListener("click", () => { if (!confirm("Put every look setting back to the default? (Press Save look afterwards to keep it.)")) return; theme = clone(meta.default); drawLook(); changed(); });
+  $("#resetAll").addEventListener("click", () => { if (!confirm("Reset only the look to the default? Prompts, sources, keys and helper drafts stay unchanged.")) return; theme = clone(meta.default); drawLook(); changed(); });
   $("#exp").addEventListener("click", () => { const a = el("a", { href: URL.createObjectURL(new Blob([JSON.stringify(theme, null, 1)], { type: "application/json" })), download: "customchat-look.json" }); document.body.append(a); a.click(); a.remove(); });
   $("#imp").addEventListener("change", async (e) => { const f = e.target.files[0]; if (!f) return; try { const j = JSON.parse(await f.text()); const t = Object.assign(clone(meta.default), j); t.light = Object.assign(clone(meta.default.light), j.light || {}); t.dark = Object.assign(clone(meta.default.dark), j.dark || {}); theme = t; drawLook(); changed(); say("Look imported into the preview. Press Save look to keep it."); } catch (x) { say("That file is not a CustomChat look file", true); } e.target.value = ""; });
 }
