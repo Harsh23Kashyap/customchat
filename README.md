@@ -1,5 +1,7 @@
 # CustomChat
 
+0.1.11: Configuration scrolls continuously through every section. Prompt/code editors stay inline; navigation no longer hides neighboring sections. Nerd ZIP imports skip benign metadata, name rejected private files, and explain source-archive versus Nerd-bundle ZIPs. Empty local sources and YAML-only imports open with an empty document folder and a clear setup warning. The export button has its own Share this Nerd card.
+
 [![Installer tests](https://github.com/Harsh23Kashyap/customchat/actions/workflows/installer.yml/badge.svg)](https://github.com/Harsh23Kashyap/customchat/actions/workflows/installer.yml)
 
 A chat app over your documents, set up with one YAML file. Answers cite their sources. Starts in offline Demo mode: no key, account or paid calls.
