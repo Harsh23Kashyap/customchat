@@ -29,6 +29,7 @@ async function provExtras() {
   const p = cur.provider, k = keyInfo[p] || { needed: false, has: true };
   $("#keybox").hidden = p === "mock" || p === "ollama"; { const bl = $("#base").closest("label"); if (bl) bl.hidden = !(p === "ollama" || p === "openai_compatible"); }
   $("#keyh").textContent = p === "openai_compatible" ? "Only if your server asks for one. Stored on this computer only, never shown again." : "Stored on this computer only, never shown again.";
+  $("#apikey").placeholder = k.has ? "Saved key available. Enter only to replace it." : "Paste a key to save privately";
   const ks = $("#keystate"); ks.className = "keystate" + (k.has ? " ok" : "");
   ks.textContent = k.has ? (k.source === "env" ? "Key found in an environment variable." : "A key is saved.") : (k.needed ? "No key yet." : "");
   { const tc = $("#testconn"), blocked = !!(k.needed && !k.has); testBlocked = blocked; tc.disabled = blocked || !canEdit; tc.title = blocked ? "Save a key first, then test it" : ""; if (blocked) $("#testres").textContent = "Save a key first, then test."; else if ($("#testres").textContent === "Save a key first, then test.") $("#testres").textContent = ""; }
@@ -247,7 +248,8 @@ const GROUPS = {
   layout: [["Layout", ["sidebar", "chat_width"]], ["More layout options", ["sidebar_width", "avatars", "you_align", "composer", "toolbar", "sources_panel"], true]]
 };
 const clone = (o) => JSON.parse(JSON.stringify(o));
-const get = (f) => (f.colors ? theme[editMode][f.key] : theme[f.key]);
+const effectiveWording = () => {const a=window.CCLoadedApp?.app||{};return {txt_title:a.title,txt_tagline:a.tagline,txt_examples:(a.examples||[]).join("\n"),txt_footer:a.footer};};
+const get = (f) => (f.colors ? theme[editMode][f.key] : theme[f.key] || effectiveWording()[f.key] || theme[f.key]);
 const setv = (f, v) => { if (f.colors) theme[editMode][f.key] = v; else theme[f.key] = v; changed(); };
 let sendTimer = 0;
 function pushPreview() {
