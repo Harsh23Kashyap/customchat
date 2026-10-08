@@ -865,3 +865,22 @@ body.loading-nerd #col{max-width:none}.import-grid{display:grid;grid-template-co
 @media(min-width:1181px){body.loading-nerd .layout{grid-template-columns:168px minmax(0,1fr)!important}}@media(max-width:1180px){body.loading-nerd .layout{grid-template-columns:minmax(0,1fr)!important}}body.loading-nerd #col{width:100%;min-width:0}body.loading-nerd #sec-portable{width:100%;box-sizing:border-box}
 
 .import-scan{margin:20px 0;padding-top:20px;border-top:1px solid var(--line)}.import-scan h3{margin:16px 0 10px;font-size:20px}.import-scan>p{line-height:1.6}.import-scan .import-row span{overflow-wrap:anywhere}.import-scan .import-details p{overflow-wrap:anywhere}
+
+/* Stable setup labels and action links, independent of viewport wrapping. */
+.workspace-status-row{display:grid;grid-template-columns:minmax(0,1fr);align-items:start;justify-content:normal;gap:8px 20px}
+.workspace-status-row>b,.workspace-status-row>span{min-width:0;margin:0;overflow-wrap:anywhere}
+.workspace-status-row>span{flex:none}
+a.go{display:inline-flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;line-height:1.4;max-width:100%;min-width:0;white-space:normal;padding:10px 18px}
+.keyrow>a.go{height:auto;min-height:44px;flex:0 1 auto;white-space:normal}
+@media(max-width:760px){.workspace-status-row{grid-template-columns:minmax(0,1fr);gap:4px}.workspace-status-row>span{margin:0}}
+
+.workspace-status-row{gap:4px;padding:14px 0}.workspace-status-row>span{color:var(--muted,#63736c);font-size:14px}
+.workspace-check-details{margin:16px 0}.workspace-check-details summary{font-size:14px;color:var(--cfg-accent,#173f35)}.workspace-check-details p{font-size:14px;margin:10px 0;line-height:1.5}
+.workspace-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));max-width:640px}.workspace-tabs .go{padding:9px 8px;height:auto;min-height:44px;white-space:normal}
+@media(max-width:480px){.workspace-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* One editor surface, sized inside its grid track instead of beyond it. */
+.pipeline-editor-pane{box-sizing:border-box;width:100%;max-width:100%;overflow-x:hidden}
+.pipeline-editor-pane .helper,.pipeline-editor-pane .stage{box-shadow:none!important;border-radius:0!important;padding:0!important}
+.pipeline-editor-pane .helper>*{max-width:100%;box-sizing:border-box;overflow-wrap:anywhere}
+@media(max-width:760px){.pipeline-editor-pane{border:0;border-top:1px solid var(--line,#d8e1d2);border-radius:0;padding:20px 0;background:transparent}.editing-pipeline #col{min-width:0}.pipeline-editor-pane .keyrow .go{white-space:normal;height:auto;min-height:44px;padding:10px 14px}}
