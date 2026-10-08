@@ -907,3 +907,7 @@ body:has(#nerdReview .import-grid) #col{min-width:0;width:100%;max-width:none}
 #nerdReview{scroll-margin-top:24px}
 
 .all-config-fields{margin:20px 0;padding:20px;background:#f5f7ef;border:1px solid #d1dec8;border-radius:14px}.all-config-fields>summary{font-weight:600;cursor:pointer}.all-config-fields>p{font-size:13px;line-height:1.6}.all-config-fields label{display:block;margin:16px 0;font-size:12px;font-weight:600}.all-config-fields textarea{display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:12px;font:13px/1.6 monospace;border:1px solid #bacdb2;border-radius:10px;resize:vertical}
+
+.preset.selected{outline:2px solid var(--brand);background:var(--side-bg)}
+
+.workspace-fields{margin:16px 0;padding:12px;border:1px solid var(--line);border-radius:12px}.workspace-fields fieldset{border:1px solid var(--line);border-radius:10px;margin:12px 0;padding:12px;min-width:0}.workspace-fields label{display:block;margin:12px 0}.workspace-fields input:not([type=checkbox]),.workspace-fields textarea{display:block;width:100%;margin-top:6px}.workspace-fields small{display:block;color:var(--mut)}
