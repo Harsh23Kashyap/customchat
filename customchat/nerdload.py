@@ -33,7 +33,6 @@ class NerdLoader:
       if path.is_absolute() or '..' in path.parts or '\\' in info.filename or re.match(r'^[A-Za-z]:',info.filename):raise ValueError('Unsafe path in bundle: '+info.filename)
       if (info.external_attr>>16)&0o170000==0o120000:raise ValueError('Symlinks are not allowed: '+info.filename)
       if any(re.match(r'^\.env(?:$|[._-])',part,re.I) or part.lower() in ('.ssh','.aws','.azure','.gnupg','.npmrc','.pypirc','.netrc') for part in path.parts):raise ValueError('Private file is not allowed: '+info.filename)
-      if re.search(r'(secret|credential|password|token|customchat\.db|accounts|sessions)',info.filename,re.I):raise ValueError('Private file is not allowed: '+info.filename)
      names={str(PurePosixPath(i.filename).name) for i in z.infolist() if not i.is_dir()}
      if 'pyproject.toml' in names and any('/customchat/__init__.py' in '/'+i.filename for i in z.infolist()):raise ValueError('This is the CustomChat source ZIP, not a Nerd bundle. Install it to run CustomChat. To share a Nerd, use Download app ZIP in Configuration.')
      total=0
@@ -47,7 +46,7 @@ class NerdLoader:
       if hidden:
        if all(x in benign or x.startswith('._') for x in hidden):continue
        raise ValueError('Unsupported hidden file: '+info.filename)
-      if re.search(r'(secret|credential|password|token|customchat\.db|accounts|sessions)',info.filename,re.I):raise ValueError('Private files are not allowed')
+      if re.search(r'(secret|credential|password|token|customchat\.db|accounts|sessions)',info.filename,re.I):raise ValueError('Private file is not allowed: '+info.filename)
       if len(info.filename)>240:raise ValueError('Path too long')
       if path.suffix.lower() not in _ALLOWED:raise ValueError('Unsupported file: '+info.filename)
       total+=info.file_size
