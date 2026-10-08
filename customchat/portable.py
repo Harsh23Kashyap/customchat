@@ -108,6 +108,12 @@ def bundle(cfg, theme_value=None, prompt_value=None):
     pv = {'text': {k: v for k, v in (pv.get('text') or {}).items() if k in prompts.STAGES and isinstance(v, str) and len(v) <= prompts.MAX_LEN},
           'on': {k: bool(v) for k, v in (pv.get('on') or {}).items() if k in prompts.STAGES and prompts.STAGES[k]['optional']}}
     files['data/prompts.json'] = json.dumps(pv, indent=2).encode()
+    if state:
+        from .editstate import drafts
+        helper_drafts=drafts(state)
+        if helper_drafts:
+            _check_values(helper_drafts)
+            files['data/code-drafts.json']=json.dumps(helper_drafts).encode()
     files['app.yaml'] = yaml.safe_dump(clean, sort_keys=False, allow_unicode=True).encode()
     envs = set()
     def env_names(v):
