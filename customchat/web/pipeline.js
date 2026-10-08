@@ -124,7 +124,7 @@ function build(col) {
   prompts.querySelectorAll(".pgroup").forEach(n=>n.remove());
   editorList(prompts,promptCards,"prompts");editorList(code,codeCards,"code");
   prompts.querySelector(".help").textContent="Select a stage. Edit its full prompt below.";
-  const m = $("#sec-model"); const anchor = $("#look");
+  const m = $("#sec-model"); const anchor = $("#sec-presets");
   col.insertBefore(prompts, anchor); col.insertBefore(code, anchor);
 
 }
