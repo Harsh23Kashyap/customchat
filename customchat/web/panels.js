@@ -113,9 +113,9 @@ async function codePanel(host) {
     const cb=el("input",{type:"checkbox","aria-label":"Enable "+name});cb.checked=set.has(id);
     const badge=el("span",{class:"source-key-badge"});const status=el("small",{class:"h",role:"status"});
     const card=el("section",{class:"source-key-card"});
-    const input=el("input",{type:"password",autocomplete:"off",spellcheck:"false","aria-label":name+" API key",placeholder:"Paste "+name+" API key"});
+    const input=el("input",{type:"password",autocomplete:"off",spellcheck:"false","aria-label":name+" API key",placeholder:has?"Saved key available (replace only)":"(not filled) - "+name+" API key"});
     const keyrow=el("div",{class:"keyrow source-inline-key"});const help=el("small",{class:"h"});
-    const refresh=()=>{badge.textContent=keyfree?"Key-free":has?"Key saved":"Key needed";status.textContent=!cb.checked?"Off. Turn on to set up.":has?"Ready to use.":"Selected. Paused until a key is saved.";keyrow.hidden=help.hidden=keyfree||!cb.checked;help.textContent=has?"A key is saved. Leave blank to keep it, or paste a replacement.":"Needs a key before it can search. No requests sent until saved.";remove.hidden=!has||keyfree;};
+    const refresh=()=>{badge.textContent=keyfree?"Key-free":has?"Key saved":"Not filled (API key)";status.textContent=!cb.checked?"Off. Not enabled.":has?"Ready to use.":"Selected. Paused until a key is saved.";keyrow.hidden=keyfree||!cb.checked;help.hidden=keyfree;input.placeholder=has?"Saved key available (replace only)":"(not filled) - "+name+" API key";help.textContent=has?"A key is saved. Leave blank to keep it, or paste a replacement.":"Not filled: no API key saved. No requests sent until enabled and saved.";remove.hidden=!has||keyfree;};
     const endpoint=library?"/api/catalog/key":"/api/websearch/key";
     const save=el("button",{type:"button",class:"go blue",text:"Save key",onclick:async()=>{if(!input.value.trim()){status.textContent="Paste a key first. Existing key kept.";return}try{const r=await api(endpoint,{id,key:input.value});input.value="";has=r.has_key;refresh()}catch(e){status.textContent=e.message}}});
     const remove=el("button",{type:"button",class:"go ghost",text:"Remove key",onclick:async()=>{try{const r=await api(endpoint,{id,clear:true});has=r.has_key;refresh()}catch(e){status.textContent=e.message}}});
