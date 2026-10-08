@@ -895,10 +895,10 @@ a.go{display:inline-flex;align-items:center;justify-content:center;text-align:ce
 #sec-portable .nerd-drop{display:flex;flex-direction:column;align-items:center;gap:10px;padding:28px 20px;margin:22px 0 0;border:1px dashed #9bb795;border-radius:18px;background:linear-gradient(145deg,#f5f8f0,#edf3e8);text-align:center;min-height:0;box-sizing:border-box}.drop-symbol{display:flex;align-items:center;justify-content:center;width:44px;height:44px;background:#fffdf7;border:1px solid #d1dec9;border-radius:13px;font-size:25px;color:#173f35;box-shadow:0 3px 8px #173f3508}.drop-eyebrow{font-size:10px;letter-spacing:.12em;color:#526f59;font-weight:700}#sec-portable .nerd-drop>b{font-size:19px}#sec-portable .nerd-drop p{margin:0;font-size:13px;color:#52675c}#sec-portable .nerd-drop .filebtn{display:inline-flex;align-items:center;justify-content:center;border:1px solid #bacdb2;background:#fffdf7;border-radius:10px;padding:10px 18px;min-height:40px;height:auto;margin:4px 0;font-size:13px}#sec-portable .nerd-drop small{font-size:11px;color:#617365;margin:0}#nerdReview:empty{display:none}#nerdReview:not(:empty){margin-top:18px}#sec-portable .nerd-drop.dragover{background:#e4efd9;border-color:#173f35;box-shadow:0 0 0 3px #173f3510}
 
 /* Bundle review owns the preview: avoid a second, unrelated chat preview. */
-body.reviewing-nerd #pvbox,body.reviewing-nerd #pvfab{display:none!important}
-@media(min-width:1181px){body.reviewing-nerd .layout{grid-template-columns:168px minmax(0,1fr)!important}}
-@media(max-width:1180px){body.reviewing-nerd .layout{grid-template-columns:minmax(0,1fr)!important}}
-body.reviewing-nerd #col{min-width:0;width:100%;max-width:none}
+body:has(#nerdReview .import-grid) #pvbox,body:has(#nerdReview .import-grid) #pvfab{display:none!important}
+@media(min-width:1181px){body:has(#nerdReview .import-grid) .layout{grid-template-columns:168px minmax(0,1fr)!important}}
+@media(max-width:1180px){body:has(#nerdReview .import-grid) .layout{grid-template-columns:minmax(0,1fr)!important}}
+body:has(#nerdReview .import-grid) #col{min-width:0;width:100%;max-width:none}
 .import-grid{grid-template-columns:minmax(0,1.35fr) minmax(280px,1fr)}
 .import-preview{position:static;max-height:none;overflow:visible}
 @media(max-width:780px){.import-grid{grid-template-columns:minmax(0,1fr)}}
