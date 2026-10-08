@@ -112,3 +112,7 @@ Enabled question checks no longer silently approve an unavailable or malformed v
 Tests: 13 synthetic attack families across all nine prompt constructions (117 combinations), 26 code-policy/data constructions, runtime/history/failure-path fixtures, nine AST escape samples, eight malformed-label/citation cases and four benign controls. These are deterministic construction/parser/AST checks, not measurements of live-model attack success. ChatGPT supplied a separate simulated attack review; it did not execute this backend. No finite matrix covers every possible attack.
 
 Residual risks: models can still follow poisoned content or launder false claims; citation syntax does not prove semantic support. Optional support checks are model-dependent and off by default. Streaming can show text before final checks, so there is no confidentiality guarantee. AST checks do not isolate capabilities or enforce all endpoints; allowed Python can still access host/network resources. Bounded mode is NOT a sandbox. Prompt hardening reduces tested failure paths, not a guarantee against hallucination or jailbreaks.
+
+### Configuration layout fixes (0.1.10)
+
+Setup uses short, stacked status lines, with full check details behind an expandable section. Workspace tabs wrap in a consistent grid. Action links, including Open your chat, center their labels without underlines or clipped text and grow when text wraps. No provider, prompt or data behavior changes.
