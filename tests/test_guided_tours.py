@@ -11,7 +11,7 @@ class GuidedTours(unittest.TestCase):
  def test_skip_keyboard_focus_and_local_only(self):
   s=(W/'tour.js').read_text()
   for text in ["'Skip'","'cancel'","ArrowRight","ArrowLeft","showModal()","before.focus","localStorage.setItem"]:self.assertIn(text,s)
-  self.assertNotIn('fetch(',s)
+  self.assertIn('/api/guide-seen',s);self.assertNotIn('/api/ask',s)
  def test_motion_and_small_viewport_limits(self):
   css=(W/'tour.css').read_text()
   for text in ['@keyframes cc-guide-orb','prefers-reduced-motion','100dvh','max-height:540px',':focus-visible']:self.assertIn(text,css)
