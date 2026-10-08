@@ -30,7 +30,7 @@ def make_handler(cfg, engine):
     budget = Budget(cfg, os.path.dirname(os.path.abspath(store.path)) if store.path != ":memory:" else None)
     cfg["budget"] = dict(budget.value)
     engine.provider = budget.wrap(engine.provider)
-    themestore = themes.ThemeStore(os.path.dirname(os.path.abspath(store.path)) if store.path != ":memory:" else "/tmp")
+    themestore = themes.ThemeStore(os.path.dirname(os.path.abspath(store.path)) if store.path != ":memory:" else "/tmp", cfg["app"])
     from . import editstate
     state_folder = os.path.dirname(os.path.abspath(store.path)) if store.path != ":memory:" else "/tmp"
     acc = Accounts(store, bool(cfg["auth"].get("signup", True))) if cfg["auth"]["mode"] == "accounts" else None
@@ -177,7 +177,7 @@ def make_handler(cfg, engine):
                     b=self._body()
                     rev=editstate.save_config(cfg,b.get('config'),str(b.get('revision','')))
                     return self._send(200,{'revision':rev,'restart_required':True,'message':'App file saved. Restart this workspace to apply all fields. No new code or network calls ran.'})
-                return self._send(200,{'config':editstate.view(cfg),'revision':editstate.revision(cfg),'helpers':editstate.helper_state(cfg,state_folder)})
+                return self._send(200,{'config':editstate.view(cfg),'defaults':schema.DEFAULTS,'revision':editstate.revision(cfg),'helpers':editstate.helper_state(cfg,state_folder),'connector_keys':{k:websearch.has_key(k) for k in websearch.PROVIDERS}})
             if path == "/api/codegen/draft" and method == "POST":
                 self._owner()
                 if not can_edit(self):raise PermissionError('Only the app owner can save helper drafts')
@@ -482,7 +482,9 @@ def make_handler(cfg, engine):
                 st = hardware.pull_status(qs.get("id", ""))
                 return self._send(200, st) if st else self._send(404, {"error": "Unknown download"})
             if path == "/api/states" and method == "GET":
-                return self._send(200, {"states": [n for n in store.states(o) if not n.startswith(("scope-","action-","note-","history-","workspace-"))]})
+                names=[n for n in store.states(o) if not n.startswith(("scope-","action-","note-","history-","workspace-"))]
+                matches=[n for n in names if store.get_state(o,n)==settings_view()]
+                return self._send(200, {"states": names, "current": matches[0] if len(matches)==1 else ""})
             if path == "/api/states/save" and method == "POST":
                 return self._send(200, {"name": store.save_state(o, b.get("name"), settings_view())})
             if path == "/api/states/load" and method == "POST":
@@ -706,8 +708,7 @@ def serve(path, host=None, port=None):
         if store.path != ":memory:" and os.path.exists(wf):
             ws = json.load(open(wf))
             pl = [x for x in (ws.get("providers") or [ws.get("provider")]) if x in websearch.PROVIDERS]
-            if ws.get("on") and pl:
-                engine.set_web(True, pl)
+            engine.set_web(bool(ws.get("on")), pl)
     except (OSError, ValueError):
         pass
     try:
