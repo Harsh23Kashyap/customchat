@@ -428,13 +428,7 @@ function pvExtra() {
   }
 }
 function pvFollow() {
-  window.CCPipeline?.show(activeSec);
-  const editing = ["prompts", "code"].includes(activeSec);
-  document.body.classList.toggle("editing-pipeline", editing);
-  document.body.dataset.editorKind = editing ? activeSec : "";
-  const loading = activeSec === "portable";
-  document.body.classList.toggle("loading-nerd", loading);
-  if (editing || loading) return;
+  // Keep all settings in one continuous document. Navigation only updates preview.
   const m = activeSec === "model", card = $("#pvmodel"), fr = $("#pv"), cap = $("#pvcap");
   const names = { presets: "Whole look", wording: "Wording", colors: "Colors", background: "Background", fonts: "Fonts", shape: "Shape and spacing", emoji: "Icons", motion: "Motion", layout: "Layout", model: "Model" };
   if (cap) cap.textContent = "Showing: " + (names[activeSec] || "Chat");
