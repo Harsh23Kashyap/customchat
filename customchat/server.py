@@ -162,6 +162,20 @@ def make_handler(cfg, engine):
                 return self._error_page(404) if method == "GET" and not path.startswith("/api/") else self._send(404, {"error": "Not found"})
             if method == "GET" and not path.startswith("/api/"):
                 return self._static(path)
+            if path == "/api/guide-seen":
+                self._owner()
+                guide_path = os.path.join(state_folder, "guide-seen.json")
+                try:
+                    with open(guide_path) as f: seen = json.load(f)
+                    if not isinstance(seen, dict): seen = {}
+                except (OSError, ValueError): seen = {}
+                if method == "POST":
+                    key = self._body().get("key")
+                    if key not in ("cc_tour", "cc_cfg_tour_v1"): raise ValueError("Unknown guide")
+                    seen[key] = True
+                    os.makedirs(state_folder, exist_ok=True)
+                    with open(guide_path, "w") as f: json.dump(seen, f)
+                return self._send(200, seen)
             if path == "/api/health":
                 if qs.get("deep") and can_edit(self):
                     return self._send(200, {"ok": True, "app": cfg["app"].get("title") or cfg["app"].get("name", ""), "provider": cfg["provider"]["type"],
@@ -330,13 +344,13 @@ def make_handler(cfg, engine):
                     return self._send(403, {"error": "Only the admin can change prompts or generate code"})
                 try:
                     if path == "/api/prompts" and method == "GET":
-                        return self._send(200, {"stages": engine.prompts.view(cfg["prompt"]["system"]), "real_model": cfg["provider"]["type"] != "mock"})
+                        return self._send(200, {"stages": engine.prompts.view(cfg["prompt"]["system"], cfg["prompt"].get("revise",False)), "real_model": cfg["provider"]["type"] != "mock"})
                     if path == "/api/prompts/save" and method == "POST":
                         engine.prompts.save(str(b.get("key") or ""), b.get("text"), b.get("on")); engine._cache.clear()
-                        return self._send(200, {"stages": engine.prompts.view(cfg["prompt"]["system"])})
+                        return self._send(200, {"stages": engine.prompts.view(cfg["prompt"]["system"], cfg["prompt"].get("revise",False))})
                     if path == "/api/prompts/reset" and method == "POST":
                         engine.prompts.reset(str(b.get("key") or "")); engine._cache.clear()
-                        return self._send(200, {"stages": engine.prompts.view(cfg["prompt"]["system"])})
+                        return self._send(200, {"stages": engine.prompts.view(cfg["prompt"]["system"], cfg["prompt"].get("revise",False))})
                     if path == "/api/prompts/test" and method == "POST":
                         if cfg["provider"]["type"] == "mock":
                             return self._send(200, {"ok": False, "error": "Demo mode has no model to run a prompt. Connect a model on the Model tab, then try again."})
