@@ -9,7 +9,7 @@ async function api(path, body) {
 }
 const el = (t, p = {}, ...k) => { const e = document.createElement(t); for (const [a, v] of Object.entries(p)) { if (v == null) continue; if (a === "class") e.className = v; else if (a === "text") e.textContent = v; else if (a.startsWith("on")) e.addEventListener(a.slice(2), v); else e.setAttribute(a, v); } e.append(...k.filter((x) => x != null)); return e; };
 const NOTE = (m) => { const n = $("#msg"); if (n) { n.textContent = m; n.className = "msg"; } };
-let stages = [], real = false, helperState = {};
+let stages = [], real = false, helperState = {}, connectorKeys={};
 
 function diagram() {
   const box = el("div", { class: "pipe", role: "list", "aria-label": "Order of steps for each question" });
@@ -101,10 +101,14 @@ function codeCard(kind, title, help, ph) {
   const rewrite = el("button", { type: "button", class: "go blue", text: "Rewrite parsing from this response", onclick: () => { sample = raw.value; gen.click(); } });
   const live = kind === "search" ? el("details", { class: "stage inner" }, el("summary", {}, el("b", { text: "Match a real response" }), el("small", { text: "Optional" })), el("div", { class: "sbody" }, el("p", { class: "h", text: "Fetch one real response so the parsing fits it." }), el("div", { class: "keyrow" }, url, show), raw, rewrite)) : null;
   const initial=helperState[kind];if(initial){brief.value=initial.brief||"";code.value=initial.code||"";}
-  const saveDraft=el("button",{type:"button",class:"go ghost",text:"Save helper draft",onclick:async()=>{try{await api("/api/codegen/draft",{kind,brief:brief.value,code:code.value});out.textContent="Draft saved in this workspace. Not activated or run.";}catch(e){out.textContent=e.message}}});
+  const pids=Object.keys(connectorKeys).filter(k=>new RegExp("\\b"+k+"\\b","i").test(brief.value));recognized=pids.length===1?pids[0]:"";
+  const filled=el("p",{class:"h",role:"status",text:initial?.code?"Existing helper loaded from this workspace.":"(not filled) - no saved helper code in this workspace."});
+  if(!brief.value)brief.placeholder="(not filled) - "+ph;
+  if(recognized){apiKey.placeholder=connectorKeys[recognized]?"Saved key available (replace only)":"(not filled) - connector API key";detected.textContent=recognized+": "+(connectorKeys[recognized]?"Key saved privately.":"Not filled (API key).");}else{apiKey.placeholder="(not filled) - optional connector API key";detected.textContent="No connector selected. (not filled)";}
+  const saveDraft=el("button",{type:"button",class:"go ghost",text:"Save helper draft",onclick:async()=>{try{await api("/api/codegen/draft",{kind,brief:brief.value,code:code.value});filled.textContent=code.value.trim()?"Helper draft saved in this workspace.":"(not filled) - no saved helper code.";out.textContent="Draft saved in this workspace. Not activated or run.";}catch(e){out.textContent=e.message}}});
   const copy = el("button", { type: "button", class: "go ghost", text: "Copy", onclick: () => { navigator.clipboard && navigator.clipboard.writeText(code.value); out.textContent = "Copied."; } });
   const chk = el("button", { type: "button", class: "go ghost", text: "Check again", onclick: review });
-  return el("details", { class: "sub helper" }, el("summary", {}, el("b", { text: title }), el("small", { text: help })), brief, kind==="search"?el("div",{class:"keyrow"},apiKey,saveConnectorKey,detect):null, kind==="search"?el("p",{class:"h",text:"Key stays private, never in generated code or sent to the writing model. Unknown service? Add its name or docs URL."}):null, kind==="search"?detected:null, live, el("div", { class: "keyrow tight" }, gen, chk, copy, saveDraft), ed ? host : fallback, ed ? el("small", { class: "h", text: "Press Esc, then Tab, to move past the editor." }) : null, out, el("div", { class: "keyrow" }, tq, tryBtn), tres);
+  return el("details", { class: "sub helper" }, el("summary", {}, el("b", { text: title }), el("small", { text: help })), brief, filled, kind==="search"?el("div",{class:"keyrow"},apiKey,saveConnectorKey,detect):null, kind==="search"?el("p",{class:"h",text:"Key stays private, never in generated code or sent to the writing model. Unknown service? Add its name or docs URL."}):null, kind==="search"?detected:null, live, el("div", { class: "keyrow tight" }, gen, chk, copy, saveDraft), ed ? host : fallback, ed ? el("small", { class: "h", text: "Press Esc, then Tab, to move past the editor." }) : null, out, el("div", { class: "keyrow" }, tq, tryBtn), tres);
 }
 
 function build(col) {
@@ -132,7 +136,7 @@ function build(col) {
 }
 async function init() {
   try { const d = await api("/api/prompts"); stages = d.stages; real = d.real_model; } catch (e) { return; }
-  try { helperState=(await api("/api/configuration-state")).helpers||{}; } catch(e) {}
+  try { const current=await api("/api/configuration-state");helperState=current.helpers||{};connectorKeys=current.connector_keys||{}; } catch(e) {}
   build($("#col"));
 }
 init();
