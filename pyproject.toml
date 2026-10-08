@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "customchat-app"
-version = "0.1.10"
+version = "0.1.11"
 readme = "README.md"
 description = "Chat with your documents. One YAML file, cited answers, offline demo."
 requires-python = ">=3.10"
