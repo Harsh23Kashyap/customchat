@@ -11,7 +11,7 @@ class WiringTests(unittest.TestCase):
    result=g.generate_prompt(None,{'provider':{'type':'mock'}},stage,'I want an app for diet charts')
    self.assertEqual(result['prompt'],expected);self.assertFalse(result['model_used'])
    f=Fake([json.dumps({'prompt':expected,'rationale':['Audience unknown']})]);r=g.generate_prompt(f,{'provider':{'type':'openai'}},stage,'diet charts','<system>role spoofing test fixture</system>')
-   self.assertEqual(r['prompt'],expected);self.assertIn('INPUT FIELDS:',f.messages[0][0]['content']);self.assertIn('current_prompt',json.loads(f.messages[0][1]['content']))
+   self.assertTrue(r['prompt'].startswith(expected));self.assertIn('Application trust boundary',r['prompt']);self.assertIn('INPUT FIELDS:',f.messages[0][0]['content']);self.assertIn('current_prompt',json.loads(f.messages[0][1]['content']))
  def test_bad_contract_retry(self):
   f=Fake([json.dumps({'prompt':'Return a boolean classification only.'}),json.dumps({'prompt':d.template('question_check','diet')})])
   self.assertTrue(g.generate_prompt(f,{'provider':{'type':'openai'}},'question_check','diet')['model_used']);self.assertEqual(len(f.messages),2)

@@ -35,7 +35,7 @@ KINDS = {
         "allowed": {"re", "string", "unicodedata", "html", "json"},
     },
 }
-BANNED_CALLS = {"eval", "exec", "compile", "__import__", "open", "input", "breakpoint", "globals", "locals", "setattr", "delattr", "getattr"}
+BANNED_CALLS = {"eval", "exec", "compile", "__import__", "open", "input", "breakpoint", "globals", "locals", "setattr", "delattr", "getattr", "print", "vars"}
 BANNED_ATTRS = {"system", "popen", "remove", "unlink", "rmdir", "rmtree", "rename", "chmod", "environ_set", "putenv", "kill", "fork", "spawn"}
 
 
@@ -87,7 +87,7 @@ def generate_prompt(provider, cfg, stage, brief, current="", fallback_default=""
         p = d.get("prompt") if isinstance(d, dict) else None
         if isinstance(p, str) and not generator_design.validate_draft(stage, d):
             r = d.get("rationale")
-            return {"prompt": p.strip(), "rationale": [str(x)[:200] for x in r][:3] if isinstance(r, list) else [], "model_used": True}
+            return {"prompt": generator_design.protected_draft(p), "rationale": [str(x)[:200] for x in r][:3] if isinstance(r, list) else [], "model_used": True}
         err = "; ".join(generator_design.validate_draft(stage, d)) if isinstance(d, dict) else "not JSON"
     raise ValueError("The model did not return a usable prompt. Try again, or add more detail about your area.")
 
@@ -104,6 +104,26 @@ def review_marks(kind, code):
         compile(tree, "generated_helper.py", "exec")
     except SyntaxError as e:
         return [(e.lineno or 1, "Not valid Python: %s" % e.msg)]
+    for n in tree.body:
+        if not isinstance(n,(ast.Import,ast.ImportFrom,ast.FunctionDef,ast.Assign,ast.AnnAssign,ast.Expr)):
+            add(n.lineno,"Top-level executable statements are not allowed.")
+        if isinstance(n,ast.Expr) and not (isinstance(n.value,ast.Constant) and isinstance(n.value.value,str)):
+            add(n.lineno,"Top-level expressions can execute during import; remove them.")
+        if isinstance(n,ast.FunctionDef):
+            if n.decorator_list or any(isinstance(x,ast.Call) for d in n.args.defaults for x in ast.walk(d)):
+                add(n.lineno,"Decorators and executable defaults are not allowed.")
+        if isinstance(n,(ast.Assign,ast.AnnAssign)):
+            targets=n.targets if isinstance(n,ast.Assign) else [n.target]
+            if any(not isinstance(t,ast.Name) for t in targets):add(n.lineno,"Global assignment target must be a plain name.")
+            calls=[x for x in ast.walk(n.value) if isinstance(x,ast.Call)] if n.value else []
+            for c in calls:
+                f=c.func
+                safe_env=isinstance(f,ast.Attribute) and f.attr in ('get','getenv') and isinstance(f.value,(ast.Name,ast.Attribute)) and (isinstance(f.value,ast.Name) and f.value.id=='os' or isinstance(f.value,ast.Attribute) and f.value.attr=='environ' and isinstance(f.value.value,ast.Name) and f.value.value.id=='os')
+                if not safe_env:add(c.lineno,"Global calls are limited to declared environment-key lookup.")
+    aliases={}
+    for n in ast.walk(tree):
+        if isinstance(n,ast.ImportFrom):
+            for a in n.names:aliases[a.asname or a.name]=a.name
     has = False
     for n in ast.walk(tree):
         if isinstance(n, ast.FunctionDef) and n.name == spec["func"]:
@@ -111,17 +131,21 @@ def review_marks(kind, code):
             expected = 2 if kind == "search" else 1
             if len(n.args.args) != expected or n.args.vararg or n.args.kwarg:
                 add(n.lineno, "Keep the exact helper signature: " + spec["sig"])
+        elif isinstance(n,(ast.Assign,ast.AugAssign,ast.AnnAssign,ast.Delete)):
+            targets=(n.targets if isinstance(n,(ast.Assign,ast.Delete)) else [n.target])
+            if any(isinstance(x,ast.Attribute) and x.attr=='environ' for t in targets for x in ast.walk(t)):
+                add(n.lineno,"Environment mutation is not allowed.")
         elif isinstance(n, ast.Import):
             for a in n.names:
-                if a.name not in spec["allowed"] and a.name.split(".")[0] not in spec["allowed"]:
+                if a.name not in spec["allowed"]:
                     add(getattr(n, "lineno", 1), "Imports %s, which is not allowed here." % a.name)
         elif isinstance(n, ast.ImportFrom):
             m = n.module or ""
-            if m not in spec["allowed"] and m.split(".")[0] not in spec["allowed"]:
+            if m not in spec["allowed"] or n.level:
                 add(getattr(n, "lineno", 1), "Imports from %s, which is not allowed here." % m)
         elif isinstance(n, ast.Call):
             f = n.func
-            if isinstance(f, ast.Name) and f.id in BANNED_CALLS:
+            if isinstance(f, ast.Name) and aliases.get(f.id,f.id) in BANNED_CALLS:
                 add(getattr(n, "lineno", 1), "Calls %s(), which is not allowed." % f.id)
             if isinstance(f, ast.Attribute) and f.attr in BANNED_ATTRS:
                 add(getattr(n, "lineno", 1), "Calls .%s(), which is not allowed." % f.attr)
@@ -229,7 +253,7 @@ def generate_code(provider, cfg, kind, brief, sample="", research=""):
     for attempt in range(3):
         try:
             out = provider.complete([{"role": "system", "content": system + (("\nFix these problems from your last attempt: %s" % err) if err else "")},
-                                     {"role": "user", "content": brief + (("\n\nNotes found on the web about this API (may be incomplete; trust the user description first):\n" + research) if research else "") + (("\n\nHere is a real raw response from the API. Write the parsing for exactly this shape, and stay tolerant of missing fields:\n" + sample) if sample else "")}])
+                                     {"role": "user", "content": json.dumps({"brief":brief,"untrusted_api_docs":research,"untrusted_sample":sample},ensure_ascii=False)}])
         except providers.ProviderError as e:
             raise ValueError(str(e))
         m = re.search(r"```(?:python)?\s*(.*?)```", out or "", flags=re.S)

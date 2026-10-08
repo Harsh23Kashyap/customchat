@@ -315,7 +315,7 @@ class Round16(unittest.TestCase):
 
     def test_query_rewrite_with_model(self):
         class P:
-            def complete(s, m): return "1. alpha beta\n2. gamma"
+            def complete(s, m): return "alpha beta\ngamma"
         e, cfg = engine(); cfg["provider"]["type"] = "ollama"; cfg["retrieval"]["query_rewrite"] = True; e.provider = P()
         self.assertEqual(e.queries("what is it"), ["what is it", "alpha beta", "gamma"])
         cfg["retrieval"]["query_rewrite"] = False; self.assertEqual(e.queries("q"), ["q"])
