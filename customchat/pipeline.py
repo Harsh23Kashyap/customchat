@@ -43,13 +43,15 @@ class Engine:
     WEB_ID = "web"
 
     def web_state(self):
-        b = next((x for x in self.cfg["sources"] if x["id"] == self.WEB_ID), None)
-        return {"on": bool(b), "providers": list((b or {}).get("providers", []))}
+        blocks = [x for x in self.cfg["sources"] if x["type"] == "web_search"]
+        pids = list(dict.fromkeys(p for x in blocks for p in (x.get("providers") or [x.get("provider")]) if p))
+        return {"on": bool(blocks), "providers": pids}
 
     def set_web(self, on, providers=()):
         providers = [providers] if isinstance(providers, str) else list(providers or [])
-        self.cfg["sources"] = [x for x in self.cfg["sources"] if x["id"] != self.WEB_ID]
-        self.connectors.pop(self.WEB_ID, None)
+        for x in [x for x in self.cfg["sources"] if x["type"] == "web_search"]:
+            self.connectors.pop(x["id"], None)
+        self.cfg["sources"] = [x for x in self.cfg["sources"] if x["type"] != "web_search"]
         if on and providers:
             blk = {"id": self.WEB_ID, "type": "web_search", "label": "Live web", "providers": providers, "weight": 0.8}
             self.cfg["sources"].append(blk)
@@ -59,14 +61,16 @@ class Engine:
     CATALOG = {"pubmed": "PubMed", "arxiv": "arXiv", "wikipedia": "Wikipedia", "crossref": "Crossref", "openalex": "OpenAlex"}
 
     def catalog_state(self):
-        return [x["type"] for x in self.cfg["sources"] if x["id"].startswith("cat-")]
+        return list(dict.fromkeys(x["type"] for x in self.cfg["sources"] if x["type"] in self.CATALOG))
 
     def set_catalog(self, types):
         types = [t for t in dict.fromkeys(types or []) if t in self.CATALOG]
-        for x in [x for x in self.cfg["sources"] if x["id"].startswith("cat-")]:
-            self.connectors.pop(x["id"], None)
-        self.cfg["sources"] = [x for x in self.cfg["sources"] if not x["id"].startswith("cat-")]
+        existing = [x for x in self.cfg["sources"] if x["type"] in self.CATALOG]
+        for x in existing:
+            if x["type"] not in types:self.connectors.pop(x["id"], None)
+        self.cfg["sources"] = [x for x in self.cfg["sources"] if x["type"] not in self.CATALOG or x["type"] in types]
         for t in types:
+            if any(x["type"] == t for x in self.cfg["sources"]):continue
             blk = {"id": "cat-" + t, "type": t, "label": self.CATALOG[t], "weight": 0.9}
             self.cfg["sources"].append(blk)
             self.connectors[blk["id"]] = make_connector(blk, self.cfg.get("_dir", "."))
