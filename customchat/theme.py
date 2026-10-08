@@ -113,12 +113,20 @@ def clean(raw):
 
 
 class ThemeStore:
-    def __init__(self, folder):
+    def __init__(self, folder, app=None):
         self.path = os.path.join(folder, "theme.json")
-        self.value = DEFAULT_CLEAN()
+        base = DEFAULT_CLEAN()
+        app = app or {}
+        for field,key in (("brand","accent"),("accent","accent2")):
+            if HEX.match(str(app.get(key,""))):base["light"][field]=app[key]
+        if app.get("theme") in ENUMS["mode"]:base["mode"]=app["theme"]
+        self.value = clean(base)
         try:
             with open(self.path, encoding="utf-8") as f:
-                self.value = clean(json.load(f))
+                raw=json.load(f)
+                merged=dict(base);merged.update(raw)
+                for mode in ("light","dark"):merged[mode]={**base[mode],**raw.get(mode,{})}
+                self.value = clean(merged)
         except (OSError, ValueError):
             pass
 
