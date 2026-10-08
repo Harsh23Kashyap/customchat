@@ -17,3 +17,18 @@ class ConfigAlignment(unittest.TestCase):
   js=(Path(__file__).parents[1]/'customchat/web/workspace.js').read_text()
   self.assertIn("Check details and limits",js)
   self.assertIn("Local checks only. Live services have not been tested.",js)
+
+ def test_navigation_does_not_hide_sections(self):
+  js=(Path(__file__).parents[1]/'customchat/web/settings.js').read_text()
+  follow=js.split('function pvFollow() {',1)[1].split('const m = activeSec',1)[0]
+  self.assertNotIn('classList.toggle',follow)
+  self.assertNotIn('CCPipeline',follow)
+ def test_editors_live_in_their_sections(self):
+  js=(Path(__file__).parents[1]/'customchat/web/pipeline.js').read_text()
+  self.assertIn('section.append(list, pane)',js)
+  self.assertIn('id:kind+"Editor"',js)
+  self.assertNotIn('$(".layout").append(pane)',js)
+ def test_export_has_dedicated_card(self):
+  html=(Path(__file__).parents[1]/'customchat/web/settings.html').read_text()
+  self.assertIn('class="export-card"',html)
+  self.assertIn('Share this Nerd',html)
