@@ -47,8 +47,8 @@
       </section>
       <section class="tile" id="sec-portable"><div class="head"><span class="ic green">&#8599;</span><div><b>Load and share Nerds</b><small>Drop a bundle, review it, then run it</small></div></div>
         <div class="help">Export app.yaml, the current model settings, saved look, prompts and configured local documents. Keys, accounts, conversations and personal uploads stay here. Review included documents before sharing. Python plugins and remote services still need their original setup.</div>
-        <div id="nerdDrop" class="nerd-drop" tabindex="0" role="button" aria-label="Choose or drop a Nerd ZIP or YAML"><b>Drop a Nerd here</b><p>ZIP bundle or app.yaml</p><label class="go ghost filebtn">Choose a file<input id="nerdFile" type="file" accept=".zip,.yaml,.yml,.json" hidden></label><small>Review before running. Keys and chat history stay out.</small></div><div id="nerdReview" role="status"></div>
-        <button type="button" class="go green" id="exportApp">Download app ZIP</button><span id="exportStatus" role="status" aria-live="polite"></span>
+        <div id="nerdDrop" class="nerd-drop" tabindex="0" role="button" aria-label="Choose or drop a Nerd ZIP or YAML"><span class="drop-symbol" aria-hidden="true">&#8593;</span><span class="drop-eyebrow">LOAD A NERD</span><b>Drop your bundle here</b><p>A Nerd ZIP or app.yaml, ready for review.</p><label class="go ghost filebtn">Choose a file<input id="nerdFile" type="file" accept=".zip,.yaml,.yml,.json" hidden></label><small>1. Choose &nbsp; 2. Review &nbsp; 3. Run</small></div><div id="nerdReview" role="status"></div>
+        <div class="export-card"><div><b>Share this Nerd</b><p>Download an importable bundle of this app and its local documents. Keys and chats stay here.</p></div><button type="button" class="go green" id="exportApp"><span aria-hidden="true">&#8595;</span> Download app ZIP</button><span id="exportStatus" role="status" aria-live="polite"></span></div>
       </section>
       <section class="tile" id="sec-freshness"><div class="head"><span class="ic green">&#8635;</span><div><b>Document freshness</b><small>Keep local evidence up to date</small></div></div>
         <div class="help">Local folders are checked when someone asks a question, at most once every 30 seconds by default. Changed, added and removed documents update the search index. No background polling or model calls. Set refresh_interval in the local source YAML to change the interval.</div>
@@ -89,4 +89,4 @@ help.textContent=m==="simple"?"The everyday settings, in plain words.":"Adds des
 var m="simple";try{m=localStorage.getItem(K)||"simple"}catch(e){}set(m);
 bar.addEventListener("click",function(e){var b=e.target.closest("button");if(b)set(b.dataset.m)})})()</script>
 <script src="/workspace.js"></script><script src="/nerdload.js"></script></body>
-</html>
+  </html>
