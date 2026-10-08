@@ -18,9 +18,15 @@ class NerdLoadTests(unittest.TestCase):
  def test_path_traversal(self):
   with self.assertRaisesRegex(ValueError,'Unsafe path'):self.loader.review('d.zip',self.encoded({'../bad.txt':'x','app.yaml':'{}'}))
  def test_env_rejected(self):
-  with self.assertRaisesRegex(ValueError,'Hidden'):self.loader.review('d.zip',self.encoded({'.env':'secret','app.yaml':'{}'}))
- def test_missing_source(self):
-  with self.assertRaisesRegex(ValueError,'Missing local'):self.loader.review('app.yaml',base64.b64encode(b'sources: [{id: docs, type: local_files, path: docs}]').decode())
+  with self.assertRaisesRegex(ValueError,'Private file.*.env'):self.loader.review('d.zip',self.encoded({'.env':'secret','app.yaml':'{}'}))
+ def test_yaml_without_documents_loads_empty_folder(self):
+  d=self.loader.review('app.yaml',base64.b64encode(b'sources: [{id: docs, type: local_files, path: docs}]').decode())
+  self.assertTrue(any('No documents included' in r['message'] for r in d['readiness']['rows']))
+  r=self.loader.load(d['token']);self.assertTrue((Path(r['workspace'])/'docs').is_dir())
+ def test_export_empty_source_roundtrip(self):
+  (self.root/'docs').mkdir();cfg=schema.validate({'sources':[{'id':'docs','type':'local_files','path':'docs'}]});cfg['_dir']=str(self.root)
+  data,_=bundle(cfg);d=self.loader.review('nerd.zip',base64.b64encode(data).decode());r=self.loader.load(d['token'])
+  self.assertTrue((Path(r['workspace'])/'assets/source-1').is_dir())
  def test_inline_secret_rejected(self):
   raw=b'sources: [{id: x, type: http_json, url: "https://a.example/?token=secret"}]'
   with self.assertRaises(ValueError):self.loader.review('app.yaml',base64.b64encode(raw).decode())
@@ -46,3 +52,17 @@ class NerdLoadTests(unittest.TestCase):
   import yaml
   raw=yaml.safe_dump({'app':{'title':'<img src=x onerror=alert(1)>','tagline':'Bundle tagline','examples':['Example question?']},'provider':{'type':'mock'},'sources':[]})
   d=self.loader.review('demo.zip',self.encoded({'app.yaml':raw}));self.assertTrue(d['preview']['static']);self.assertEqual(d['preview']['title'],'<img src=x onerror=alert(1)>');self.assertEqual(d['preview']['examples'],['Example question?']);self.assertEqual(self.loader.list(),[])
+
+ def test_benign_dotfiles_skipped(self):
+  d=self.loader.review('demo.zip',self.encoded({'Nerd/app.yaml':'{}','Nerd/.gitignore':'data/','Nerd/.github/workflows/test.yml':'{}','Nerd/.DS_Store':'x','Nerd/__MACOSX/._doc':'x'}))
+  self.assertEqual(d['preview']['files'],['app.yaml'])
+ def test_secrets_in_ignored_metadata_still_rejected(self):
+  for name in ['.env.local','.env.example','.ssh/id_rsa','.aws/config','.pypirc','.github/.env','__MACOSX/.env','credentials.json']:
+   with self.subTest(name=name),self.assertRaisesRegex(ValueError,'Private file.*'+name.replace('.','\\.')):
+    self.loader.review('d.zip',self.encoded({'app.yaml':'{}',name:'secret'}))
+ def test_unknown_dotfile_named(self):
+  with self.assertRaisesRegex(ValueError,'Unsupported hidden file: .private'):
+   self.loader.review('d.zip',self.encoded({'app.yaml':'{}','.private':'x'}))
+ def test_source_archive_explained(self):
+  with self.assertRaisesRegex(ValueError,'CustomChat source ZIP, not a Nerd bundle'):
+   self.loader.review('source.zip',self.encoded({'customchat/.gitignore':'x','customchat/pyproject.toml':'x','customchat/customchat/__init__.py':'x'}))
