@@ -107,11 +107,11 @@ class PromptStore:
         with _lock:
             return self._load()["on"].get(key, STAGES[key]["on"])
 
-    def view(self, fallback_answer=""):
+    def view(self, fallback_answer="", revise_default=False):
         with _lock:
             d = self._load()
             return [{"key": k, "label": s["label"], "help": s["help"], "optional": s["optional"],
-                     "on": d["on"].get(k, s["on"]), "text": d["text"].get(k, ""),
+                     "on": d["on"].get(k, revise_default if k=="revise" else s["on"]), "text": d["text"].get(k, ""),
                      "default": s["default"] or fallback_answer, "custom": bool((d["text"].get(k) or "").strip())}
                     for k, s in STAGES.items()]
 
