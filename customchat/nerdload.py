@@ -65,6 +65,8 @@ class NerdLoader:
   appname=next(n for n in files if PurePosixPath(n).name in ('app.yaml','app.yml','app.json'))
   try:raw=yaml.safe_load(files[appname].decode('utf-8'))
   except Exception:raise ValueError('Invalid app YAML/JSON') from None
+  if isinstance(raw,dict) and 'articles' in raw and 'app' not in raw and 'provider' not in raw and 'sources' not in raw:
+   raise ValueError('This looks like an API response, not a Nerd app. In Code helpers, open Search connector, then Match a real response and paste this JSON there. It will not be imported or run.')
   try:cfg=schema.validate(raw);_check_values(cfg)
   except (schema.ConfigError,ExportError) as e:raise ValueError(str(e)) from None
   for name,content in files.items():

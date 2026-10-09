@@ -27,3 +27,9 @@ class EditStateTests(unittest.TestCase):
   with zipfile.ZipFile(io.BytesIO(data)) as z:
    self.assertIn('data/code-drafts.json',z.namelist());self.assertNotIn('data/secrets.json',z.namelist());self.assertNotIn(b'test-private-key',data)
   loader=NerdLoader(self.root);d=loader.review('nerd.zip',base64.b64encode(data).decode());self.assertIn('data/code-drafts.json',d['preview']['files'])
+ def test_saved_view_does_not_revert_to_runtime_after_save(self):
+  d=editstate.view(self.cfg);d['retrieval']['min_score']=.75;d['actions']['writes']=True;editstate.save_config(self.cfg,d,editstate.revision(self.cfg))
+  current=editstate.saved_view(self.cfg);self.assertEqual(current['retrieval']['min_score'],.75);self.assertTrue(current['actions']['writes']);self.assertEqual(self.cfg['retrieval']['min_score'],0)
+  current['provider']['temperature']=.8;editstate.save_config(self.cfg,current,editstate.revision(self.cfg));self.assertEqual(editstate.saved_view(self.cfg)['retrieval']['min_score'],.75)
+ def test_invalid_or_symlink_saved_view_rejected(self):
+  self.path.write_text('app: [');self.assertRaises(ValueError,editstate.saved_view,self.cfg);self.path.unlink();other=self.root/'other.yaml';other.write_text('{}');self.path.symlink_to(other);self.assertRaises(ValueError,editstate.saved_view,self.cfg)

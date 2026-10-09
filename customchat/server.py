@@ -191,7 +191,8 @@ def make_handler(cfg, engine):
                     b=self._body()
                     rev=editstate.save_config(cfg,b.get('config'),str(b.get('revision','')))
                     return self._send(200,{'revision':rev,'restart_required':True,'message':'App file saved. Restart this workspace to apply all fields. No new code or network calls ran.'})
-                return self._send(200,{'config':editstate.view(cfg),'defaults':schema.DEFAULTS,'revision':editstate.revision(cfg),'helpers':editstate.helper_state(cfg,state_folder),'connector_keys':{k:websearch.has_key(k) for k in websearch.PROVIDERS}})
+                saved_config=editstate.saved_view(cfg)
+                return self._send(200,{'config':saved_config,'runtime_config':editstate.view(cfg),'restart_required':saved_config!=editstate.view(cfg),'defaults':schema.DEFAULTS,'revision':editstate.revision(cfg),'helpers':editstate.helper_state(cfg,state_folder),'connector_keys':{k:websearch.has_key(k) for k in websearch.PROVIDERS}})
             if path == "/api/codegen/draft" and method == "POST":
                 self._owner()
                 if not can_edit(self):raise PermissionError('Only the app owner can save helper drafts')
@@ -281,6 +282,7 @@ def make_handler(cfg, engine):
                 return self._send(200, {"sources": rows, "mode": "Checks on questions and owner refresh; no background polling"})
             if path == "/api/app-export-check" and method == "GET":
                 if not can_edit(self): raise PermissionError("Only the app owner can export configuration")
+                if editstate.saved_view(cfg)!=editstate.view(cfg):raise ValueError("Saved app-file changes are waiting for restart. Restart this workspace before exporting so the ZIP cannot contain stale settings.")
                 from .portable import bundle
                 from .readiness import check
                 import io, zipfile
@@ -292,6 +294,7 @@ def make_handler(cfg, engine):
             if path == "/api/app-export" and method == "GET":
                 if not can_edit(self):
                     raise PermissionError("Only the app owner can export configuration.")
+                if editstate.saved_view(cfg)!=editstate.view(cfg):raise ValueError("Saved app-file changes are waiting for restart. Restart this workspace before exporting so the ZIP cannot contain stale settings.")
                 from .portable import bundle
                 data, _ = bundle(cfg, themestore.value, engine.prompts._load())
                 return self._send(200, data, "application/zip", {"Content-Disposition": 'attachment; filename="customchat-app.zip"'})

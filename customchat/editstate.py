@@ -7,6 +7,13 @@ from .portable import _check_values
 
 def view(cfg):
  return copy.deepcopy({k:cfg[k] for k in schema.DEFAULTS})
+def saved_view(cfg):
+ path=Path(cfg.get('_path',''))
+ if not cfg.get('_path'):return view(cfg)
+ if not path.is_file() or path.is_symlink():raise ValueError('Saved app file is not a regular file')
+ try:raw=yaml.safe_load(path.read_text(encoding='utf-8'))
+ except (OSError,UnicodeError,yaml.YAMLError):raise ValueError('Saved app file cannot be read') from None
+ result=view(schema.validate(raw));_check_values(result);return result
 def save_config(cfg,raw,revision):
  path=Path(cfg.get('_path',''))
  if not cfg.get('_path') or not path.is_file() or path.is_symlink():raise ValueError('This workspace has no writable app file')

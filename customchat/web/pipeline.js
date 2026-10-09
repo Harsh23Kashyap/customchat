@@ -26,7 +26,7 @@ function diagram() {
 function stageCard(s) {
   const area = el("textarea", { rows: "6", maxlength: "6000", "aria-label": s.label + " prompt", spellcheck: "false" });
   area.value = s.text || s.default;
-  const brief = el("input", { placeholder: "Describe your topic in a sentence (optional)", "aria-label": "About your topic" });
+  const brief = el("input", { placeholder: "Topic (optional)", "aria-label": "About your topic" });
   const st = el("span", { class: "testres", role: "status" });
   const sw = s.optional ? el("label", { class: "check sw" }, el("input", { type: "checkbox", id: "on-" + s.key }), " Use this step") : null;
   if (sw) { $("input", sw).checked = !!s.on; $("input", sw).addEventListener("change", async (e) => { try { await api("/api/prompts/save", { key: s.key, on: e.target.checked }); s.on = e.target.checked; const sm = $("summary small", $("#st-" + s.key)); if (sm) sm.textContent = s.on ? "On" : "Off"; redrawDiagram(); st.textContent = e.target.checked ? "On." : "Off."; } catch (x) { st.textContent = x.message; e.target.checked = !e.target.checked; } }); }
@@ -37,7 +37,7 @@ function stageCard(s) {
   return el("details", { class: "stage", id: "st-" + s.key }, el("summary", {}, el("b", { text: s.label }), el("small", { text: s.optional ? (s.on ? "On" : "Off") : "Always on" })), el("div", { class: "sbody" }, el("p", { class: "h", text: s.help }), sw, area, el("div", { class: "keyrow" }, brief, gen), why, el("div", { class: "keyrow" }, save, reset, st)));
 }
 let selected = {},focusSection="";
-function placePrompt(){const pane=$("#promptsEditor"),section=$("#sec-prompts"),layout=$(".layout"),preview=$("#pvbox");if(!pane||!section||!layout)return;const active=focusSection==="prompts",desktop=matchMedia("(min-width:1181px)").matches;document.body.classList.toggle("prompt-pane-active",active&&desktop);if(active&&desktop){pane.classList.add("prompt-side-editor");layout.insertBefore(pane,preview)}else{pane.classList.remove("prompt-side-editor");const list=$(".editor-list",section);section.insertBefore(pane,active&&!desktop?list:null)}if(preview)preview.hidden=active&&desktop;}
+function placePrompt(){const layout=$(".layout"),preview=$("#pvbox");if(!layout)return;const desktop=matchMedia("(min-width:1181px)").matches,active=focusSection==="prompts"||focusSection==="code";document.body.classList.toggle("prompt-pane-active",active&&desktop);for(const kind of ["prompts","code"]){const pane=$("#"+kind+"Editor"),section=$("#sec-"+kind);if(!pane||!section)continue;if(focusSection===kind&&desktop){pane.classList.add("prompt-side-editor");layout.insertBefore(pane,preview)}else{pane.classList.remove("prompt-side-editor");const list=$(".editor-list",section);section.insertBefore(pane,focusSection===kind&&!desktop?list:null)}}if(preview)preview.hidden=active&&desktop;}
 window.CCPipelineFocus=section=>{focusSection=section;placePrompt()};window.addEventListener("resize",placePrompt);
 
 function editorList(section, cards, kind) {
@@ -49,7 +49,7 @@ function editorList(section, cards, kind) {
     list.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b === button)));
     card.hidden = false; card.open = true; card.classList.add("selected-editor");
     selected[kind] = {card,button};
-    pane.replaceChildren(card);
+    pane.replaceChildren(card);placePrompt();
     if(kind==="prompts"){const area=$("textarea",card);if(area){area.scrollTop=0;area.setSelectionRange(0,0)}placePrompt();requestAnimationFrame(()=>{if(area)area.scrollTop=0})}
   };
   cards.forEach(card => {
@@ -133,7 +133,7 @@ function build(col) {
   promptCards.forEach(c=>c.remove());codeCards.forEach(c=>c.remove());
   prompts.querySelectorAll(".pgroup").forEach(n=>n.remove());
   editorList(prompts,promptCards,"prompts");editorList(code,codeCards,"code");
-  prompts.querySelector(".help").textContent="Select a stage. Edit its full prompt below.";
+  prompts.querySelector(".help").textContent="Select a stage. Its full saved prompt appears in the editor.";
   const m = $("#sec-model"); const anchor = $("#sec-presets");
   col.insertBefore(prompts, anchor); col.insertBefore(code, anchor);
 

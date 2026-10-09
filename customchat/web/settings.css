@@ -918,3 +918,10 @@ body:has(#nerdReview .import-grid) #col{min-width:0;width:100%;max-width:none}
 #savebar,#savebar.clean{position:fixed;left:auto;right:20px;bottom:calc(20px + env(safe-area-inset-bottom))!important;top:auto;width:auto;max-width:calc(100vw - 40px);margin:0;padding:8px;display:flex;flex-wrap:nowrap;gap:8px;border:1px solid #dbe4ee;border-radius:18px!important;transform:none;opacity:1;pointer-events:auto;z-index:80}
 #savebar #dirty{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 #savebar .go{flex:none;padding:10px 20px}#savebar .floating-more{position:relative}#savebar summary{list-style:none;cursor:pointer;font-size:24px;padding:3px 13px;border-radius:12px;min-height:44px;box-sizing:border-box}#savebar summary::-webkit-details-marker{display:none}#savebar #resetAll{position:absolute;right:0;bottom:calc(100% + 16px);background:#fff;color:#b42318;border:1px solid #f1c7c2;box-shadow:0 6px 20px #0002}
+/* Helper descriptions stay compact so the loaded code is visible immediately. */
+#codeEditor textarea[aria-label$="description"]{min-height:100px!important;height:100px;resize:vertical}
+/* Leave scroll room above floating appearance actions. */
+.pipeline-editor-pane{scroll-padding-bottom:100px;padding-bottom:100px!important}
+#promptsEditor .keyrow>input{flex:1 1 280px;min-width:0}
+#promptsEditor .keyrow>.go{flex:0 0 auto}
+#savebar .save-scope{font-size:11px;color:#556f5a;align-self:center}

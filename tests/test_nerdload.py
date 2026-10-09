@@ -66,3 +66,6 @@ class NerdLoadTests(unittest.TestCase):
  def test_source_archive_explained(self):
   with self.assertRaisesRegex(ValueError,'CustomChat source ZIP, not a Nerd bundle'):
    self.loader.review('source.zip',self.encoded({'customchat/.gitignore':'x','customchat/pyproject.toml':'x','customchat/customchat/__init__.py':'x','customchat/customchat/accounts.py':'x'}))
+ def test_article_response_has_routing_hint_without_import(self):
+  with self.assertRaisesRegex(ValueError,'Match a real response'):
+   self.loader.review('response.json',base64.b64encode(b'{"articles": [{"title":"Fixture"}]}').decode())
