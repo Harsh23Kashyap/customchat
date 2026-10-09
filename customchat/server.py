@@ -313,6 +313,19 @@ def make_handler(cfg, engine):
                     if management.active:raise ValueError('Wait for the workspace test to finish before changing settings')
                     management.history.record(o,settings_view());apply_settings(b.get("settings") or {})
                 return self._send(200, {"settings": settings_view()})
+            if path == "/api/source-credentials":
+                if not can_edit(self):
+                    return self._send(403, {"error": "Source keys can only be changed from this computer or by the admin"})
+                from . import source_credentials
+                if method == "GET":
+                    return self._send(200, {"credentials": source_credentials.status(cfg)})
+                if method == "POST":
+                    with management.lock:
+                        if management.active:raise ValueError("Wait for the workspace test to finish before changing keys")
+                        result = source_credentials.update(cfg, b)
+                        engine._cache.clear()
+                    return self._send(200, {"credentials": result})
+                return self._send(405, {"error": "Method not allowed"})
             if path.startswith("/api/provider/"):
                 if not can_edit(self):
                     return self._send(403, {"error": "Provider settings can only be changed from this computer or by the admin"})
@@ -699,8 +712,8 @@ ERR_PAGES = {
 
 # Config lock: CUSTOMCHAT_CONFIG=off serves the chat only. No settings page, no config or key endpoints.
 LOCKED = os.environ.get("CUSTOMCHAT_CONFIG", "").strip().lower() in ("off", "0", "false", "locked", "disabled")
-LOCKED_PAGES = {"/settings.html", "/settings.js", "/settings.css", "/panels.js", "/pipeline.js", "/codeeditor.js", "/codeeditor.LICENSE.txt", "/workspace.js"}
-LOCKED_API = ("/api/budget", "/api/docs-freshness", "/api/app-export", "/api/app-export-check", "/api/settings", "/api/provider", "/api/hardware", "/api/prompts", "/api/codegen", "/api/websearch", "/api/catalog", "/api/ollama", "/api/states", "/api/nerds", "/api/workspace")
+LOCKED_PAGES = {"/settings.html", "/settings.js", "/settings.css", "/panels.js", "/pipeline.js", "/codeeditor.js", "/codeeditor.LICENSE.txt", "/workspace.js", "/splitters.js", "/sourcekeys.js"}
+LOCKED_API = ("/api/source-credentials","/api/budget", "/api/docs-freshness", "/api/app-export", "/api/app-export-check", "/api/settings", "/api/provider", "/api/hardware", "/api/prompts", "/api/codegen", "/api/websearch", "/api/catalog", "/api/ollama", "/api/states", "/api/nerds", "/api/workspace")
 
 
 def _esc(s):

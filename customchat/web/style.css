@@ -759,3 +759,7 @@ html[data-motion=none] .ephemeral-scene *,html[data-motion=calm] .ephemeral-scen
 :root[data-motion=calm] .playground *, :root[data-motion=none] .playground *{animation:none!important}
 /* Welcome source illustration inherits the selected palette in both modes. */
 .doc-scene>circle{fill:var(--side-bg)}.doc-scene .doc-left rect,.doc-scene .doc-right rect{fill:var(--paper);stroke:var(--line)}.doc-scene text{fill:var(--brand)}.doc-scene .doc-left path,.doc-scene .doc-right path{stroke:var(--line)}.doc-scene .doc-trail{stroke:var(--mut)}.doc-scene .doc-spark rect{fill:var(--lime)}.doc-scene .doc-spark path{fill:var(--on-lime)}
+/* Match the workspace's scrollbars without changing scroll behavior. */
+*{scrollbar-width:thin;scrollbar-color:var(--mut,#8aab98) var(--side-bg,#edf2e9)}
+*::-webkit-scrollbar{width:10px;height:10px}*::-webkit-scrollbar-track{background:var(--side-bg,#edf2e9);border-radius:8px}*::-webkit-scrollbar-thumb{background:var(--mut,#8aab98);border:2px solid var(--side-bg,#edf2e9);border-radius:8px}*::-webkit-scrollbar-thumb:hover{background:var(--brand,#476e5a)}
+@media(forced-colors:active){*{scrollbar-color:auto}}

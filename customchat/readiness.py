@@ -18,6 +18,7 @@ def check(cfg,files=None,provided=None):
    if missing:rows.append({'kind':'default','item':section+' optional fields','message':'Defaults applied: '+', '.join(missing)})
  for src in cfg['sources']:
   if src.get('api_key_env'):requirements.append(src['api_key_env'])
+  if src['type']=='http_json':requirements.extend((src.get('header_env') or {}).values())
   if src['type']=='python' and files is not None:
    name=src['entry'].partition(':')[0].replace('.','/')+'.py'
    try:

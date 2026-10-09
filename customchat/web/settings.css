@@ -925,3 +925,32 @@ body:has(#nerdReview .import-grid) #col{min-width:0;width:100%;max-width:none}
 #promptsEditor .keyrow>input{flex:1 1 280px;min-width:0}
 #promptsEditor .keyrow>.go{flex:0 0 auto}
 #savebar .save-scope{font-size:11px;color:#556f5a;align-self:center}
+
+/* Desktop dividers live in existing gutters; compact/mobile layouts stay unchanged. */
+.layout{position:relative}
+.column-splitter[hidden]{display:none!important}
+.column-splitter{display:none}
+@media(min-width:1181px){
+ .layout.resizable-columns{grid-template-columns:var(--settings-nav-width) minmax(0,1fr) var(--settings-right-width)!important}
+ body.loading-nerd .layout.resizable-columns,body:has(#nerdReview .import-grid) .layout.resizable-columns{grid-template-columns:168px minmax(0,1fr)!important}
+ .column-splitter{display:block;position:absolute;top:0;bottom:96px;width:24px;cursor:col-resize;touch-action:none;z-index:5}
+ .splitter-grip{display:block;position:sticky;top:40vh;width:4px;height:80px;margin:0 auto;background:#b7c7b8;border-radius:8px;transition:background-color .15s}
+ .column-splitter:hover .splitter-grip,.column-splitter:focus-visible .splitter-grip{background:var(--cfg-accent,#173f35)}
+ .column-splitter:focus-visible{outline:none}.column-splitter:focus-visible .splitter-grip{outline:2px solid var(--cfg-accent,#173f35);outline-offset:4px}
+ body.resizing-columns,body.resizing-columns *{cursor:col-resize!important;user-select:none!important}
+ body.resizing-columns iframe{pointer-events:none!important}
+}
+.preview-toggle{justify-self:end;white-space:normal}
+body.settings-preview-hidden #pvbox,body.settings-preview-hidden #pvfab{display:none!important}
+@media(min-width:1181px){body.settings-preview-hidden:not(.prompt-pane-active) .layout{grid-template-columns:var(--settings-nav-width,168px) minmax(0,1fr)!important}}
+@media(min-width:1001px) and (max-width:1180px){body.settings-preview-hidden .layout{grid-template-columns:minmax(0,1fr)!important}}
+.native-source-keys>p{font-size:13px;line-height:1.6;margin:12px 0}.native-source-keys h3{font-size:16px}
+/* Quiet, usable scrollbars across workspace panes, editors and the chat. */
+*{scrollbar-width:thin;scrollbar-color:#8aab98 #edf2e9}
+*::-webkit-scrollbar{width:10px;height:10px}
+*::-webkit-scrollbar-track{background:#edf2e9;border-radius:8px}
+*::-webkit-scrollbar-thumb{background:#8aab98;border:2px solid #edf2e9;border-radius:8px}
+*::-webkit-scrollbar-thumb:hover{background:#476e5a}
+@media(forced-colors:active){*{scrollbar-color:auto}}
+@media(prefers-reduced-motion:reduce){.splitter-grip{transition:none}}
+.modebar .preview-toggle{grid-column:1/-1;justify-self:end;margin-top:0;min-height:36px;padding:8px 16px}

@@ -40,7 +40,9 @@ class Management:
   {'item':'Data audience','state':'review','detail':'Authentication: '+self.cfg['auth']['mode']+'. Review before sharing or hosting.'},
   {'item':'Connector code','state':'review' if any(s['type']=='python' for s in sources) else 'ready','detail':'Bounded mode is NOT a sandbox. Review code; host files and network remain accessible.' if any(s['type']=='python' for s in sources) else 'No Python plugin configured'}]
   required=sorted({s.get('api_key_env') for s in sources if s.get('api_key_env')})
+  from . import source_credentials
   missing=[k for k in required if not os.environ.get(k)]
+  missing.extend(item['env'] for item in source_credentials.status(self.cfg) if not item['has_key'])
   if missing:rows.append({'item':'Source credentials','state':'setup','detail':'Not detected in host environment: '+', '.join(missing)+'. Set them privately; presence does not prove validity.'})
   for source in sources:
    if source['type']=='local_files':

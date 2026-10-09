@@ -88,5 +88,5 @@ function set(m){document.body.classList.toggle("simple",m==="simple");[].forEach
 help.textContent=m==="simple"?"The everyday settings, in plain words.":"Adds design and fine controls.";try{localStorage.setItem(K,m)}catch(e){}}
 var m="simple";try{m=localStorage.getItem(K)||"simple"}catch(e){}set(m);
 bar.addEventListener("click",function(e){var b=e.target.closest("button");if(b)set(b.dataset.m)})})()</script>
-<script src="/configstate.js"></script><script src="/workspace.js"></script><script src="/nerdload.js"></script></body>
+<script src="/configstate.js"></script><script src="/workspace.js"></script><script src="/nerdload.js"></script><script src="/splitters.js"></script><script src="/sourcekeys.js"></script></body>
                                                                                                                                  </html>

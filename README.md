@@ -1,5 +1,7 @@
 # CustomChat
 
+0.1.16: resizable desktop settings columns, a persistent hide/show chat-preview control, matching workspace scrollbars, and private custom HTTP-source keys. The NewsNerd starter release asset has a native NewsAPI mapping and filled prompts/look/helper drafts; add your own OpenAI and NewsAPI keys locally. Live service use is not part of the offline test claim.
+
 0.1.14: Selecting Prompts replaces the desktop chat preview with the full current stage editor. Prompt selection starts at the beginning of its complete text; mobile shows the editor above the stage list. Saved revise toggles match app defaults and explicit overrides. No prompt wording changed.
 
 0.1.13: Configuration hydrates its normal controls, not a raw app-field dump. Active sources are detected by type rather than special IDs, matching presets are selected and custom looks are labeled accurately. App-file branding seeds unsaved theme values. Existing helper drafts and private key presence show in their controls; empty optional fields explicitly say not filled. Saved-state selection reflects the current model settings. No unused source is enabled automatically.

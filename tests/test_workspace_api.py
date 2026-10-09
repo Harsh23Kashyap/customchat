@@ -28,3 +28,21 @@ class WorkspaceAPITests(unittest.TestCase):
   with self.assertRaises(urllib.error.HTTPError):self.call(self.clients[0],'/api/workspace/preflight/run',{'confirmed':True,'ticket':'unknown'})
  def test_credential_url_rejected(self):
   with self.assertRaises(urllib.error.HTTPError):self.call(self.clients[0],'/api/settings',{'settings':{'base_url':'https://host/?key=secret'}})
+
+ def test_source_credentials_admin_only_and_not_echoed(self):
+  from customchat import secrets
+  old=secrets.STORE;secrets.STORE=secrets.SecretStore(self.tmp.name)
+  self.cfg['sources']=[{'id':'newsapi','type':'http_json','label':'NewsAPI','url':'https://newsapi.org/v2/everything?q={query}','header_env':{'X-Api-Key':'NEWSAPI_KEY'}}]
+  try:
+   self.assertIn('credentials',self.call(self.clients[0],'/api/source-credentials'))
+   for data in [None,{'source':'newsapi','env':'NEWSAPI_KEY','key':'FAKE_FIXTURE_ONLY'}]:
+    with self.assertRaises(urllib.error.HTTPError):self.call(self.clients[1],'/api/source-credentials',data)
+   result=self.call(self.clients[0],'/api/source-credentials',{'source':'newsapi','env':'NEWSAPI_KEY','key':'FAKE_FIXTURE_ONLY'})
+   self.assertTrue(result['credentials'][0]['has_key']);self.assertNotIn('FAKE_FIXTURE_ONLY',json.dumps(result))
+   self.call(self.clients[0],'/api/source-credentials',{'source':'newsapi','env':'NEWSAPI_KEY','clear':True})
+  finally:secrets.STORE=old
+ def test_source_credentials_locked(self):
+  from unittest.mock import patch
+  with patch('customchat.server.LOCKED',True):
+   with self.assertRaises(urllib.error.HTTPError) as error:self.call(self.clients[0],'/api/source-credentials')
+   self.assertEqual(error.exception.code,404)
