@@ -114,14 +114,14 @@ async function codePanel(host) {
     const badge=el("span",{class:"source-key-badge"});const status=el("small",{class:"h",role:"status"});
     const card=el("section",{class:"source-key-card"});
     const input=el("input",{type:"password",autocomplete:"off",spellcheck:"false","aria-label":name+" API key",placeholder:has?"Saved key available (replace only)":"(not filled) - "+name+" API key"});
-    const keyrow=el("div",{class:"keyrow source-inline-key"});const help=el("small",{class:"h"});
-    const refresh=()=>{badge.textContent=keyfree?"Key-free":has?"Key saved":"Not filled (API key)";status.textContent=!cb.checked?"Off. Not enabled.":has?"Ready to use.":"Selected. Paused until a key is saved.";keyrow.hidden=keyfree||!cb.checked;help.hidden=keyfree;input.placeholder=has?"Saved key available (replace only)":"(not filled) - "+name+" API key";help.textContent=has?"A key is saved. Leave blank to keep it, or paste a replacement.":"Not filled: no API key saved. No requests sent until enabled and saved.";remove.hidden=!has||keyfree;};
+    const keyrow=el("div",{class:"keyrow source-inline-key"});const help=el("small",{class:"h"});const notes=el("details",{class:"source-key-notes"},el("summary",{text:"Key and setup notes"}),help);
+    const refresh=()=>{badge.textContent=keyfree?"Key-free":has?"Key saved":"Not filled (API key)";status.textContent=!cb.checked?"Off. Not enabled.":has?"Ready to use.":"Selected. Paused until a key is saved.";keyrow.hidden=keyfree||!cb.checked;notes.hidden=keyfree;input.placeholder=has?"Saved key available (replace only)":"(not filled) - "+name+" API key";help.textContent=has?"A key is saved. Leave blank to keep it, or paste a replacement.":"Not filled: no API key saved. No requests sent until enabled and saved.";remove.hidden=!has||keyfree;};
     const endpoint=library?"/api/catalog/key":"/api/websearch/key";
     const save=el("button",{type:"button",class:"go blue",text:"Save key",onclick:async()=>{if(!input.value.trim()){status.textContent="Paste a key first. Existing key kept.";return}try{const r=await api(endpoint,{id,key:input.value});input.value="";has=r.has_key;refresh()}catch(e){status.textContent=e.message}}});
     const remove=el("button",{type:"button",class:"go ghost",text:"Remove key",onclick:async()=>{try{const r=await api(endpoint,{id,clear:true});has=r.has_key;refresh()}catch(e){status.textContent=e.message}}});
     keyrow.append(input,save,remove);
     cb.addEventListener("change",()=>{cb.checked?set.add(id):set.delete(id);refresh();library?persistLibraries():persistWeb()});
-    card.append(el("div",{class:"source-key-top"},el("label",{class:"check sw"},cb,el("b",{text:name})),badge),status,keyrow,help);refresh();host.append(card);
+    card.append(el("div",{class:"source-key-top"},el("label",{class:"check sw"},cb,el("b",{text:name})),badge),status,keyrow,notes);refresh();host.append(card);
   }
   const loaded=window.CCLoadedApp || await api("/api/config");
   host.prepend(el("div", {class:"loaded-source-overview"}, el("b", {text:"This Nerd's configured sources"}), ...loaded.sources.map(s=>el("p", {text:s.label + " · " + s.type})),el("small", {text:"Already active from the loaded Nerd. The controls below add optional searches."})));

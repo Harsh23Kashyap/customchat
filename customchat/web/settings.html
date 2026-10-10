@@ -37,7 +37,7 @@
         <div class="keyrow"><select id="modelPick" aria-label="Model"></select><button type="button" class="go ghost" id="refreshModels">Refresh list</button></div>
         <input id="model" placeholder="Type the model name" aria-label="Model name" hidden>
         <div class="keyrow testrow"><button type="button" class="go ghost" id="testconn">Test connection</button><span class="testres" id="testres" role="status" aria-live="polite"></span></div>
-        <label>Base URL <em>(Ollama and OpenAI-compatible servers only)</em><span class="h">Where the server runs, for example http://localhost:11434 for Ollama.</span><input id="base" placeholder="http://localhost:11434"></label>
+        <label>Base URL override <em>(optional)</em><span class="h">Leave blank for this provider's default. For a custom server, enter its API address.</span><input id="base" placeholder="http://localhost:11434"></label>
         <div class="two">
           <label>Temperature <span id="temperatureViz" class="slider-viz thermometer" aria-hidden="true"><i></i></span><output id="tv"></output><span class="h">Low is precise and repeatable. High is more creative.</span><input id="temp" aria-label="Temperature" type="range" min="0" max="2" step="0.05"></label>
           <label>Sources per answer <span id="sourcesViz" class="slider-viz doc-stack" aria-hidden="true"></span><output id="kv"></output><span class="h">How many passages are shown to the model for each question.</span><input id="topk" aria-label="Sources per answer" type="range" min="1" max="20" step="1"></label>
@@ -45,9 +45,9 @@
         <label class="check"><input id="rewrite" type="checkbox"> Rewrite follow-up questions before searching</label>
         <button class="go blue big" id="apply">Apply</button>
       </section>
-      <section class="tile" id="sec-portable"><div class="head"><span class="ic green">&#8599;</span><div><b>Load and share Nerds</b><small>Drop a bundle, review it, then run it</small></div></div>
+      <section class="tile" id="sec-portable"><div class="head"><span class="ic green">&#8599;</span><div><b>Load and share Nerds</b><small>Load saved settings, or download a shareable ZIP</small></div></div>
         <div class="help">Export app.yaml, the current model settings, saved look, prompts and configured local documents. Keys, accounts, conversations and personal uploads stay here. Review included documents before sharing. Python plugins and remote services still need their original setup.</div>
-        <div id="nerdDrop" class="nerd-drop" tabindex="0" role="button" aria-label="Choose or drop a Nerd ZIP or YAML"><span class="drop-symbol" aria-hidden="true">&#8593;</span><span class="drop-eyebrow">LOAD A NERD</span><b>Drop your bundle here</b><p>A Nerd ZIP or app.yaml, ready for review.</p><label class="go ghost filebtn">Choose a file<input id="nerdFile" type="file" accept=".zip,.yaml,.yml,.json" hidden></label><small>1. Choose &nbsp; 2. Review &nbsp; 3. Run</small></div><div id="nerdReview" role="status"></div>
+        <div id="nerdDrop" class="nerd-drop" tabindex="0" role="button" aria-label="Choose or drop a Nerd ZIP or YAML"><span class="drop-symbol" aria-hidden="true">&#8593;</span><span class="drop-eyebrow">LOAD A NERD</span><b>Drop your bundle here</b><p>ZIP restores bundled settings, prompts, helper drafts and documents. YAML fills its declared settings; extra files need a ZIP.</p><label class="go ghost filebtn">Choose a file<input id="nerdFile" type="file" accept=".zip,.yaml,.yml,.json" hidden></label><small>1. Choose &nbsp; 2. Review &nbsp; 3. Run</small></div><div id="nerdReview" role="status"></div>
         <div class="export-card"><div><b>Share this Nerd</b><p>Download an importable bundle of this app and its local documents. Keys and chats stay here.</p></div><button type="button" class="go green" id="exportApp"><span aria-hidden="true">&#8595;</span> Download app ZIP</button><span id="exportStatus" role="status" aria-live="polite"></span></div>
       </section>
       <section class="tile" id="sec-freshness"><div class="head"><span class="ic green">&#8635;</span><div><b>Document freshness</b><small>Keep local evidence up to date</small></div></div>
@@ -64,7 +64,7 @@
         <div class="help">Dollar accounting is not available yet. Setting any dollar cap blocks non-Demo answer-pipeline calls rather than guessing a bill. It does not limit owner-run configuration tests, external search fees or embedding costs. Set provider-side billing limits before publishing.</div>
         <button type="button" class="go green" id="saveBudget">Save budget</button><div id="budgetStatus" role="status" aria-live="polite"></div>
       </section>
-      <section class="tile" id="sec-finish"><div class="head"><span class="ic green">✓</span><div><b>Your Nerd, ready to use</b><small>One setup status page. Details stay closed until needed.</small></div></div>
+      <section class="tile" id="sec-finish"><div class="head"><span class="ic green">✓</span><div><b>Your Nerd, ready to use</b><small>One setup status page. Every feature is listed in the section directory.</small></div></div>
         <div id="workspacePanel"></div><div class="keyrow"><a class="go green" href="/">Open your chat</a></div>
       </section>
       <div id="look"></div>

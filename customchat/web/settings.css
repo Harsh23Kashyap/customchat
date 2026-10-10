@@ -301,7 +301,7 @@ h1{margin-top:0!important}
 .preset.more{border-color:#dfe6e1;font-weight:500;color:#4f6158}
 @media(max-width:1180px){.layout{grid-template-columns:minmax(0,1fr) 380px}.menu{display:none}}
 @media(max-width:1000px){.layout{grid-template-columns:minmax(0,1fr);width:100%}.preview{position:static;order:-1}#pv{height:420px}.fields{grid-template-columns:1fr}main.card,.toolbar{width:100%;box-sizing:border-box}.two{grid-template-columns:1fr}}
-@media(max-width:560px){body{padding:12px 8px 120px}main.card{padding:16px 12px}.layout{gap:16px}}
+@media(max-width:560px){body{padding:12px 8px 120px}main.card{padding:16px 12px!important}.layout{gap:16px}}
 @media(max-width:560px){#sec-code .row2,#sec-code .keyrow,#sec-code .btns{flex-wrap:wrap}#sec-code .go{max-width:100%;white-space:normal}}
 @media(max-width:560px){.secfoot{flex-wrap:wrap;justify-content:stretch}.secfoot .go{flex:1 1 100%;width:100%;min-width:0;box-sizing:border-box;white-space:normal;margin:0;padding:12px 14px}.savebar{flex-wrap:wrap;width:100%;box-sizing:border-box;margin-left:0;margin-right:0}.savebar span{flex:1 1 100%}.savebar .go{flex:1 1 auto;min-width:0;white-space:nowrap;padding:10px 12px}}
 /* pass 67: full-set review fixes */
@@ -954,3 +954,52 @@ body.settings-preview-hidden #pvbox,body.settings-preview-hidden #pvfab{display:
 @media(forced-colors:active){*{scrollbar-color:auto}}
 @media(prefers-reduced-motion:reduce){.splitter-grip{transition:none}}
 .modebar .preview-toggle{grid-column:1/-1;justify-self:end;margin-top:0;min-height:36px;padding:8px 16px}
+
+/* Compact configuration editor; preview styles intentionally unchanged. */
+#col .source-key-card {padding:12px 14px;gap:6px;margin:0;border-radius:10px}
+#col .source-key-card .h {font-size:12px;line-height:1.4}
+#col .source-key-top {gap:8px}
+#col .source-key-card:not(:has(input:checked)) > small:last-child {font-size:11.5px}
+#col .workspace-fields {padding:9px 12px;border-radius:9px}
+#col .workspace-fields summary {font-size:13px;line-height:1.5}
+#col .workspace-fields fieldset {margin-top:12px;padding:12px;gap:12px}
+#col .head b {font-size:18px}
+#col .head small {line-height:1.5}
+.settings-directory {padding:0 2px 12px;border-bottom:1px solid #dce4de;margin-bottom:8px}
+.settings-directory label {font-size:11px;color:#607168;margin-bottom:7px}
+.settings-directory input {font-size:12px!important;padding:9px 10px!important;min-width:0}
+.directory-results {display:flex;flex-direction:column;font-size:12px;gap:4px;margin-top:6px}
+.directory-results:empty {display:none}
+#menu .nav-label {font-size:10px;letter-spacing:.06em}
+#menu .nav-group {margin-bottom:10px}
+#menu .nav-group a {font-size:12px;padding:7px 8px}
+@media(max-width:1000px){.settings-directory{display:none}}
+#col > .tile, #look > .tile {gap:14px;padding:22px 18px!important;border:1px solid #dfe6e1!important;border-radius:14px!important;background:#fff;margin-bottom:0}
+#col .workspace-status-row {display:grid;grid-template-columns:130px 1fr;align-items:start;padding:9px 0;gap:12px}
+#col .workspace-status-row b {font-size:13px}
+#col .workspace-status-row span {font-size:13px;color:#53665b}
+#col .workspace-body {gap:10px}
+#sec-search .source-key-card {display:grid;grid-template-columns:1fr;gap:5px}
+#sec-search .source-key-top b {font-size:13px}
+#sec-search > h3 {font-size:13px;border-top:1px solid #e2e8e3;padding-top:14px;margin-top:4px}
+#sec-search .loaded-source-overview {padding:12px;border-radius:10px;background:#f1f6ef}
+#col .workspace-fields fieldset {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#col .workspace-fields fieldset fieldset {grid-column:1/-1}
+#col .workspace-fields fieldset label:has(textarea) {grid-column:1/-1}
+#col .workspace-fields fieldset label {min-width:0}
+@media(max-width:760px){#col .workspace-fields fieldset{grid-template-columns:1fr}#col > .tile,#look>.tile{padding:16px 12px!important}#col .workspace-status-row{grid-template-columns:1fr;gap:4px}}
+
+body.simple #menu a[href="#sec-presets"],body.simple #menu a[href="#sec-background"],body.simple #menu a[href="#sec-fonts"],body.simple #menu a[href="#sec-shape"],body.simple #menu a[href="#sec-emoji"],body.simple #menu a[href="#sec-motion"],body.simple #menu a[href="#sec-layout"]{display:block!important}
+body.simple #menu a[href="#sec-presets"]::after,body.simple #menu a[href="#sec-background"]::after,body.simple #menu a[href="#sec-fonts"]::after,body.simple #menu a[href="#sec-shape"]::after,body.simple #menu a[href="#sec-emoji"]::after,body.simple #menu a[href="#sec-motion"]::after,body.simple #menu a[href="#sec-layout"]::after{content:" · More";font-size:10px;color:#6d7e73}
+
+#col .source-key-card {padding:10px 12px!important;gap:4px!important}
+#col .source-key-card > small {margin:0!important}
+#col .source-key-card .source-key-top {margin:0!important}
+#col .workspace-fields {margin:8px 0!important;padding:10px 12px!important}
+#col .workspace-fields > summary {min-height:24px!important;padding:0!important}
+#col .workspace-status-row {padding:8px 0!important}
+
+#col .source-key-notes {margin:0!important;font-size:11px;line-height:1.5}
+#col .source-key-notes summary {min-height:24px!important;cursor:pointer;color:#587062;padding:2px 0!important}
+#col .source-key-notes .h {padding:8px 0 0!important}
+#col .source-key-card {gap:3px!important}

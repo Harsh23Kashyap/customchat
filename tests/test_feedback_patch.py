@@ -5,7 +5,7 @@ class FeedbackPatch(unittest.TestCase):
  def test_settings_groups_with_helper_loader(self):
   html=(R/'customchat/web/settings.html').read_text();js=(R/'customchat/web/settings.js').read_text()
   self.assertIn('src="/pipeline.js"',html);self.assertNotIn('src="/codeeditor.js"',html)
-  for x in ('Configuration','Frontend','App management','Sources and APIs'):self.assertIn(x,js)
+  for x in ('Start and share','Answers and sources','Appearance','Usage and maintenance','Sources and APIs'):self.assertIn(x,js)
  def test_real_assets_and_package(self):
   files=list((R/'customchat/web/emoji').glob('*.webp'));self.assertEqual(len(files),17)
   for p in files:
