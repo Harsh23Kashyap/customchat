@@ -21,13 +21,18 @@ function draw() {
   provExtras();
   for (const id of ["model", "apikey", "keysave", "keyclear", "modelPick", "refreshModels", "testconn", "base", "temp", "topk", "rewrite", "apply", "load", "saveLook", "resetAll", "imp", "exportApp", "checkDocs", "saveBudget"]) $("#" + id).disabled = !canEdit; $("#testconn").disabled = !canEdit || testBlocked;
 }
+// Endpoint overrides belong to one provider, never silently migrate across providers.
+function switchProvider(provider, model = "") {
+  const current = read();
+  cur = { ...current, provider, model, base_url: current.provider === provider ? current.base_url : "" };
+}
 const read = () => ({ provider: cur.provider, model: chosenModel(), base_url: $("#base").value.trim(), temperature: +$("#temp").value, top_k: +$("#topk").value, query_rewrite: $("#rewrite").checked });
 /* ---------- key, model picker, connection test ---------- */
 let keyInfo = {}, modelNote = "";
 const OTHER = "__other__";
 async function provExtras() {
   const p = cur.provider, k = keyInfo[p] || { needed: false, has: true };
-  $("#keybox").hidden = p === "mock" || p === "ollama"; { const bl = $("#base").closest("label"); if (bl) bl.hidden = !(p === "ollama" || p === "openai_compatible"); }
+  $("#keybox").hidden = p === "mock" || p === "ollama"; { const bl = $("#base").closest("label"); if (bl) bl.hidden = !(p === "ollama" || p === "openai_compatible" || cur.base_url); }
   $("#keyh").textContent = p === "openai_compatible" ? "Only if your server asks for one. Stored on this computer only, never shown again." : "Stored on this computer only, never shown again.";
   $("#apikey").placeholder = k.has ? "Saved key available. Enter only to replace it." : "Paste a key to save privately";
   const ks = $("#keystate"); ks.className = "keystate" + (k.has ? " ok" : "");
@@ -66,7 +71,7 @@ function buildChips(list) {
   // Keep the active provider visible without reopening a collapsed list.
   if (!top.includes(cur.provider) && chipList.includes(cur.provider)) top.push(cur.provider);
   const extra = rest.filter(p => !top.includes(p));
-  for (const p of top.concat(chipsMore ? extra : [])) { const b = el("button", { type: "button", "data-p": p, role: "radio", "aria-checked": String(p === cur.provider) }, mark(p), NAMES[p] || p); b.addEventListener("click", () => { if (canEdit) { cur = { ...read(), provider: p, model: "" };$("#testres").textContent="";$("#testres").className="testres"; draw(); pvFollow(); } }); seg.append(b); }
+  for (const p of top.concat(chipsMore ? extra : [])) { const b = el("button", { type: "button", "data-p": p, role: "radio", "aria-checked": String(p === cur.provider) }, mark(p), NAMES[p] || p); b.addEventListener("click", () => { if (canEdit) { switchProvider(p);$("#testres").textContent="";$("#testres").className="testres"; draw(); pvFollow(); } }); seg.append(b); }
   if (extra.length) { const m = el("button", { type: "button", class: "chipmore", "aria-expanded": String(chipsMore) }, chipsMore ? "Show fewer" : "Load more"); m.addEventListener("click", () => { chipsMore = !chipsMore; buildChips(); }); seg.append(m); }
 }
 /* ---------- local model suggestions (Ollama) ---------- */
@@ -111,7 +116,7 @@ async function ollamaPanel() {
 }
 function modelAction(tag, installed) {
   const wrap = el("div", { class: "mact" });
-  const use = () => { cur = {...read(),provider:"ollama",model:tag,base_url:cur.provider==="ollama"?$("#base").value.trim():"http://localhost:11434"};draw();loadModels(true).then(() => { const pick=$("#modelPick");pick.value=[...pick.options].some(o=>o.value===tag)?tag:OTHER;$("#model").value=tag;pickChanged();pvFollow(); }); };
+  const use = () => { switchProvider("ollama", tag);draw();loadModels(true).then(() => { const pick=$("#modelPick");pick.value=[...pick.options].some(o=>o.value===tag)?tag:OTHER;$("#model").value=tag;pickChanged();pvFollow(); }); };
   if (installed) { wrap.append(el("span", { class: "okt", text: "Installed" }), el("button", { type: "button", class: "mini", onclick: use }, "Use this model")); return wrap; }
   const bar = el("div", { class: "pbar", hidden: "" }, el("i")), msg = el("span", { class: "h" });
   const btn = el("button", { type: "button", class: "mini dl", disabled: canEdit ? undefined : "" }, "Download");
@@ -453,7 +458,7 @@ function pvFollow() {
   { let cp = $("#pvcloud"); if (!cp) { cp = el("div", { id: "pvcloud", class: "pvcloud" }); card.after(cp); }
     cp.hidden = !m;
     if (m) cp.replaceChildren(el("b", { text: "Suggested cloud models" }), ...CLOUD_PICKS.map((c) => el("div", { class: "cpick" }, mark(c.p), el("div", { class: "cpt" }, el("b", { text: c.name }), el("span", { class: "h", text: c.why })),
-      cur.provider === c.p && chosenModel() === c.id ? el("span", { class: "okt", text: "In use" }) : el("button", { type: "button", class: "mini", disabled: canEdit ? undefined : "", onclick: () => { cur = { ...read(), provider: c.p, model: c.id }; draw(); const tr = $("#testres"); if (tr) { tr.textContent = ""; tr.className = ""; } loadModels(false).then(() => { const pk = $("#modelPick"); pk.value = [...pk.options].some((o) => o.value === c.id) ? c.id : OTHER; if (pk.value === OTHER) { $("#model").hidden = false; $("#model").value = c.id; } cur.model = c.id; pvFollow(); }); } }, "Use"))),
+      cur.provider === c.p && chosenModel() === c.id ? el("span", { class: "okt", text: "In use" }) : el("button", { type: "button", class: "mini", disabled: canEdit ? undefined : "", onclick: () => { switchProvider(c.p, c.id); draw(); const tr = $("#testres"); if (tr) { tr.textContent = ""; tr.className = ""; } loadModels(false).then(() => { const pk = $("#modelPick"); pk.value = [...pk.options].some((o) => o.value === c.id) ? c.id : OTHER; if (pk.value === OTHER) { $("#model").hidden = false; $("#model").value = c.id; } cur.model = c.id; pvFollow(); }); } }, "Use"))),
       el("div", { class: "h" }, "Taken from ", el("a", { href: "https://developers.openai.com/api/docs/models", target: "_blank", rel: "noopener" }, "OpenAI"), " and ", el("a", { href: "https://ai.google.dev/gemini-api/docs/models", target: "_blank", rel: "noopener" }, "Google"), " model pages on 5 Oct 2026. Names change, so use Refresh list after adding a key.")); }
   { const box = $("#ollamabox"); if (box) { const cpn = $("#pvcloud"); if (box.previousElementSibling !== cpn) cpn.after(box); box.hidden = !m; if (m && !box.dataset.loaded) ollamaPanel(); }
     let hist = $("#pvhist"); if (!hist) { hist = el("div", { id: "pvhist", class: "pvhist" }); card.parentNode.append(hist); }
@@ -501,12 +506,22 @@ function resetGroup(s) { const d = meta.default; for (const f of s.fields) { if 
 function setPvMode(m) { document.querySelectorAll("#pvmode button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.m === m))); }
 function buildMenu() {
   const m = $("#menu"); m.replaceChildren();
-  const groups=[["config","Configuration",[["model","Model and key"],["search","Sources and APIs"],["prompts","Prompts"],["code","Code helpers"]]],["frontend","Frontend",[["presets","Presets and states"],...SECTIONS.map(s=>[s.id,s.title])]], ["manage","App management",[["freshness","Document freshness"],["budget","Budget"],["portable","Portable app"],["finish","Setup and workspace"]]]];
+  const groups=[["start","Start and share",[["finish","Setup and workspace"],["portable","Load and share Nerds"]]],["config","Answers and sources",[["model","Model and key"],["search","Sources and APIs"],["prompts","Prompts"],["code","Code helpers"]]],["frontend","Appearance",[["presets","Presets and saved looks"],...SECTIONS.map(s=>[s.id,s.title])]], ["manage","Usage and maintenance",[["freshness","Document freshness"],["budget","Budget"]]]];
   groups.forEach(([id,title,items])=>{const group=el("div",{class:"nav-group","data-group":id});group.append(el("b",{class:"nav-label",text:title}));items.forEach(([id,t])=>group.append(el("a",{href:"#sec-"+id,text:t})));m.append(group);});
-  m.querySelector("a").classList.add("on");
+  const workspaceGroup=m.querySelector('[data-group="start"]');
+  const setupLink=workspaceGroup.querySelector('a[href="#sec-finish"]');setupLink.dataset.workspace="Setup";
+  for(const name of ["Workspace","Changes","Backup","Test questions","Deploy"]){const a=el("a",{href:"#sec-finish",text:name,class:"workspace-directory-link"});a.dataset.workspace=name;workspaceGroup.insertBefore(a,workspaceGroup.querySelector('a[href="#sec-portable"]'));}
+  const search = el("input", {type:"search",placeholder:"Find a section", "aria-label":"Find a configuration section"});
+  const directory = el("div", {class:"settings-directory"}, el("label", {text:"All features"}, search));
+  const results=el("div", {class:"directory-results",role:"status"});directory.append(results);m.prepend(directory);
+  search.addEventListener("input",()=>{const term=search.value.trim().toLowerCase();results.replaceChildren();if(!term)return;
+    const matches=[...m.querySelectorAll(".nav-group a")].filter(a=>{const sec=document.querySelector(a.hash);return (a.textContent+" "+(sec?.innerText||"")).toLowerCase().includes(term)});
+    matches.forEach(a=>{const link=el("a",{href:a.hash,text:a.textContent});if(a.dataset.workspace)link.dataset.workspace=a.dataset.workspace;results.append(link)});if(!matches.length)results.textContent="No matching section. All features remain below.";
+  });
+  m.querySelector(".nav-group a").classList.add("on");
   let navHoldUntil=0;
-  m.addEventListener("click",e=>{const a=e.target.closest("a");if(!a)return;e.preventDefault();activeSec=a.hash.replace("#sec-","");navHoldUntil=Date.now()+1200;pvFollow();history.replaceState(null,"",a.hash);requestAnimationFrame(()=>document.querySelector(a.hash)?.scrollIntoView({block:"start",behavior:"instant"}));m.querySelectorAll("a").forEach(x=>x.classList.toggle("on",x===a))});
-  const col=$("#col");const order=["finish","model","search","prompts","code","presets","look","freshness","budget","portable"];
+  m.addEventListener("click",e=>{const a=e.target.closest("a");if(!a)return;e.preventDefault();if(a.dataset.workspace)document.dispatchEvent(new CustomEvent("cc-workspace-open",{detail:a.dataset.workspace}));const target=document.querySelector(a.hash);if(target && getComputedStyle(target).display==="none")document.querySelector('#cfgmode [data-m="advanced"]')?.click();activeSec=a.hash.replace("#sec-","");navHoldUntil=Date.now()+1200;pvFollow();history.replaceState(null,"",a.hash);requestAnimationFrame(()=>document.querySelector(a.hash)?.scrollIntoView({block:"start",behavior:"instant"}));m.querySelectorAll("a").forEach(x=>x.classList.toggle("on",x===a))});
+  const col=$("#col");const order=["finish","portable","model","search","prompts","code","presets","look","freshness","budget"];
   order.forEach(id=>{const sec=id==="look"?$("#look"):$("#sec-"+id);if(sec)col.insertBefore(sec,$("#msg"));});
   const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting && Date.now()>navHoldUntil) { activeSec = e.target.id.replace("sec-", ""); pvFollow(); document.querySelectorAll("#menu a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id)); } }, { rootMargin: "-20% 0px -70% 0px" });
   const watch = () => document.querySelectorAll("section.tile[id^=sec-]").forEach((n) => io.observe(n)); watch(); setTimeout(watch, 800); setTimeout(watch, 2500);
